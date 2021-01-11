@@ -1,0 +1,9 @@
+.env
+
+.idea/
+old/
+
+datasets/autsl
+datasets/msasl
+datasets/ncslgr
+datasets/ngt
