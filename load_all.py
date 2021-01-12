@@ -26,5 +26,5 @@ autsl = tfds.load('autsl', builder_kwargs=dict(
     valid_decryption_key=os.getenv("AUTSL_VALID_DECRYPTION_KEY")
 ))
 
-print([d["pose"]["data"].shape for d in iter(autsl["train"])])
+# print([d["p.ose"]["data"].shape for d in iter(autsl["train"])])
 # print([d["video"].shape for d in iter(autsl["train"])])

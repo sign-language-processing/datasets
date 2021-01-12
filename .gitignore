@@ -3,6 +3,6 @@
 .idea/
 old/
 
-datasets/msasl
-datasets/ncslgr
-datasets/ngt
+sign_language_datasets/datasets/msasl
+sign_language_datasets/datasets/ncslgr
+sign_language_datasets/datasets/ngt
