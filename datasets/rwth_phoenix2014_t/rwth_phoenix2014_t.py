@@ -4,10 +4,10 @@ import os
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from pose_format import Pose
 from tensorflow.io.gfile import GFile
 
 from datasets.config import SignDatasetConfig
+from utils.features import PoseFeature
 
 _DESCRIPTION = """
 Parallel Corpus of German Sign Language of the weather, including video, gloss and translation.
@@ -68,10 +68,8 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
             features['video'] = self._builder_config.video_feature((210, 260))
 
         if self._builder_config.include_pose == 'holistic':
-            features['pose'] = {
-                'data': tfds.features.Tensor(shape=(None, 1, 543, 3), dtype=tf.float32),
-                'conf': tfds.features.Tensor(shape=(None, 1, 543), dtype=tf.float32)
-            }
+            pose_header_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pose.header")
+            features['pose'] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -128,10 +126,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
                                       if name != "createDnnTrainingLabels-profile.py.lprof"]
                     datum['fps'] = self._builder_config.fps if self._builder_config.fps is not None else 25
 
-
                 if poses_path is not None:
-                    with GFile(os.path.join(poses_path, datum["id"] + ".pose"), "rb") as pf:
-                        p = Pose.read(pf.read())
-                        datum['pose'] = {'data': p.body.data.data, 'conf': p.body.confidence}
+                    datum["pose"] = os.path.join(poses_path, datum["id"] + ".pose")
 
                 yield datum["id"], datum
