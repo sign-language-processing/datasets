@@ -6,7 +6,7 @@ import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 from tqdm import tqdm
 
-from datasets.config import SignDatasetConfig
+from sign_language_datasets.datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
 A large-scale dataset for Word-Level American Sign Language

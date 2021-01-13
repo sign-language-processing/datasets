@@ -10,8 +10,8 @@ from tensorflow.io.gfile import GFile
 from tensorflow_datasets.core.download.resource import get_dl_dirname
 from tqdm import tqdm
 
-from ..config import SignDatasetConfig
-from ...utils.features import PoseFeature
+from sign_language_datasets.datasets.config import SignDatasetConfig
+from sign_language_datasets.utils.features import PoseFeature
 
 _DESCRIPTION = """
 A large-scale, multimodal dataset that contains isolated Turkish sign videos.

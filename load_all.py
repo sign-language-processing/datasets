@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # noinspection PyUnresolvedReferences
 import datasets
-from datasets.config import SignDatasetConfig
+from sign_language_datasets.datasets.config import SignDatasetConfig
 
 load_dotenv()
 
