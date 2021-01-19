@@ -7,6 +7,8 @@ from tensorflow.io.gfile import GFile
 from tqdm import tqdm
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
+from sign_language_datasets.utils.downloaders.aslpro import download_aslpro
+from sign_language_datasets.utils.downloaders.youtube import download_youtube
 
 _DESCRIPTION = """
 A large-scale dataset for Word-Level American Sign Language
@@ -79,12 +81,9 @@ class Wlasl(tfds.core.GeneratorBasedBuilder):
     print("url", url)
 
     if "aslpro" in url:
-      # return dl_manager.download_custom(url, download_aslpro)
-      raise Exception()
+      return dl_manager.download_custom(url, download_aslpro)
     elif "youtube" in url or "youtu.be" in url:
-      # return dl_manager.download_custom(url, download_youtube)
-      raise Exception()
-
+      return dl_manager.download_custom(url, download_youtube)
     else:
       return dl_manager.download(url)
 
@@ -106,10 +105,6 @@ class Wlasl(tfds.core.GeneratorBasedBuilder):
 
   def _split_generators(self, dl_manager: tfds.download.DownloadManager):
     """Returns SplitGenerators."""
-
-    # # TODO this is currently an issue
-    # dl_manager.download(
-    #     "https://aslsignbank.haskins.yale.edu/dictionary/protected_media/glossvideo/ASL/BO/BOOK-418.mp4")
 
     data_index_path = dl_manager.download(_INDEX_URL)
 
