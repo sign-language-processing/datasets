@@ -2,6 +2,41 @@
 
 This repository includes TFDS data loaders for sign language datasets.
 
+## Installation
+
+#### From Source
+```bash
+pip install git+https://github.com/sign-language-processing/datasets.git
+```
+
+#### PyPi
+Not available. Need to add automatic publication on push.
+
+## Usage
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sign-language-processing/datasets/blob/master/examples/load.ipynb)
+
+See [load_all.py](load_all.py) for loading code for all datasets. 
+It includes the option to choose the resolution and fps. Following is a short sample:
+
+```python
+import tensorflow_datasets as tfds
+import sign_language_datasets.datasets
+from sign_language_datasets.datasets.config import SignDatasetConfig
+
+# Loading a dataset with default configuration
+aslg_pc12 = tfds.load("aslg_pc12")
+
+# Loading a dataset with custom configuration
+config = SignDatasetConfig(name="videos_and_poses256x256:12", 
+                           version="3.0.0",          # Specific version
+                           include_video=True,       # Download and load dataset videos
+                           fps=12,                   # Load videos at constant, 12 fps
+                           resolution=(256, 256),    # Convert videos to a constant resolution, 256x256
+                           include_pose="holistic")  # Download and load Holistic pose estimation
+rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(config=config))
+```
+
 ## Datasets
 
 | Dataset            | Videos | Poses                                                 | Ready |
@@ -13,18 +48,6 @@ This repository includes TFDS data loaders for sign language datasets.
 | msasl              |        |                                                       | No    |
 | Video-Based CSL    |        |                                                       | No    |
 | RVL-SLLL ASL	     |        |                                                       | No    |
-
-## Usage
-
-See [load_all.py](load_all.py) for loading code for all datasets. 
-It includes the option to choose the resolution and fps. Following is a short sample:
-
-```python
-aslg_pc12 = tfds.load("aslg_pc12")
-
-config = SignDatasetConfig(name="256x256:12", include_video=True, fps=12, resolution=(256, 256))
-rwth_phoenix2014_t = tfds.load("rwth_phoenix2014_t", builder_kwargs=dict(config=config))
-```
 
 ## Data Interface
 

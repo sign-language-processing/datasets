@@ -1,6 +1,5 @@
 """RWTH-PHOENIX 2014 T: Parallel Corpus of Sign Language Video, Gloss and Translation"""
 import csv
-import os
 from os import path
 
 import tensorflow as tf
@@ -51,7 +50,8 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
   BUILDER_CONFIGS = [
     SignDatasetConfig(name="default", include_video=True, include_pose="holistic"),
     SignDatasetConfig(name="videos", include_video=True, include_pose=None),
-    SignDatasetConfig(name="poses", include_video=False, include_pose="holistic")
+    SignDatasetConfig(name="poses", include_video=False, include_pose="holistic"),
+    SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
   ]
 
   def _info(self) -> tfds.core.DatasetInfo:
@@ -69,7 +69,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
       features["video"] = self._builder_config.video_feature((210, 260))
 
     if self._builder_config.include_pose == "holistic":
-      pose_header_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pose.header")
+      pose_header_path = path.join(path.dirname(path.realpath(__file__)), "pose.header")
       features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path)
 
     return tfds.core.DatasetInfo(
@@ -130,13 +130,13 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
         }
 
         if self._builder_config.include_video:
-          frames_base = os.path.join(images_path, row["video"])[:-7]
-          datum["video"] = [os.path.join(frames_base, name)
+          frames_base = path.join(images_path, row["video"])[:-7]
+          datum["video"] = [path.join(frames_base, name)
                             for name in sorted(tf.io.gfile.listdir(frames_base))
                             if name != "createDnnTrainingLabels-profile.py.lprof"]
           datum["fps"] = self._builder_config.fps if self._builder_config.fps is not None else 25
 
         if poses_path is not None:
-          datum["pose"] = os.path.join(poses_path, datum["id"] + ".pose")
+          datum["pose"] = path.join(poses_path, datum["id"] + ".pose")
 
         yield datum["id"], datum

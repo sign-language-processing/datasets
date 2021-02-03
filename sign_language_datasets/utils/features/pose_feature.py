@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 
+import numpy as np
 import tensorflow as tf
 from pose_format import Pose, PoseHeader
 from pose_format.numpy.pose_body import NumPyPoseBody
@@ -113,7 +114,20 @@ class PoseFeature(feature.FeatureConnector):
 
   def encode_example(self, pose_path_or_fobj):
     """Convert the given image into a dict convertible to tf example."""
-    if isinstance(pose_path_or_fobj, type_utils.PathLikeCls):
+    encode_body = lambda body: {"data": body.data.data, "conf": body.confidence, "fps": body.fps}
+
+    if pose_path_or_fobj is None:
+      # Create 0 size tensors
+      data_shape = list(self._shape)
+      data_shape[0] = 0
+      conf_shape = tuple(data_shape[:3])
+      data_shape = tuple(data_shape)
+
+      pose_body = NumPyPoseBody(data=np.zeros(data_shape), confidence=np.zeros(conf_shape), fps=0)
+      return encode_body(pose_body)
+    elif isinstance(pose_path_or_fobj, Pose):
+      return encode_body(pose_path_or_fobj.body)
+    elif isinstance(pose_path_or_fobj, type_utils.PathLikeCls):
       pose_path_or_fobj = os.fspath(pose_path_or_fobj)
       with tf.io.gfile.GFile(pose_path_or_fobj, "rb") as pose_f:
         encoded_pose = pose_f.read()
@@ -124,7 +138,7 @@ class PoseFeature(feature.FeatureConnector):
 
     if self._encoding_format == "pose":
       pose_body = read_body(encoded_pose, self._header, self._read_offset)
-      return {"data": pose_body.data.data, "conf": pose_body.confidence, "fps": pose_body.fps}
+      return encode_body(pose_body)
     else:
       raise Exception("Unknown encoding format '%s'" % self._encoding_format)
 
