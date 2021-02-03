@@ -1,6 +1,7 @@
 """RWTH-PHOENIX 2014 T: Parallel Corpus of Sign Language Video, Gloss and Translation"""
 import csv
 import os
+from os import path
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -89,10 +90,10 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
       urls.append(_POSE_URLS[self._builder_config.include_pose])
 
     downloads = dl_manager.download_and_extract(urls)
-    annotations_path = downloads[0] / "PHOENIX-2014-T-release-v3" / "PHOENIX-2014-T"
+    annotations_path = path.join(downloads[0], "PHOENIX-2014-T-release-v3", "PHOENIX-2014-T")
 
     if self._builder_config.include_pose == "holistic":
-      pose_path = downloads[1] / "holistic"
+      pose_path = path.join(downloads[1], "holistic")
     else:
       pose_path = None
 
@@ -105,9 +106,9 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
   def _generate_examples(self, annotations_path: str, pose_path: str, split: str):
     """ Yields examples. """
 
-    filepath = os.path.join(annotations_path, "annotations", "manual", "PHOENIX-2014-T." + split + ".corpus.csv")
-    images_path = os.path.join(annotations_path, "features", "fullFrame-210x260px", split)
-    poses_path = os.path.join(pose_path, split) if pose_path is not None else None
+    filepath = path.join(annotations_path, "annotations", "manual", "PHOENIX-2014-T." + split + ".corpus.csv")
+    images_path = path.join(annotations_path, "features", "fullFrame-210x260px", split)
+    poses_path = path.join(pose_path, split) if pose_path is not None else None
 
     with GFile(filepath, "r") as f:
       data = csv.DictReader(f, delimiter="|", quoting=csv.QUOTE_NONE)

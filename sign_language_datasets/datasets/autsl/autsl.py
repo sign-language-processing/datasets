@@ -1,6 +1,7 @@
 """AUTSL: Large Scale Signer Independent Isolated SLR Dataset (Turkish Sign Language)"""
 import csv
 import os
+from os import path
 from typing import Union
 from zipfile import ZipFile
 
@@ -143,8 +144,8 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
     if self._builder_config.include_pose is not None:
       pose_path = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
-      train_pose_path = pose_path / self._builder_config.include_pose / "train"
-      valid_pose_path = pose_path / self._builder_config.include_pose / "validation"
+      train_pose_path = path.join(pose_path, self._builder_config.include_pose, "train")
+      valid_pose_path = path.join(pose_path, self._builder_config.include_pose, "validation")
     else:
       train_pose_path = valid_pose_path = None
 
