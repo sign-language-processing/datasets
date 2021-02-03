@@ -97,11 +97,20 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
     else:
       pose_path = None
 
-    return {
-      "validation": self._generate_examples(annotations_path, pose_path, "dev"),
-      "test": self._generate_examples(annotations_path, pose_path, "test"),
-      "train": self._generate_examples(annotations_path, pose_path, "train"),
-    }
+    return [
+      tfds.core.SplitGenerator(
+        name=tfds.Split.VALIDATION,
+        gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"}
+      ),
+      tfds.core.SplitGenerator(
+        name=tfds.Split.TEST,
+        gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"}
+      ),
+      tfds.core.SplitGenerator(
+        name=tfds.Split.TRAIN,
+        gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"}
+      ),
+    ]
 
   def _generate_examples(self, annotations_path: str, pose_path: str, split: str):
     """ Yields examples. """

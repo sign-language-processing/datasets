@@ -149,10 +149,16 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
     else:
       train_pose_path = valid_pose_path = None
 
-    return {
-      "validation": self._generate_examples(valid_videos, valid_pose_path, valid_labels),
-      "train": self._generate_examples(train_videos, train_pose_path, train_labels),
-    }
+    return [
+      tfds.core.SplitGenerator(
+        name=tfds.Split.VALIDATION,
+        gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels}
+      ),
+      tfds.core.SplitGenerator(
+        name=tfds.Split.TRAIN,
+        gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels}
+      ),
+    ]
 
   def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None],
                          labels_path: Union[str, None]):
