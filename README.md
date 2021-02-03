@@ -2,11 +2,6 @@
 
 This repository includes TFDS data loaders for sign language datasets.
 
-### Why not Huggingface Datasets?
-Huggingface datasets do not work well with videos.
-From the lack of native support of the video type, to lack of support of arbitrary tensors.
-Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
-
 ## Datasets
 
 | Dataset            | Videos | Poses                                                 | Ready |
@@ -16,6 +11,8 @@ Furthermore, they currently have memory leaks that prevent from saving even the 
 | autsl              | Yes    | Holistic                                              | Yes   |
 | wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | No    |
 | msasl              |        |                                                       | No    |
+| Video-Based CSL    |        |                                                       | No    |
+| RVL-SLLL ASL	     |        |                                                       | No    |
 
 ## Usage
 
@@ -48,3 +45,8 @@ We follow the following interface wherever possible to make it easy to swap data
     "text": tfds.features.Text()
 }
 ```
+
+### Why not Huggingface Datasets?
+Huggingface datasets do not work well with videos.
+From the lack of native support of the video type, to lack of support of arbitrary tensors.
+Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
