@@ -37,9 +37,8 @@ _TRAIN_LABELS = "http://158.109.8.102/AuTSL/data/train/train_labels.csv"
 
 _VALID_VIDEOS = "http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip"  # 3 files
 
-_POSE_URLS = {
-  "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz"
-}
+_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz"}
+_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
 
 
 class AUTSL(tfds.core.GeneratorBasedBuilder):
@@ -75,7 +74,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
       features["depth_video"] = self._builder_config.video_feature((512, 512), 1)
 
     if self._builder_config.include_pose == "holistic":
-      pose_header_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pose.header")
+      pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
       features["pose"] = PoseFeature(shape=(None, 1, 543, 4), header_path=pose_header_path)
 
     return tfds.core.DatasetInfo(

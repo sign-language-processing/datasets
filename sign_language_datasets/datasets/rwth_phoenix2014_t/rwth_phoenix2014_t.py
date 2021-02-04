@@ -36,9 +36,9 @@ _CITATION = """
 
 _VIDEO_ANNOTATIONS_URL = "https://www-i6.informatik.rwth-aachen.de/ftp/pub/rwth-phoenix/2016/phoenix-2014-T.v3.tar.gz"
 _ANNOTATIONS_URL = "https://nlp.biu.ac.il/~amit/datasets/phoenix-2014-T.v3.txt.tar.gz"
-_POSE_URLS = {
-  "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/phoenix.tar.gz"
-}
+
+_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/phoenix.tar.gz"}
+_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
 
 
 class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
@@ -69,7 +69,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
       features["video"] = self._builder_config.video_feature((210, 260))
 
     if self._builder_config.include_pose == "holistic":
-      pose_header_path = path.join(path.dirname(path.realpath(__file__)), "pose.header")
+      pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
       features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path)
 
     return tfds.core.DatasetInfo(
