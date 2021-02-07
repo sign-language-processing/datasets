@@ -74,3 +74,14 @@ We follow the following interface wherever possible to make it easy to swap data
 Huggingface datasets do not work well with videos.
 From the lack of native support of the video type, to lack of support of arbitrary tensors.
 Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
+
+### Cite
+
+```bibtex
+@misc{moryossef2021datasets, 
+    title={Sign Language Datasets},
+    author={Moryossef, Amit},
+    howpublished={\url{https://github.com/sign-language-processing/datasets}},
+    year={2021}
+}
+```
