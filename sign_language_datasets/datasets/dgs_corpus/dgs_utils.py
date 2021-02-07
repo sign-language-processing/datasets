@@ -2,7 +2,7 @@ import pympi
 
 
 def get_elan_sentences(elan_path: str):
-  eaf = pympi.Elan.Eaf(elan_path)
+  eaf = pympi.Elan.Eaf(elan_path) # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
   timeslots = eaf.timeslots
 
