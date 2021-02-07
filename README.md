@@ -14,10 +14,10 @@ Not available. Need to add automatic publication on push.
 
 ## Usage
 
+We demonstrate a loading script for every dataset in [examples/load.ipynb](examples/load.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sign-language-processing/datasets/blob/master/examples/load.ipynb)
 
-See [load_all.py](load_all.py) for loading code for all datasets. 
-It includes the option to choose the resolution and fps. Following is a short sample:
+Our config includes the option to choose the resolution and fps, for example:
 
 ```python
 import tensorflow_datasets as tfds
