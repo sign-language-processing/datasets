@@ -150,16 +150,16 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
     splits = [
       tfds.core.SplitGenerator(
-        name=tfds.Split.VALIDATION,
-        gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels}
+        name=tfds.Split.TRAIN,
+        gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels}
       )
     ]
 
     # If no validation set, no data even about its annotations
-    if valid_videos is not None or valid_pose_path is not None:
+    if valid_videos is not None or valid_pose_path is not None or valid_labels is not None:
       splits.append(tfds.core.SplitGenerator(
-        name=tfds.Split.TRAIN,
-        gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels}
+        name=tfds.Split.VALIDATION,
+        gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels}
       ))
 
     return splits
