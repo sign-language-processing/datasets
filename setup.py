@@ -17,7 +17,7 @@ setup(
   author_email='amitmoryossef@gmail.com',
   url='https://github.com/sign-language-processing/datasets',
   keywords=[],
-  install_requires=['python-dotenv', 'tqdm', 'pose-format', 'tensorflow-datasets', 'tensorflow'],
+  install_requires=['python-dotenv', 'tqdm', 'pose-format', 'tfds-nightly', 'tensorflow'],
   long_description=long_description,
   long_description_content_type='text/markdown',
   classifiers=[

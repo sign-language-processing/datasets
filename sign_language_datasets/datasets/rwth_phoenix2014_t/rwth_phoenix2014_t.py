@@ -35,7 +35,7 @@ _CITATION = """
 """
 
 _VIDEO_ANNOTATIONS_URL = "https://www-i6.informatik.rwth-aachen.de/ftp/pub/rwth-phoenix/2016/phoenix-2014-T.v3.tar.gz"
-_ANNOTATIONS_URL = "https://nlp.biu.ac.il/~amit/datasets/phoenix-2014-T.v3.txt.tar.gz"
+_ANNOTATIONS_URL = "https://nlp.biu.ac.il/~amit/datasets/public/phoenix-annotations.tar.gz"
 
 _POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/phoenix.tar.gz"}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
