@@ -67,7 +67,7 @@ class PoseFeature(feature.FeatureConnector):
     ```
   """
 
-  def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None):
+  def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1):
     """Construct the connector.
 
     Args:
@@ -91,6 +91,9 @@ class PoseFeature(feature.FeatureConnector):
     self._shape = shape or (None, None, None, 3)
     self._encoding_format = encoding_format or "pose"
 
+    assert int(stride) == stride, "Video fps must be divisible by custom fps, when loading poses"
+    self.stride = int(stride)
+
     if header_path is not None:
       self._header, self._read_offset = read_header(header_path)
     else:
@@ -112,9 +115,14 @@ class PoseFeature(feature.FeatureConnector):
     state["_runner"] = None
     return state
 
+  def encode_body(self, body: NumPyPoseBody):
+    if self.stride != 1:
+      body = body.slice_step(self.stride)
+
+    return {"data": body.data.data, "conf": body.confidence, "fps": int(body.fps)}
+
   def encode_example(self, pose_path_or_fobj):
     """Convert the given image into a dict convertible to tf example."""
-    encode_body = lambda body: {"data": body.data.data, "conf": body.confidence, "fps": body.fps}
 
     if pose_path_or_fobj is None:
       # Create 0 size tensors
@@ -124,9 +132,9 @@ class PoseFeature(feature.FeatureConnector):
       data_shape = tuple(data_shape)
 
       pose_body = NumPyPoseBody(data=np.zeros(data_shape), confidence=np.zeros(conf_shape), fps=0)
-      return encode_body(pose_body)
+      return self.encode_body(pose_body)
     elif isinstance(pose_path_or_fobj, Pose):
-      return encode_body(pose_path_or_fobj.body)
+      return self.encode_body(pose_path_or_fobj.body)
     elif isinstance(pose_path_or_fobj, type_utils.PathLikeCls):
       pose_path_or_fobj = os.fspath(pose_path_or_fobj)
       with tf.io.gfile.GFile(pose_path_or_fobj, "rb") as pose_f:
@@ -138,7 +146,7 @@ class PoseFeature(feature.FeatureConnector):
 
     if self._encoding_format == "pose":
       pose_body = read_body(encoded_pose, self._header, self._read_offset)
-      return encode_body(pose_body)
+      return self.encode_body(pose_body)
     else:
       raise Exception("Unknown encoding format '%s'" % self._encoding_format)
 

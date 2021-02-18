@@ -79,11 +79,13 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
     if self._builder_config.include_video:
       features["fps"] = tf.int32
       video_ids = ["a", "b", "c"]
-      features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
+      if self._builder_config.process_video:
+        features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
       features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
     if self._builder_config.include_pose == "openpose":
-      features["poses"] = {_id: PoseFeature(shape=(None, 1, 137, 2)) for _id in ["a", "b"]}
+      stride = 1  if self._builder_config.fps is None else 50 / self._builder_config.fps
+      features["poses"] = {_id: PoseFeature(shape=(None, 1, 137, 2), stride=stride) for _id in ["a", "b"]}
 
     return tfds.core.DatasetInfo(
       builder=self,
@@ -101,11 +103,6 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
     with open(index_path, "r", encoding="utf-8") as f:
       index_data = json.load(f)
-
-    # # TODO remove from here
-    # keys = list(index_data.keys())[:1]
-    # index_data = {k: index_data[k] for k in keys}
-    # # TODO remove up to here
 
     # No need to download HTML pages
     for datum in index_data.values():
@@ -150,9 +147,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
       if self._builder_config.include_video:
         videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}
 
-        features["fps"] = default_fps
+        features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
         features["paths"]["videos"] = videos
-        features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
+        if self._builder_config.process_video:
+          features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
 
       if self._builder_config.include_pose == "openpose":
         features["poses"] = get_poses(datum["openpose"], default_fps)

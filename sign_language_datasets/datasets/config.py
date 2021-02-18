@@ -8,13 +8,15 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
 
   def __init__(self,
                include_video: bool = True,
+               process_video: bool = True,
                include_pose: Optional[str] = None,
                fps: Optional[float] = None,
                resolution: Optional[Tuple[int, int]] = None,
                **kwargs):
     """Constructs a RWTHPhoenix2014TConfig.
     Args:
-      include_video: bool, whether to include video tensors in the data.
+      include_video: bool, whether to include videos in the data.
+      process_video: bool, whether to load the videos as tensors or paths
       include_pose: str, what pose data to include.
       fps: float, what pose data to include.
       resolution: (int, int), what resolution of videos to load.
@@ -22,6 +24,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
     """
     super(SignDatasetConfig, self).__init__(**kwargs)
     self.include_video = include_video
+    self.process_video = process_video
     self.include_pose = include_pose
 
     self.fps = fps
