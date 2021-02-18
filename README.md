@@ -31,6 +31,7 @@ aslg_pc12 = tfds.load("aslg_pc12")
 config = SignDatasetConfig(name="videos_and_poses256x256:12", 
                            version="3.0.0",          # Specific version
                            include_video=True,       # Download and load dataset videos
+                           process_video=True,       # Process videos to tensors, or only save path to video
                            fps=12,                   # Load videos at constant, 12 fps
                            resolution=(256, 256),    # Convert videos to a constant resolution, 256x256
                            include_pose="holistic")  # Download and load Holistic pose estimation
