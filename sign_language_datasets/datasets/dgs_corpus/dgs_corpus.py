@@ -2,6 +2,7 @@
 
 import gzip
 import json
+from os import path
 
 import numpy as np
 import tensorflow as tf
@@ -31,6 +32,11 @@ _CITATION = """
 # This `dgs.json` file was created using `create_index.py`
 INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/dgs.json"
 
+_POSE_HEADERS = {
+  "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
+  "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.poseheader")
+}
+
 
 def get_poses(openpose_path: str, fps: int):
   with gzip.GzipFile(openpose_path, "r") as openpose_raw:
@@ -58,9 +64,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
   }
 
   BUILDER_CONFIGS = [
-    SignDatasetConfig(name="default", include_video=True, include_pose="openpose"),
+    SignDatasetConfig(name="default", include_video=True, include_pose="holistic"),
     SignDatasetConfig(name="videos", include_video=True, include_pose=None),
-    SignDatasetConfig(name="poses", include_video=False, include_pose="openpose"),
+    SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
+    SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
     SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
   ]
 
@@ -83,9 +90,18 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
       features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
-    if self._builder_config.include_pose == "openpose":
-      stride = 1  if self._builder_config.fps is None else 50 / self._builder_config.fps
-      features["poses"] = {_id: PoseFeature(shape=(None, 1, 137, 2), stride=stride) for _id in ["a", "b"]}
+    # Add poses if requested
+    if self._builder_config.include_pose is not None:
+      pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
+      stride = 1 if self._builder_config.fps is None else 50 / self._builder_config.fps
+
+      if self._builder_config.include_pose == "openpose":
+        pose_shape = (None, 1, 137, 2)
+      if self._builder_config.include_pose == "holistic":
+        pose_shape = (None, 1, 543, 3)
+
+      features["poses"] = {_id: PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
+                           for _id in ["a", "b"]}
 
     return tfds.core.DatasetInfo(
       builder=self,
@@ -116,10 +132,16 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         del datum["video_b"]
         del datum["video_c"]
 
-    # Don't download poses if not necessary
+    # Don't download openpose poses if not necessary
     if self._builder_config.include_pose != "openpose":
       for datum in index_data.values():
         del datum["openpose"]
+
+    # Don't download holistic poses if not necessary
+    if self._builder_config.include_pose != "holistic":
+      for datum in index_data.values():
+        del datum["holistic_a"]
+        del datum["holistic_b"]
 
     urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
 
@@ -154,5 +176,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
       if self._builder_config.include_pose == "openpose":
         features["poses"] = get_poses(datum["openpose"], default_fps)
+
+      if self._builder_config.include_pose == "holistic":
+        features["poses"] = {t: datum["holistic_" + t] for t in ["a", "b"]}
 
       yield _id, features

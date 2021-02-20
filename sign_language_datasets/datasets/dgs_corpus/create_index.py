@@ -31,6 +31,12 @@ with urllib.request.urlopen(corpus_path + "ling/start-name_en.html") as response
       "openpose": links[12],
     }
 
+    # Add holistic
+    for c in ['a', 'b']:
+      holistic_path = "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dgs_corpus/" + tr_id + "_" + c + ".pose"
+      index_data[tr_id]['holistic_' + c] = holistic_path if index_data[tr_id]['video_' + c] is not None else None
+
+    # Make sure parsing worked
     if index_data[tr_id]["openpose"] is not None:
       assert index_data[tr_id]["openpose"].endswith(".json.gz")
 

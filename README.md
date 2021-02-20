@@ -45,7 +45,7 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 | aslg_pc12          | N/A    | N/A                                                   | 0.0.1    |
 | rwth_phoenix2014_t | Yes    | Holistic                                              | 3.0.0    |
 | autsl              | Yes    | Holistic                                              | 1.0.0    |
-| dgs_corpus         | Yes    | OpenPose                                              | 3.0.0    |
+| dgs_corpus         | Yes    | OpenPose, Holistic                                    | 3.0.0    |
 | wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960)   | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None    |
 | msasl              |        |                                                       | None     |
 | Video-Based CSL    |        |                                                       | None     |
