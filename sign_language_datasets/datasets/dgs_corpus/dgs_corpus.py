@@ -33,151 +33,149 @@ _CITATION = """
 INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/dgs.json"
 
 _POSE_HEADERS = {
-  "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
-  "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.poseheader")
+    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
+    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.poseheader"),
 }
 
 
 def get_poses(openpose_path: str, fps: int):
-  with gzip.GzipFile(openpose_path, "r") as openpose_raw:
-    openpose = json.loads(openpose_raw.read().decode("utf-8"))
+    with gzip.GzipFile(openpose_path, "r") as openpose_raw:
+        openpose = json.loads(openpose_raw.read().decode("utf-8"))
 
-  people = {"a", "b"}
-  views = {view["camera"][0]: view for view in openpose if view["camera"][0] in people}
+    people = {"a", "b"}
+    views = {view["camera"][0]: view for view in openpose if view["camera"][0] in people}
 
-  poses = {p: None for p in people}
-  for person, view in views.items():
-    width, height, frames_obj = view["width"], view["height"], view["frames"]
+    poses = {p: None for p in people}
+    for person, view in views.items():
+        width, height, frames_obj = view["width"], view["height"], view["frames"]
 
-    # Convert to pose format
-    poses[person] = load_openpose(view["frames"].values(), fps, width, height)
+        # Convert to pose format
+        poses[person] = load_openpose(view["frames"].values(), fps, width, height)
 
-  return poses
+    return poses
 
 
 class DgsCorpus(tfds.core.GeneratorBasedBuilder):
-  """DatasetBuilder for dgs_corpus dataset."""
+    """DatasetBuilder for dgs_corpus dataset."""
 
-  VERSION = tfds.core.Version('3.0.0')
-  RELEASE_NOTES = {
-    '3.0.0': '3rd release',
-  }
-
-  BUILDER_CONFIGS = [
-    SignDatasetConfig(name="default", include_video=True, include_pose="holistic"),
-    SignDatasetConfig(name="videos", include_video=True, include_pose=None),
-    SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
-    SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
-    SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
-  ]
-
-  def _info(self) -> tfds.core.DatasetInfo:
-    """Returns the dataset metadata."""
-    features = {
-      "id": tfds.features.Text(),
-      "paths": {
-        "ilex": tfds.features.Text(),
-        "eaf": tfds.features.Text(),
-        "srt": tfds.features.Text(),
-        "cmdi": tfds.features.Text(),
-      }
+    VERSION = tfds.core.Version("3.0.0")
+    RELEASE_NOTES = {
+        "3.0.0": "3rd release",
     }
 
-    if self._builder_config.include_video:
-      features["fps"] = tf.int32
-      video_ids = ["a", "b", "c"]
-      if self._builder_config.process_video:
-        features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
-      features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
+    BUILDER_CONFIGS = [
+        SignDatasetConfig(name="default", include_video=True, include_pose="openpose"),
+        SignDatasetConfig(name="videos", include_video=True, include_pose=None),
+        SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
+        SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
+        SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
+    ]
 
-    # Add poses if requested
-    if self._builder_config.include_pose is not None:
-      pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
-      stride = 1 if self._builder_config.fps is None else 50 / self._builder_config.fps
+    def _info(self) -> tfds.core.DatasetInfo:
+        """Returns the dataset metadata."""
+        features = {
+            "id": tfds.features.Text(),
+            "paths": {
+                "ilex": tfds.features.Text(),
+                "eaf": tfds.features.Text(),
+                "srt": tfds.features.Text(),
+                "cmdi": tfds.features.Text(),
+            },
+        }
 
-      if self._builder_config.include_pose == "openpose":
-        pose_shape = (None, 1, 137, 2)
-      if self._builder_config.include_pose == "holistic":
-        pose_shape = (None, 1, 543, 3)
+        if self._builder_config.include_video:
+            features["fps"] = tf.int32
+            video_ids = ["a", "b", "c"]
+            if self._builder_config.process_video:
+                features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
+            features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
-      features["poses"] = {_id: PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
-                           for _id in ["a", "b"]}
+        # Add poses if requested
+        if self._builder_config.include_pose is not None:
+            pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
+            stride = 1 if self._builder_config.fps is None else 50 / self._builder_config.fps
 
-    return tfds.core.DatasetInfo(
-      builder=self,
-      description=_DESCRIPTION,
-      features=tfds.features.FeaturesDict(features),
-      homepage="https://www.sign-lang.uni-hamburg.de/meinedgs/",
-      supervised_keys=None,
-      citation=_CITATION,
-    )
+            if self._builder_config.include_pose == "openpose":
+                pose_shape = (None, 1, 137, 2)
+            if self._builder_config.include_pose == "holistic":
+                pose_shape = (None, 1, 543, 3)
 
-  def _split_generators(self, dl_manager: tfds.download.DownloadManager):
-    """Returns SplitGenerators."""
+            features["poses"] = {_id: PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path) for _id in ["a", "b"]}
 
-    index_path = dl_manager.download(INDEX_URL)
+        return tfds.core.DatasetInfo(
+            builder=self,
+            description=_DESCRIPTION,
+            features=tfds.features.FeaturesDict(features),
+            homepage="https://www.sign-lang.uni-hamburg.de/meinedgs/",
+            supervised_keys=None,
+            citation=_CITATION,
+        )
 
-    with open(index_path, "r", encoding="utf-8") as f:
-      index_data = json.load(f)
+    def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+        """Returns SplitGenerators."""
 
-    # No need to download HTML pages
-    for datum in index_data.values():
-      del datum["transcript"]
-      del datum["format"]
+        index_path = dl_manager.download(INDEX_URL)
 
-    # Don't download videos if not necessary
-    if not self._builder_config.include_video:
-      for datum in index_data.values():
-        del datum["video_a"]
-        del datum["video_b"]
-        del datum["video_c"]
+        with open(index_path, "r", encoding="utf-8") as f:
+            index_data = json.load(f)
 
-    # Don't download openpose poses if not necessary
-    if self._builder_config.include_pose != "openpose":
-      for datum in index_data.values():
-        del datum["openpose"]
+        # No need to download HTML pages
+        for datum in index_data.values():
+            del datum["transcript"]
+            del datum["format"]
 
-    # Don't download holistic poses if not necessary
-    if self._builder_config.include_pose != "holistic":
-      for datum in index_data.values():
-        del datum["holistic_a"]
-        del datum["holistic_b"]
+        # Don't download videos if not necessary
+        if not self._builder_config.include_video:
+            for datum in index_data.values():
+                del datum["video_a"]
+                del datum["video_b"]
+                del datum["video_c"]
 
-    urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
+        # Don't download openpose poses if not necessary
+        if self._builder_config.include_pose != "openpose":
+            for datum in index_data.values():
+                del datum["openpose"]
 
-    local_paths = dl_manager.download(urls)
+        # Don't download holistic poses if not necessary
+        if self._builder_config.include_pose != "holistic":
+            for datum in index_data.values():
+                del datum["holistic_a"]
+                del datum["holistic_b"]
 
-    processed_data = {
-      _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()}
-      for _id, datum in index_data.items()
-    }
+        urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
 
-    return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
+        local_paths = dl_manager.download(urls)
 
-  def _generate_examples(self, data):
-    """ Yields examples. """
+        processed_data = {
+            _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
+        }
 
-    default_fps = 50
-    default_video = np.zeros((0, 0, 0, 3))  # Empty video
+        return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
-    for _id, datum in list(data.items()):
-      features = {
-        "id": _id,
-        "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]}
-      }
+    def _generate_examples(self, data):
+        """ Yields examples. """
 
-      if self._builder_config.include_video:
-        videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}
+        default_fps = 50
+        default_video = np.zeros((0, 0, 0, 3))  # Empty video
 
-        features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
-        features["paths"]["videos"] = videos
-        if self._builder_config.process_video:
-          features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
+        for _id, datum in list(data.items()):
+            features = {
+                "id": _id,
+                "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]},
+            }
 
-      if self._builder_config.include_pose == "openpose":
-        features["poses"] = get_poses(datum["openpose"], default_fps)
+            if self._builder_config.include_video:
+                videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}
 
-      if self._builder_config.include_pose == "holistic":
-        features["poses"] = {t: datum["holistic_" + t] for t in ["a", "b"]}
+                features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
+                features["paths"]["videos"] = videos
+                if self._builder_config.process_video:
+                    features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
 
-      yield _id, features
+            if self._builder_config.include_pose == "openpose":
+                features["poses"] = get_poses(datum["openpose"], default_fps)
+
+            if self._builder_config.include_pose == "holistic":
+                features["poses"] = {t: datum["holistic_" + t] for t in ["a", "b"]}
+
+            yield _id, features

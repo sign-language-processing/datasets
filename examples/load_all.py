@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 # noinspection PyUnresolvedReferences
 import sign_language_datasets.datasets
+
 # noinspection PyUnresolvedReferences
 import sign_language_datasets.datasets.dgs_corpus
 from sign_language_datasets.datasets.config import SignDatasetConfig
@@ -10,7 +11,7 @@ from sign_language_datasets.datasets.config import SignDatasetConfig
 load_dotenv()
 
 config = SignDatasetConfig(name="only-annotations", version="3.0.0", include_video=False)
-rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(config=config))
+rwth_phoenix2014_t = tfds.load(name="rwth_phoenix2014_t", builder_kwargs=dict(config=config))
 
 # config = SignDatasetConfig(name="256x256:10", include_video=True, fps=10, resolution=(256, 256))
 

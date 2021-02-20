@@ -9,4 +9,4 @@ f = open(f_path, "rb").read()
 pose = Pose.read(f)
 
 with open("../datasets/autsl/pose.poseheader", "wb") as fw:
-  pose.header.write(fw)
+    pose.header.write(fw)
