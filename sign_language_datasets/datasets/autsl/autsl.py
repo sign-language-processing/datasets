@@ -36,6 +36,9 @@ _TRAIN_VIDEOS = "http://158.109.8.102/AuTSL/data/train/train_set_vfbha39.zip"  #
 _TRAIN_LABELS = "http://158.109.8.102/AuTSL/data/train/train_labels.csv"
 
 _VALID_VIDEOS = "http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip"  # 3 files
+_VALID_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_labels.csv"
+
+_TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
 
 _POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz"}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
@@ -49,14 +52,14 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, include_pose="holistic")
-        # SignDatasetConfig(name="256x256:10", include_video=True, fps=10, resolution=(256, 256))
     ]
 
-    def __init__(self, train_decryption_key: str, valid_decryption_key: str, **kwargs):
+    def __init__(self, train_decryption_key: str, valid_decryption_key: str, test_decryption_key: str, **kwargs):
         super(AUTSL, self).__init__(**kwargs)
 
         self.train_decryption_key = train_decryption_key
         self.valid_decryption_key = valid_decryption_key
+        self.test_decryption_key = test_decryption_key
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -82,7 +85,8 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             citation=_CITATION,
         )
 
-    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int, pwd: str = None):
+    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int,
+                                        pwd: str = None):
         """Download and extract multipart zip file"""
 
         # Make sure not already downloaded
@@ -120,17 +124,26 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
 
         train_labels = dl_manager.download(_TRAIN_LABELS)
-        valid_labels = None
+        valid_labels = dl_manager.download(_VALID_LABELS)
+        test_labels = None
+
+        # Download validation labels
 
         # Load videos if needed
         if self._builder_config.include_video:
-            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18, pwd=self.train_decryption_key)
+            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18,
+                                                               pwd=self.train_decryption_key)
             train_videos = os.path.join(train_parts, "train")
 
-            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3, pwd=self.valid_decryption_key)
+            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3,
+                                                               pwd=self.valid_decryption_key)
             valid_videos = os.path.join(valid_parts, "val")
+
+            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3,
+                                                              pwd=self.test_decryption_key)
+            test_videos = os.path.join(test_parts, "test")
         else:
-            train_videos = valid_videos = None
+            train_videos = valid_videos = test_videos = None
 
         # Load poses if needed
 
@@ -138,32 +151,38 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             pose_path = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
             train_pose_path = path.join(pose_path, self._builder_config.include_pose, "train")
             valid_pose_path = path.join(pose_path, self._builder_config.include_pose, "validation")
+            test_pose_path = path.join(pose_path, self._builder_config.include_pose, "test")
         else:
-            train_pose_path = valid_pose_path = None
+            train_pose_path = valid_pose_path = test_pose_path = None
 
         splits = [
             tfds.core.SplitGenerator(
                 name=tfds.Split.TRAIN,
                 gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels},
+            ),
+            tfds.core.SplitGenerator(
+                name=tfds.Split.VALIDATION,
+                gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels},
             )
         ]
 
         # If no validation set, no data even about its annotations
-        if valid_videos is not None or valid_pose_path is not None or valid_labels is not None:
+        if test_videos is not None or test_pose_path is not None or test_labels is not None:
             splits.append(
                 tfds.core.SplitGenerator(
-                    name=tfds.Split.VALIDATION,
+                    name=tfds.Split.TEST,
                     gen_kwargs={
-                        "videos_path": valid_videos,
-                        "poses_path": valid_pose_path,
-                        "labels_path": valid_labels,
+                        "videos_path": test_videos,
+                        "poses_path": test_pose_path,
+                        "labels_path": test_labels,
                     },
                 )
             )
 
         return splits
 
-    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None], labels_path: Union[str, None]):
+    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None],
+                           labels_path: Union[str, None]):
         """Yields examples."""
 
         if labels_path is not None:
