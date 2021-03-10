@@ -40,8 +40,14 @@ _VALID_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_la
 
 _TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz"}
-_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
+_POSE_URLS = {
+    "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz",
+    "openpose": "https://nlp.biu.ac.il/~amit/datasets/poses/openpose/autsl.tar.gz",
+}
+_POSE_HEADERS = {
+    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
+    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose_135.poseheader"),
+}
 
 
 class AUTSL(tfds.core.GeneratorBasedBuilder):
@@ -51,7 +57,9 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
     RELEASE_NOTES = {"1.0.0": "Initial release."}
 
     BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True, include_pose="holistic")
+        SignDatasetConfig(name="default", include_video=True, include_pose=None),
+        SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
+        SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
     ]
 
     def __init__(self, train_decryption_key: str, valid_decryption_key: str, test_decryption_key: str, **kwargs):
@@ -71,10 +79,17 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             features["video"] = self._builder_config.video_feature((512, 512))
             features["depth_video"] = self._builder_config.video_feature((512, 512), 1)
 
-        if self._builder_config.include_pose == "holistic":
+        # Add poses if requested
+        if self._builder_config.include_pose is not None:
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 30 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 543, 4), header_path=pose_header_path, stride=stride)
+
+            if self._builder_config.include_pose == "openpose":
+                pose_shape = (None, 1, 135, 2)
+            if self._builder_config.include_pose == "holistic":
+                pose_shape = (None, 1, 543, 4)
+
+            features["pose"] = PoseFeature(shape=pose_shape, header_path=pose_header_path, stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
