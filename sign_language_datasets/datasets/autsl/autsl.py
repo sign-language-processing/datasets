@@ -32,6 +32,13 @@ _CITATION = """
 }
 """
 
+_OPENPOSE_DISCLAIMER = """
+OpenPose skeleton for AUTSL was processed using the Single-Network Whole-Body Pose Estimation Model (BODY_135).
+https://github.com/CMU-Perceptual-Computing-Lab/openpose_train/blob/master/experimental_models/README.md#single-network-whole-body-pose-estimation-model
+
+In cases where multiple skeletons were detected in a frame, the most centered skeleton is used.
+For more information, contact Necati Cihan Camgöz (cihancamgoz@gmail.com)"""
+
 _TRAIN_VIDEOS = "http://158.109.8.102/AuTSL/data/train/train_set_vfbha39.zip"  # 18 files
 _TRAIN_LABELS = "http://158.109.8.102/AuTSL/data/train/train_labels.csv"
 
@@ -103,6 +110,10 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
     def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int,
                                         pwd: str = None):
         """Download and extract multipart zip file"""
+
+        # Write OpenPose disclaimer
+        if self._builder_config.include_pose == "openpose":
+            print(_OPENPOSE_DISCLAIMER)
 
         # Make sure not already downloaded
         dirname = get_dl_dirname(url)
