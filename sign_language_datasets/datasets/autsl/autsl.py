@@ -46,6 +46,7 @@ _VALID_VIDEOS = "http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip"
 _VALID_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_labels.csv"
 
 _TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
+_TEST_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_test_labels.csv"
 
 _POSE_URLS = {
     "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz",
@@ -69,12 +70,12 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
     ]
 
-    def __init__(self, train_decryption_key: str, valid_decryption_key: str, test_decryption_key: str, **kwargs):
+    def __init__(self, **kwargs):
         super(AUTSL, self).__init__(**kwargs)
 
-        self.train_decryption_key = train_decryption_key
-        self.valid_decryption_key = valid_decryption_key
-        self.test_decryption_key = test_decryption_key
+        self.train_decryption_key = "MdG3z6Eh1t"  # publically available in http://chalearnlap.cvc.uab.es/dataset/40/data/66/description/
+        self.valid_decryption_key = "bhRY5B9zS2"  # publically available in http://chalearnlap.cvc.uab.es/dataset/40/data/65/description/
+        self.test_decryption_key = "ds6Kvdus3o"  # publically available in http://chalearnlap.cvc.uab.es/dataset/40/data/67/description/
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -149,11 +150,10 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
 
+        # Download labels
         train_labels = dl_manager.download(_TRAIN_LABELS)
         valid_labels = dl_manager.download(_VALID_LABELS)
-        test_labels = None
-
-        # Download validation labels
+        test_labels = dl_manager.download(_TEST_LABELS)
 
         # Load videos if needed
         if self._builder_config.include_video:
@@ -183,6 +183,10 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         splits = [
             tfds.core.SplitGenerator(
+                name=tfds.Split.TEST,
+                gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels},
+            ),
+            tfds.core.SplitGenerator(
                 name=tfds.Split.TRAIN,
                 gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels},
             ),
@@ -191,19 +195,6 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
                 gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels},
             )
         ]
-
-        # If no validation set, no data even about its annotations
-        if test_videos is not None or test_pose_path is not None or test_labels is not None:
-            splits.append(
-                tfds.core.SplitGenerator(
-                    name=tfds.Split.TEST,
-                    gen_kwargs={
-                        "videos_path": test_videos,
-                        "poses_path": test_pose_path,
-                        "labels_path": test_labels,
-                    },
-                )
-            )
 
         return splits
 

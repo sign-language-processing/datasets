@@ -25,5 +25,6 @@ http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip.001	1048576000	00
 http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip.002	1048576000	c138b73f87f952008fe21b18466bc924d539532fd348c9a7e775761c27294591	val_set_bjhfy68.zip.002
 http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip.003	1028644777	ed1549f54ddc5b4cf71d89743888daacde11f28616e52d9b5133bccf2f9fd0b1	val_set_bjhfy68.zip.003
 https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz	14820092818	4e80233393dcf83c4d98cbde80e7e9bc202bb4d6782f71e343d148ab212b3f9f	autsl.tar.gz
-https://nlp.biu.ac.il/~amit/datasets/poses/openpose/autsl.tar.gz	1107622774	1b0cd0c9805a52d426536590e98c7c9bf5436f9d92b2cdd5d84565d66ec0730a	autsl.tar.gz
+https://nlp.biu.ac.il/~amit/datasets/poses/openpose/autsl.tar.gz	1107613563	8678569831453dd9befe3b53a2856e320d052d76f63c5e4c0d45c6add0f9feda	autsl.tar.gz
+https://nlp.biu.ac.il/~amit/datasets/public/autsl_test_labels.csv	86676	a3fe15717484beb2565fd812aba720afcccb36c43173f891ce31163af9137651	autsl_test_labels.csv
 https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_labels.csv	102264	12e74248fb6199ad41fa58aa85b151966e6da31912ec109b790c6c6d627c773b	autsl_validation_labels.csv
