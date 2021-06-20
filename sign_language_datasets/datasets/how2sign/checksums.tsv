@@ -1,3 +1,9 @@
-# TODO(how2sign): If your dataset downloads files, then the checksums
-# will be automatically added here when running
-# `tfds build --register_checksums`.
+https://drive.google.com/uc?id=1dYey1F_SeHets-UO8F9cE3VMhRBO-6e0&export=download	33033658988	98e36aa4377dfb3b5e59de1ba5af94ade0a77e9565cacb0c7183267480b95cd3	train_rgb_front_clips.zip
+https://drive.google.com/uc?id=1PIYIIOxR2vnUDzSHdq3uyoUCoIJvsuNW&export=download	23273015704	dbcd63cf43bdfcb53534db7caec2b867ddd0fd652ed785faf21f8217d8446f6b	train_rgb_side_clips.zip
+https://drive.google.com/uc?id=1lnsDN-LxcsroOmetdG5_sXYXZ7setlS4&export=download	22619897332	9dc65af07dd3dabdeb18300453c2394bbb188ea03dd73c966dc23880b8672470	train_2D_keypoints.tar.gz
+https://drive.google.com/uc?id=1oVZyTWhHShyqshC2kUrfWnBF8apIR7Z1&export=download	1778074855	6cb48170131fdb7fc64d40381a3c4be41112ba4454444170f5a31af2227b6d36	val_rgb_front_clips.zip
+https://drive.google.com/uc?id=1vJVV777_bmSeA2_k7iGdZu2izooeKUrq&export=download	1237300839	333db1b9f187c5ebd98f1d8daff1c0e8bd2b99c858f46456ca39b003e5e07c48	val_rgb_side_clips.zip
+https://drive.google.com/uc?id=1aOhRknNWj8APdxHmwJdQrMo5xuIGNXxM&export=download	1242181909	83f28594bf474ce642b284ebafa13467cd71cdd8a3a19f8a33c88d5fa4100957	val_2D_keypoints.tar.gz
+https://drive.google.com/uc?id=1d6GHqu0_8IGiKbu3sTZHtMb0DGhbHSMu&export=download	2413152782	cb63633542f1c3f703ad76ec5e1420bfe9bf028afdb120508ed7cded16ed1b55	test_rgb_front_clips.zip
+https://drive.google.com/uc?id=1gKV_TloCbMyMhOdYvr_a-6I-PTf0Sjyi&export=download	1694343193	ec5013b24ed561c46e65ec60ce3a1669c8ad218269c0496aea5d0fefb67a8e8e	test_rgb_side_clips.zip
+https://drive.google.com/uc?id=1quj8Ipm56pH65KAKK3Pc-sqZ0ozw2gSe&export=download	1696569782	7b8afc7f8e25e127a7a246edad89b4deba2e7abc71f9a36148a3259564fcd37f	test_2D_keypoints.tar.gz

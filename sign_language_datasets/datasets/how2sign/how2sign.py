@@ -44,14 +44,16 @@ _SPLITS = {
     },
     tfds.Split.TEST: {
         "rgb_clips_front": "https://drive.google.com/uc?id=1d6GHqu0_8IGiKbu3sTZHtMb0DGhbHSMu&export=download",
-        "rgb_clips_side": "https://drive.google.com/uc?id=1d6GHqu0_8IGiKbu3sTZHtMb0DGhbHSMu&export=download",
-        "bfh_2d_front": "https://drive.google.com/uc?id=1gKV_TloCbMyMhOdYvr_a-6I-PTf0Sjyi&export=download",
+        "rgb_clips_side": "https://drive.google.com/uc?id=1gKV_TloCbMyMhOdYvr_a-6I-PTf0Sjyi&export=download",
+        "bfh_2d_front": "https://drive.google.com/uc?id=1quj8Ipm56pH65KAKK3Pc-sqZ0ozw2gSe&export=download",
         "bfh_2d_side": None,
         "translation": None
     },
 }
 
-_POSE_HEADERS = {"openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")}
+_POSE_HEADERS = {
+    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")
+}
 
 
 class How2Sign(tfds.core.GeneratorBasedBuilder):
