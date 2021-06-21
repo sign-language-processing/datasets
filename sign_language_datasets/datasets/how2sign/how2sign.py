@@ -1,11 +1,11 @@
-"""RWTH-PHOENIX 2014 T: Parallel Corpus of Sign Language Video, Gloss and Translation"""
-import csv
-from collections import defaultdict
+"""How2Sign: A multimodal and multiview continuous American Sign Language (ASL) dataset"""
+import os
 from itertools import chain
 from os import path
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from pose_format.utils.openpose import load_openpose_directory
 from tensorflow.io.gfile import GFile
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
@@ -85,7 +85,7 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
             stride = 1 if self._builder_config.fps is None else 24 / self._builder_config.fps
             features["pose"] = {
                 "front": PoseFeature(shape=(None, 1, 137, 2), header_path=pose_header_path, stride=stride),
-                "side": PoseFeature(shape=(None, 1, 137, 2), header_path=pose_header_path, stride=stride),
+                # "side": PoseFeature(shape=(None, 1, 137, 2), header_path=pose_header_path, stride=stride),
             }
 
         return tfds.core.DatasetInfo(
@@ -125,8 +125,31 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
                            translation: str):
         """ Yields examples. """
 
-        raise Exception("TODO implement generate examples")
+        # TODO get ids from translation file
+        ids = []
+        ids = [p[:-len('-rgb_front.mp4')] for p in os.listdir(path.join(rgb_clips_front, 'raw_videos'))]
+        ids = ids[:10]
 
-        yield {
-            "fps": 24
-        }
+        for _id in ids:
+            datum = {
+                "id": _id,
+                "fps": 24,
+            }
+
+            if self.builder_config.include_video:
+                datum["video"] = {
+                    "front": path.join(rgb_clips_front, 'raw_videos', _id + "-rgb_front.mp4"),
+                    "side": path.join(rgb_clips_side, 'raw_videos', _id + "-rgb_side.mp4"),
+                }
+
+            if self._builder_config.include_pose == "openpose":
+                front_path = path.join(bfh_2d_front, 'openpose_output', 'json', _id + '-rgb_front')
+                front_pose = load_openpose_directory(front_path, fps=24, width=1280, height=720)
+
+                # TODO add side pose when available
+                # side_path = path.join(bfh_2d_side, 'openpose_output', 'json', _id + '-rgb_side')
+                # side_pose = load_openpose_directory(side_path, fps=24, width=1280, height=720)
+
+                datum["pose"] = {"front": front_pose}
+
+            yield _id, datum
