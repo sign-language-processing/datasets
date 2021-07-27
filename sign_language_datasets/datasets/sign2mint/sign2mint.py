@@ -37,7 +37,6 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
-        # TODO(sign2mint): Specifies the tfds.core.DatasetInfo object
 
         features = {
             "id": tfds.features.Text(),
@@ -72,8 +71,6 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
-        """Returns SplitGenerators."""
-
         annotations_path = dl_manager.download("https://sign2mint.de/api/entries/all/")
 
         local_videos = {}
