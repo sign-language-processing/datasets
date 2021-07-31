@@ -22,7 +22,6 @@ def get_media_id(datum):
 
 
 def get_transcription(datum):
-    # http://purl.org/linguistics/gold:writtenRealization
     vals = []
     if "oc:transcription" in datum:
         vals = datum["oc:transcription"]
