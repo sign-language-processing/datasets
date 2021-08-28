@@ -1,3 +1,3 @@
 """SignBank dataset."""
 
-from .SignBank import Signbank
+from .signbank import SignBank
