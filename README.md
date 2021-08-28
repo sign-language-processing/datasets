@@ -50,6 +50,7 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 | sign2mint          | Yes    |                                                       | 1.0.0    |
 | signtyp            | Links  |                                                       | 1.0.0    |
 | swojs_glossario    | Yes    |                                                       | 1.0.0    |
+| SignBank           | N/A    |                                                       | 1.0.0    |
 | wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960)   | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None    |
 | msasl              |        |                                                       | None     |
 | Video-Based CSL    |        |                                                       | None     |
