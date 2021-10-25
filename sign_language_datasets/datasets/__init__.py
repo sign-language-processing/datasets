@@ -1,5 +1,6 @@
 from .aslg_pc12 import AslgPc12
 from .autsl import AUTSL
+from .chicagofswild import ChicagoFSWild
 from .config import SignDatasetConfig
 from .dgs_corpus import DgsCorpus
 from .how2sign import How2Sign
