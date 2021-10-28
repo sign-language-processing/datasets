@@ -116,8 +116,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
             csv_data = csv.reader(csv_file, delimiter=',')
             next(csv_data)  # Ignore the header
 
-            for i, row in tqdm(enumerate(csv_data)):
-
+            for row in csv_data:
                 if row[10] == split:
                     _id = row[1].replace("/", "-").replace("_(youtube)", "").replace("_(nad)", "")
 

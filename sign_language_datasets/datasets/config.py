@@ -1,5 +1,6 @@
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
+import cv2
 import tensorflow_datasets as tfds
 
 
@@ -51,4 +52,16 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         w, h = self.resolution if self.resolution is not None else default_resolution
 
         ffmpeg_extra_args = self.ffmpeg_args()
-        return tfds.features.Video(shape=(None, h, w, channels), ffmpeg_extra_args=ffmpeg_extra_args)
+        return VideoFeature(shape=(None, h, w, channels), ffmpeg_extra_args=ffmpeg_extra_args)
+
+
+class VideoFeature(tfds.features.Video):
+    def encode_example(self, video_or_path_or_fobj):
+        """TFDS does not scale images, so this class handles it"""
+
+        # Load images if list of file paths
+        if isinstance(video_or_path_or_fobj, list) and isinstance(video_or_path_or_fobj[0], str):
+            _, h, w, _ = self.shape
+            video_or_path_or_fobj = [cv2.resize(cv2.imread(f), (w, h)) for f in video_or_path_or_fobj]
+
+        return super(VideoFeature, self).encode_example(video_or_path_or_fobj)

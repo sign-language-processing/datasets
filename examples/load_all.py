@@ -1,3 +1,5 @@
+import itertools
+
 import tensorflow_datasets as tfds
 from dotenv import load_dotenv
 
@@ -21,12 +23,19 @@ load_dotenv()
 
 # wlasl = tfds.load('wlasl', builder_kwargs=dict(config=config))
 #
-autsl = tfds.load('autsl', builder_kwargs=dict(
-    config=SignDatasetConfig(name="test", include_video=False, include_pose="holistic"),
-))
+# autsl = tfds.load('autsl', builder_kwargs=dict(
+#     config=SignDatasetConfig(name="test", include_video=False, include_pose="holistic"),
+# ))
 
 # dgs_config = SignDatasetConfig(name="holistic-pose", include_video=True, process_video=False, include_pose="holistic")
 # dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=dgs_config))
 
 # print([d["p.ose"]["data"].shape for d in iter(autsl["train"])])
 # print([d["video"].shape for d in iter(autsl["train"])])
+
+chicago_fs_wild = tfds.load('chicago_fs_wild', builder_kwargs=dict(
+    config=SignDatasetConfig(name="test", include_video=True, resolution=(100, 100)),
+))
+
+for datum in itertools.islice(chicago_fs_wild["train"], 0, 10):
+    print(datum["video"].shape)
