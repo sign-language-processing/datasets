@@ -97,5 +97,6 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
                 del datum["videoLink"]
 
                 datum["video"] = local_videos[video_link] if video_link in local_videos else video_link
+                datum["gebaerdenschrift"]["symbolIds"] = [s["symbolIds"] for s in datum["gebaerdenschrift"]["symbolIds"]]
 
                 yield datum["id"], datum

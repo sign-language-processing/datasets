@@ -33,9 +33,8 @@ load_dotenv()
 # print([d["p.ose"]["data"].shape for d in iter(autsl["train"])])
 # print([d["video"].shape for d in iter(autsl["train"])])
 
-chicago_fs_wild = tfds.load('chicago_fs_wild', builder_kwargs=dict(
-    config=SignDatasetConfig(name="test", include_video=True, resolution=(100, 100)),
-))
+config = SignDatasetConfig(name="include", version="1.0.0", include_video=True, resolution=(10, 10))
+chicagofswild = tfds.load(name='chicago_fs_wild', builder_kwargs=dict(config=config))
 
-for datum in itertools.islice(chicago_fs_wild["train"], 0, 10):
-    print(datum["video"].shape)
+for datum in itertools.islice(chicagofswild["train"], 0, 10):
+  print(datum['text'].numpy().decode('utf-8'))
