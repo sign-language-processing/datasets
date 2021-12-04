@@ -14,6 +14,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         include_pose: Optional[str] = None,
         fps: Optional[float] = None,
         resolution: Optional[Tuple[int, int]] = None,
+        extra: dict = {},
         **kwargs,
     ):
         """Constructs a RWTHPhoenix2014TConfig.
@@ -32,6 +33,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
 
         self.fps = fps
         self.resolution = resolution
+        self.extra = extra
 
     def ffmpeg_args(self):
         args: List[str] = []

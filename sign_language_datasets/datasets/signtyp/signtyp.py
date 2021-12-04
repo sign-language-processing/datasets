@@ -32,7 +32,8 @@ class SignTyp(tfds.core.GeneratorBasedBuilder):
     }
 
     BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True, process_video=False)
+        SignDatasetConfig(name="default", include_video=True, process_video=False,
+                          extra={"PHPSESSID": "hj9co07ct7f5noq529no9u09l4"})
     ]
 
     def _info(self) -> tfds.core.DatasetInfo:
@@ -59,32 +60,34 @@ class SignTyp(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
 
-        cookies = {  # Cookies are mandatory, otherwise, doesn't download
-            'PHPSESSID': 'r2oh4a7ork9se2bb03c52jcom7',
-        }
+        if 'PHPSESSID' not in self._builder_config.extra:
+            raise Exception(
+                "Missing PHPSESSID extra parameter. Go to https://signtyp.uconn.edu/signpuddle/ and copy your PHPSESSID from any network request.")
+
+        cookies = {'PHPSESSID': self._builder_config.extra['PHPSESSID']}
 
         headers = {
-            'Referer': 'https://signtyp.uconn.edu/signpuddle/export.php',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
-            'If-None-Match': '"ks2Qn0SONVpb4uhxUcfjKipMmSo="',
             'Connection': 'keep-alive',
             'Cache-Control': 'max-age=0',
-            'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+            'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
             'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
             'Upgrade-Insecure-Requests': '1',
             'Origin': 'https://signtyp.uconn.edu',
             'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'Sec-Fetch-Site': 'same-origin',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-User': '?1',
             'Sec-Fetch-Dest': 'document',
+            'Referer': 'https://signtyp.uconn.edu/signpuddle/export.php?ui=1&sgn=9032',
             'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
         }
 
         data = {
-            "ex_source": "All",
-            "action": "Download",
+            'ex_source': 'All',
+            'action': 'Download'
         }
 
         res = requests.post('https://signtyp.uconn.edu/signpuddle/export.php',
@@ -92,7 +95,10 @@ class SignTyp(tfds.core.GeneratorBasedBuilder):
                             headers=headers,
                             cookies=cookies)
 
-        spml = str(res.content)
+        spml = res.text
+
+        if not spml.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
+            raise Exception("PHPSESSID might be expired.")
 
         return {
             'train': self._generate_examples(spml),
