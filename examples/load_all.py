@@ -33,8 +33,14 @@ load_dotenv()
 # print([d["p.ose"]["data"].shape for d in iter(autsl["train"])])
 # print([d["video"].shape for d in iter(autsl["train"])])
 
-config = SignDatasetConfig(name="include", version="1.0.0", include_video=True, resolution=(10, 10))
-chicagofswild = tfds.load(name='chicago_fs_wild', builder_kwargs=dict(config=config))
+# config = SignDatasetConfig(name="include4", version="1.0.0", extra={"PHPSESSID": "hj9co07ct7f5noq529no9u09l4"})
+# signtyp = tfds.load(name='sign_typ', builder_kwargs=dict(config=config))
+#
+# for datum in itertools.islice(signtyp["train"], 0, 10):
+#   print(datum['sign_writing'].numpy().decode('utf-8'), datum['video'].numpy().decode('utf-8'))
 
-for datum in itertools.islice(chicagofswild["train"], 0, 10):
-  print(datum['text'].numpy().decode('utf-8'))
+config = SignDatasetConfig(name="poses_1", version="1.0.0", include_video=False, include_pose="holistic")
+dicta_sign = tfds.load(name='dicta_sign', builder_kwargs={"config": config})
+
+for datum in itertools.islice(dicta_sign["train"], 0, 10):
+  print(datum['hamnosys'].numpy().decode('utf-8'), datum['pose']['data'].numpy().shape)
