@@ -8,8 +8,11 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
-from typing import Dict, List, Any, Tuple, Set, Optional
+from typing import Dict, Any, Set, Optional
+# noinspection PyUnresolvedReferences
 from pose_format.utils.openpose import load_openpose, OpenPoseFrame, OpenPoseFrames
+# noinspection PyUnresolvedReferences
+from pose_format.pose import Pose
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
 from sign_language_datasets.utils.features import PoseFeature
@@ -40,47 +43,26 @@ _POSE_HEADERS = {
 }
 
 
-def extract_frame_id_from_single_openpose_frame(input_dict: Dict[str, Any]) -> Tuple[int, OpenPoseFrame]:
-    """
-    Extracts the frame ID from a single OpenPose frame and also adds the frame ID as an additional key.
-
-    :param input_dict: OpenPose output, expects one single dictionary for one frame only.
-    :return: The frame ID as an integer, plus the inner dict (the value of the original OpenPose dict) without the
-             outer dict that had the frame ID as a string key.
-    """
-    assert len(input_dict.keys()) == 1, "Frame dictionary contains more than 1 key. Keys: '%s'" % str(input_dict.keys())
-
-    frame_id = None
-    frame = None
-
-    # assuming that this loop runs exactly once
-    for frame_key, frame_value in input_dict.items():
-        frame_id = int(frame_key)
-        frame = frame_value
-        frame["frame_id"] = frame_id
-
-    return frame_id, frame
-
-
-def convert_dgs_dict_to_openpose_frames(input_dicts: List[Dict[str, Any]]) -> OpenPoseFrames:
+def convert_dgs_dict_to_openpose_frames(input_dict: Dict[str, Any]) -> OpenPoseFrames:
     """
     Modifies the DGS Openpose format slightly to be compatible with the `pose_format` library. Most notably,
     changes the dict keys to integers (from strings) and adds a "frame_id" key to each frame dict.
 
-    :param input_dicts: OpenPose output, one dictionary for each frame.
+    :param input_dict: OpenPose output, one dictionary overall, one sub-dictionary for each frame.
     :return: A dictionary of OpenPose frames that is compatible with `pose_format.utils.load_openpose`.
     """
     frames = {}  # type: OpenPoseFrames
 
-    for input_dict in input_dicts:
-        frame_id, frame = extract_frame_id_from_single_openpose_frame(input_dict)
-        frames[frame_id] = frame
+    for frame_id_as_string, frame_dict in input_dict.items():
+        frame_id = int(frame_id_as_string)
+        frame_dict["frame_id"] = frame_id
+        frames[frame_id] = frame_dict
 
     return frames
 
 
 def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
-                 num_frames: Optional[int] = None) -> Dict[str, OpenPoseFrames]:
+                 num_frames: Optional[int] = None) -> Dict[str, Pose]:
     """
     Load OpenPose in the particular format used by DGS (one single file vs. one file for each frame).
 
@@ -107,7 +89,7 @@ def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
         width, height, frames_obj = view["width"], view["height"], view["frames"]
 
         # Convert to pose format
-        frames = view["frames"].values()
+        frames = view["frames"]
         frames = convert_dgs_dict_to_openpose_frames(frames)
         poses[person] = load_openpose(frames, fps=fps, width=width, height=height, depth=0, num_frames=num_frames)
 
