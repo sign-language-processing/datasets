@@ -2,12 +2,14 @@
 
 import gzip
 import json
-from os import path
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from pose_format.utils.openpose import load_openpose
+
+from os import path
+from typing import Dict, List, Any, Tuple, Set, Optional
+from pose_format.utils.openpose import load_openpose, OpenPoseFrame, OpenPoseFrames
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
 from sign_language_datasets.utils.features import PoseFeature
@@ -38,11 +40,66 @@ _POSE_HEADERS = {
 }
 
 
-def get_poses(openpose_path: str, fps: int):
+def extract_frame_id_from_single_openpose_frame(input_dict: Dict[str, Any]) -> Tuple[int, OpenPoseFrame]:
+    """
+    Extracts the frame ID from a single OpenPose frame and also adds the frame ID as an additional key.
+
+    :param input_dict: OpenPose output, expects one single dictionary for one frame only.
+    :return: The frame ID as an integer, plus the inner dict (the value of the original OpenPose dict) without the
+             outer dict that had the frame ID as a string key.
+    """
+    assert len(input_dict.keys()) == 1, "Frame dictionary contains more than 1 key. Keys: '%s'" % str(input_dict.keys())
+
+    frame_id = None
+    frame = None
+
+    # assuming that this loop runs exactly once
+    for frame_key, frame_value in input_dict.items():
+        frame_id = int(frame_key)
+        frame = frame_value
+        frame["frame_id"] = frame_id
+
+    return frame_id, frame
+
+
+def convert_dgs_dict_to_openpose_frames(input_dicts: List[Dict[str, Any]]) -> OpenPoseFrames:
+    """
+    Modifies the DGS Openpose format slightly to be compatible with the `pose_format` library. Most notably,
+    changes the dict keys to integers (from strings) and adds a "frame_id" key to each frame dict.
+
+    :param input_dicts: OpenPose output, one dictionary for each frame.
+    :return: A dictionary of OpenPose frames that is compatible with `pose_format.utils.load_openpose`.
+    """
+    frames = {}  # type: OpenPoseFrames
+
+    for input_dict in input_dicts:
+        frame_id, frame = extract_frame_id_from_single_openpose_frame(input_dict)
+        frames[frame_id] = frame
+
+    return frames
+
+
+def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
+                 num_frames: Optional[int] = None) -> Dict[str, OpenPoseFrames]:
+    """
+    Load OpenPose in the particular format used by DGS (one single file vs. one file for each frame).
+
+    :param openpose_path: Path to a file that contains OpenPose for all frames of a DGS video, in one single JSON.
+    :param fps: Framerate.
+    :param people: Specify the name prefixes of camera views that should be extracted. The default value is {"a", "b"}.
+    :param num_frames: Number of frames when it is known and cannot be derived from OpenPose files. That is the case if
+                       the last frame(s) of a video are missing from the OpenPose output.
+    :return: Dictionary of Pose objects (one for each person) with a header specific to OpenPose and a body that
+             contains a single array.
+    """
+    # set mutable default argument
+    if people is None:
+        people = {"a", "b"}
+
     with gzip.GzipFile(openpose_path, "r") as openpose_raw:
         openpose = json.loads(openpose_raw.read().decode("utf-8"))
 
-    people = {"a", "b"}
+    # select views if their name starts with "a" or "b"
     views = {view["camera"][0]: view for view in openpose if view["camera"][0] in people}
 
     poses = {p: None for p in people}
@@ -50,7 +107,9 @@ def get_poses(openpose_path: str, fps: int):
         width, height, frames_obj = view["width"], view["height"], view["frames"]
 
         # Convert to pose format
-        poses[person] = load_openpose(view["frames"].values(), fps, width, height)
+        frames = view["frames"].values()
+        frames = convert_dgs_dict_to_openpose_frames(frames)
+        poses[person] = load_openpose(frames, fps=fps, width=width, height=height, depth=0, num_frames=num_frames)
 
     return poses
 
@@ -173,7 +232,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
 
             if self._builder_config.include_pose == "openpose":
-                features["poses"] = get_poses(datum["openpose"], default_fps)
+                features["poses"] = get_openpose(datum["openpose"], fps=default_fps)
 
             if self._builder_config.include_pose == "holistic":
                 features["poses"] = {t: datum["holistic_" + t] for t in ["a", "b"]}
