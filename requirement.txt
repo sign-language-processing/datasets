@@ -3,3 +3,4 @@ tqdm
 pose-format>=0.0.3
 tfds-nightly
 tensorflow>=2.4.0
+numpy

@@ -11,13 +11,13 @@ print(packages)
 setup(
     name="sign-language-datasets",
     packages=packages,
-    version="0.0.2",
+    version="0.0.3",
     description="TFDS Datasets for sign language",
     author="Amit Moryossef",
     author_email="amitmoryossef@gmail.com",
     url="https://github.com/sign-language-processing/datasets",
     keywords=[],
-    install_requires=["python-dotenv", "tqdm", "pose-format", "tfds-nightly", "tensorflow"],
+    install_requires=["python-dotenv", "tqdm", "pose-format", "tfds-nightly", "tensorflow", "numpy"],
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
