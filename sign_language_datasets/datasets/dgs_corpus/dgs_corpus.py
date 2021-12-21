@@ -9,9 +9,7 @@ import tensorflow_datasets as tfds
 
 from os import path
 from typing import Dict, Any, Set, Optional
-# noinspection PyUnresolvedReferences
 from pose_format.utils.openpose import load_openpose, OpenPoseFrame, OpenPoseFrames
-# noinspection PyUnresolvedReferences
 from pose_format.pose import Pose
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
