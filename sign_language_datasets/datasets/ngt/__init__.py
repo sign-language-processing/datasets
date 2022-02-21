@@ -1,0 +1,1 @@
+from .ngt import NGTCorpus

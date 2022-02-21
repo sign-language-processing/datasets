@@ -25,8 +25,10 @@ _CITATION = """\
 """
 
 # This `ngt.json` file was created using `create_index.py`
-# INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/ngt.json"
-INDEX_URL = "https://files.ifi.uzh.ch/cl/archiv/2022/easier/ngt.json"
+INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/ngt.json"
+
+# alternative mirror:
+# INDEX_URL = "https://files.ifi.uzh.ch/cl/archiv/2022/easier/ngt.json"
 
 _HOMEPAGE = "https://www.ru.nl/corpusngtuk/"
 

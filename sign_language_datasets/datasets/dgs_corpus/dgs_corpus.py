@@ -9,7 +9,7 @@ import tensorflow_datasets as tfds
 
 from os import path
 from typing import Dict, Any, Set, Optional
-from pose_format.utils.openpose import load_openpose, OpenPoseFrame, OpenPoseFrames
+from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
 from sign_language_datasets.datasets.config import SignDatasetConfig
@@ -31,6 +31,8 @@ _CITATION = """
   doi = {10.25592/dgs.corpus-3.0}
 }
 """
+
+_HOMEPAGE = "https://www.sign-lang.uni-hamburg.de/meinedgs/"
 
 # This `dgs.json` file was created using `create_index.py`
 INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/dgs.json"
@@ -145,7 +147,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             builder=self,
             description=_DESCRIPTION,
             features=tfds.features.FeaturesDict(features),
-            homepage="https://www.sign-lang.uni-hamburg.de/meinedgs/",
+            homepage=_HOMEPAGE,
             supervised_keys=None,
             citation=_CITATION,
         )
