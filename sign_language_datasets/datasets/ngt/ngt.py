@@ -72,7 +72,7 @@ def _get_view_to_speaker_mapping(datum_dict: dict) -> dict:
     return {"a": speakers[0], "b": speakers[1]}
 
 
-class NGTCorpus(datasets.GeneratorBasedBuilder):
+class NGTCorpus(tfds.core.GeneratorBasedBuilder):
     """
     DatasetBuilder for NGT corpus dataset.
 
