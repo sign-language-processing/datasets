@@ -12,8 +12,8 @@ from typing import Dict, Any, Set, Optional
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
-from sign_language_datasets.datasets.config import SignDatasetConfig
-from sign_language_datasets.utils.features import PoseFeature
+from ...datasets.config import SignDatasetConfig
+from ...utils.features import PoseFeature
 
 _DESCRIPTION = """
 Parallel corpus for German Sign Language (DGS) with German and English annotations

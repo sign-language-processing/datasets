@@ -4,7 +4,7 @@ import json
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from sign_language_datasets.datasets import SignDatasetConfig
+from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
 A lexicon for Brazilian Sign Language (Libras), including videos, and SignWriting transcription.

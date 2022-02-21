@@ -6,3 +6,4 @@ __pycache__
 
 sign_language_datasets/datasets/msasl
 sign_language_datasets/datasets/ncslgr
+.coverage

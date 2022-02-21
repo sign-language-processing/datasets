@@ -4,7 +4,7 @@ import json
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from sign_language_datasets.datasets import SignDatasetConfig
+from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
 The specialist signs developed in the project break down barriers for deaf people 

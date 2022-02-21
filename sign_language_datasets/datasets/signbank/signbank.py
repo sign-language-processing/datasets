@@ -8,7 +8,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tqdm import tqdm
 
-from sign_language_datasets.datasets import SignDatasetConfig
+from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
 SignBank Site: SignWriting Software for Sign Languages, including SignMaker 2017, 

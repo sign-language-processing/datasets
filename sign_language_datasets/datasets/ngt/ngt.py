@@ -9,8 +9,7 @@ import tensorflow_datasets as tfds
 
 from typing import Optional
 
-from sign_language_datasets.datasets.config import SignDatasetConfig
-
+from ...datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
 An open access online corpus of movies with annotations of Sign Language of the Netherlands.
@@ -156,17 +155,24 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
                 datum["video_b"] = datum[video_key_b]
 
                 video_keys_to_keep = ("video_a", "video_b", "video_c")
+                all_keys = list(datum.keys())
 
-                for key in datum.keys():
+                for key in all_keys:
                     if key.startswith("video"):
                         if key not in video_keys_to_keep:
                             del datum[key]
         else:
             # Don't download videos if not necessary
             for datum in index_data.values():
-                for key in datum.keys():
+                keys = list(datum.keys())
+                for key in keys:
                     if key.startswith("video"):
                         del datum[key]
+
+        # never download audio files
+        for datum in index_data.values():
+            if "audio" in datum.keys():
+                del datum["audio"]
 
         urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
 
