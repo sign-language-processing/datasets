@@ -67,10 +67,9 @@ def _get_view_to_speaker_mapping(datum_dict: dict) -> dict:
         speaker_set.add(speaker_id)
     speakers = list(sorted(speaker_set))
 
-    assert len(speakers) == 2, "There are %d speakers instead of 2 in this corpus example: %s" % \
-                               (len(speakers), str(datum_dict))
+    assert 0 < len(speakers) <= 2, "Corpus example has 0 or more than 2 speakers: %s" % str(datum_dict)
 
-    return {"a": speakers[0], "b": speakers[1]}
+    return {"a": speakers[0], "b": speakers[1] if len(speakers) == 2 else None}
 
 
 class NGTCorpus(tfds.core.GeneratorBasedBuilder):
@@ -144,13 +143,14 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
             index_data = json.load(f)
 
         # remove corpus examples if videos are restricted (= only an empty ELAN file is available, or only the "c"
-        # video without annotations)
+        # or "t" video without annotations)
         keys_to_be_removed = set()
         for datum_key, datum in index_data.items():
             if len(datum.keys()) == 1:
                 keys_to_be_removed.add(datum_key)
 
-        print(keys_to_be_removed)
+        # this is currently removing the following keys:
+        # {'CNGT0025', 'CNGT0876', 'CNGT1542', 'CNGT0020', 'CNGT0314'}
 
         for key in keys_to_be_removed:
             del index_data[key]
@@ -167,8 +167,9 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
                 datum["video_a"] = datum[video_key_a]
 
                 speaker_b = view_to_speaker_mapping["b"]
-                video_key_b = "video_" + speaker_b + "_b"  # this "_b" is for "body" view
-                datum["video_b"] = datum[video_key_b]
+                if speaker_b is not None:
+                    video_key_b = "video_" + speaker_b + "_b"  # this "_b" is for "body" view
+                    datum["video_b"] = datum[video_key_b]
 
                 video_keys_to_keep = ("video_a", "video_b", "video_c")
                 all_keys = list(datum.keys())
