@@ -91,7 +91,7 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
     - use "c" as the video feature identifier for the combined view
     """
 
-    VERSION = tfds.core.Version("0.4.0")
+    VERSION = tfds.core.Version("3.0.0")
     RELEASE_NOTES = {
         "3.0.0": "3rd release",
     }
@@ -115,7 +115,9 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
             features["fps"] = tf.int32
             video_ids = ["a", "b", "c"]
             if self._builder_config.process_video:
-                features["videos"] = {_id: self._builder_config.video_feature(_VIDEO_RESOLUTION) for _id in video_ids}
+                features["videos"] = {"a": self._builder_config.video_feature(_VIDEO_RESOLUTION),
+                                      "b": self._builder_config.video_feature(_VIDEO_RESOLUTION),
+                                      "c": self._builder_config.video_feature(_VIDEO_RESOLUTION_C)}
             features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
         # Add poses if requested
