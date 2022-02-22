@@ -57,6 +57,22 @@ As far as I can see, "f" and "b" are present for all corpus examples, and for al
 are missing sometimes.
 
 Framerate of videos: 25 fps
+
+## Restricted files
+
+Some files are restricted and cannot be found by the crawler below. This does not mean that all files are restricted,
+in some cases the ELAN file is public (albeit empty) but the videos are restricted.
+
+Example: https://archive.mpi.nl/tla/islandora/object/tla%3A1839_00_0000_0000_0009_2D68_9
+
+ELAN files for which the videos are not public are marked with "NP" in the file name, example: "CNGT0020_r3_NP.eaf".
+
+The opposite case is also possible: sometimes only a video of the combined or "t" view is available, while everything else
+including the ELAN file is restricted.
+
+Example: CNGT0314 here: https://archive.mpi.nl/tla/islandora/object/tla%3A1839_00_0000_0000_0009_0016_1
+
+List of all such exceptions currently: {'CNGT0025', 'CNGT0314', 'CNGT1542', 'CNGT0020', 'CNGT0876'}
 """
 
 
@@ -149,23 +165,27 @@ def get_info_from_mpg_filename(filename: str) -> Tuple[Optional[str], str]:
     return speaker_id, view
 
 
-def create_structured_download_dict(force_rebuild: bool = False):
+def create_structured_download_dict(force_rebuild: bool = False,
+                                    flat_json_path: str = "ngt_flat.json",
+                                    structured_json_path: str = "ngt.json"):
     """
 
     :param force_rebuild:
+    :param flat_json_path:
+    :param structured_json_path:
     :return:
     """
     # open or create flat download dict
 
-    if os.path.exists("ngt_flat.json") and not force_rebuild:
-        print("Opening existing flat download dict: 'ngt_flat.json'")
-        with open("ngt_flat.json", "r") as infile:
+    if os.path.exists(flat_json_path) and not force_rebuild:
+        print("Opening existing flat download dict: '%s'" % flat_json_path)
+        with open(flat_json_path, "r") as infile:
             flat_download_dict = json.load(infile)
     else:
-        print("Rebuilding flat download dict: 'ngt_flat.json'")
+        print("Rebuilding flat download dict: '%s'" % flat_json_path)
         flat_download_dict = create_flat_download_dict()
 
-        with open("ngt_flat.json", "w") as outfile:
+        with open(flat_json_path, "w") as outfile:
             json.dump(flat_download_dict, outfile)
 
     # group files by corpus example ID
@@ -200,10 +220,10 @@ def create_structured_download_dict(force_rebuild: bool = False):
             print("Unexpected filename: %s" % filename)
             sys.exit()
 
-    with open("ngt.json", "w") as outfile:
+    with open(structured_json_path, "w") as outfile:
         print("Writing structured download dict '%s'." % "ngt.json")
         json.dump(structured_download_dict, outfile)
 
 
 if __name__ == "__main__":
-    create_structured_download_dict()
+    create_structured_download_dict(flat_json_path="ngt_flat.json", structured_json_path="ngt.json")

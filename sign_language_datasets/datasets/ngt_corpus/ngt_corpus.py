@@ -17,7 +17,8 @@ An open access online corpus of movies with annotations of Sign Language of the 
 
 _CITATION = """\
 @inproceedings{dataset:Crasborn2008TheCN,
-    title = {The Corpus NGT: An online corpus for professionals and laymen},
+    title = {The Corpus NGT: An online corpus with annotations of Sign Language of the Netherlands 
+    for professionals and laymen},
     author = {O. Crasborn and I. Zwitserlood},
     year = {2008}
 }
@@ -66,7 +67,8 @@ def _get_view_to_speaker_mapping(datum_dict: dict) -> dict:
         speaker_set.add(speaker_id)
     speakers = list(sorted(speaker_set))
 
-    assert len(speakers) == 2
+    assert len(speakers) == 2, "There are %d speakers instead of 2 in this corpus example: %s" % \
+                               (len(speakers), str(datum_dict))
 
     return {"a": speakers[0], "b": speakers[1]}
 
@@ -140,6 +142,18 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
 
         with open(index_path, "r", encoding="utf-8") as f:
             index_data = json.load(f)
+
+        # remove corpus examples if videos are restricted (= only an empty ELAN file is available, or only the "c"
+        # video without annotations)
+        keys_to_be_removed = set()
+        for datum_key, datum in index_data.items():
+            if len(datum.keys()) == 1:
+                keys_to_be_removed.add(datum_key)
+
+        print(keys_to_be_removed)
+
+        for key in keys_to_be_removed:
+            del index_data[key]
 
         if self._builder_config.include_video:
             # rename "body" video keys, ignore other views
