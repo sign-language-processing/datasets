@@ -77,12 +77,64 @@ We follow the following interface wherever possible to make it easy to swap data
 }
 ```
 
-### Why not Huggingface Datasets?
+## Adding a new dataset
+
+For general instructions, see the
+[TFDS guide to writing custom datasets](https://github.com/tensorflow/datasets/blob/master/docs/add_dataset.md).
+Instructions below are specific to this repository.
+
+Make a new folder inside `sign_language_datasets/datasets` with the same name as the dataset. As a convention, the name
+of the dataset should be lowercase and words should be separated by an underscore. Example:
+
+```sh
+mkdir sign_language_datasets/datasets/new_dataset
+```
+
+Creating a custom TFDS dataset means to write a new class which inherits from `tfds.core.GeneratorBasedBuilder`.
+Store the new dataset class in a file with the exact
+same name as the dataset, i.e. `new_dataset.py`. `new_dataset.py` must contain a line similar to:
+
+```python
+class NewDataset(tfds.core.GeneratorBasedBuilder):
+```
+
+### Registering a new dataset
+
+The mechanism to add a custom dataset to TFDS' dataset registry is to import the class `NewDataset`. For this reason the folder
+`sign_language_datasets/datasets/new_dataset` must have an `__init__.py` file that imports the class
+`NewDataset`:
+
+```python
+from .new_dataset import NewDataset
+```
+
+Even though the name of the class is `NewDataset`, it will be available for loading in lowercase and uppercase characters
+are interpreted as the start of a new word that should be separated with an underscore. This means that the class can
+be loaded as follows:
+
+```python
+ds = tfds.load('new_dataset')
+```
+
+### Generating checksums
+
+The folder for the new dataset should contain a file `checksums.tsv` with checksums for every file in the dataset. This
+allows the TFDS download manager to check the integrity of the data it downloads. Use the `tfds build` tool to generate
+the checksum file:
+
+```sh
+tfds build --register_checksums new_dataset.py
+```
+
+Use a dataset configuration which includes all files (e.g. does include the video files if any) using the `--config`
+argument. The default behaviour is to build all configurations which might be redundant.
+
+## Why not Huggingface Datasets?
 Huggingface datasets do not work well with videos.
 From the lack of native support of the video type, to lack of support of arbitrary tensors.
 Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
 
-### Cite
+## Cite
 
 ```bibtex
 @misc{moryossef2021datasets, 
