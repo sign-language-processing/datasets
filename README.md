@@ -87,11 +87,12 @@ Make a new folder inside `sign_language_datasets/datasets` with the same name as
 of the dataset should be lowercase and words should be separated by an underscore. Example:
 
 ```sh
-mkdir sign_language_datasets/datasets/new_dataset
+cd sign_language_datasets/datasets
+tfds new new_dataset
 ```
 
-Creating a custom TFDS dataset means to write a new class which inherits from `tfds.core.GeneratorBasedBuilder`.
-Store the new dataset class in a file with the exact
+For our purposes, creating a custom TFDS dataset means writing a new class which inherits from `tfds.core.GeneratorBasedBuilder`.
+If you use `tfds new` to create a new dataset then the dataset class is stored in a file with the exact
 same name as the dataset, i.e. `new_dataset.py`. `new_dataset.py` must contain a line similar to:
 
 ```python
