@@ -6,8 +6,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
-from sign_language_datasets.datasets.config import SignDatasetConfig
-from sign_language_datasets.utils.features import PoseFeature
+from ...datasets.config import SignDatasetConfig
+from ...utils.features import PoseFeature
 
 _DESCRIPTION = """
 Parallel Corpus of German Sign Language of the weather, including video, gloss and translation.

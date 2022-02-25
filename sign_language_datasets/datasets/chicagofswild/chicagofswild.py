@@ -6,9 +6,8 @@ from os import path
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
-from tqdm import tqdm
 
-from sign_language_datasets.datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
 ChicagoFSWild+ contains 55,232 fingerspelling sequences signed by 260 signers.

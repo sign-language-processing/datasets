@@ -40,21 +40,22 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 
 ## Datasets
 
-| Dataset            | Videos | Poses                                                 | Versions |
-|--------------------|--------|-------------------------------------------------------|----------|
-| aslg_pc12          | N/A    | N/A                                                   | 0.0.1    |
-| rwth_phoenix2014_t | Yes    | Holistic                                              | 3.0.0    |
-| autsl              | Yes    | OpenPose, Holistic                                    | 1.0.0    |
-| dgs_corpus         | Yes    | OpenPose, Holistic                                    | 3.0.0    |
-| how2sign           | Yes    | OpenPose                                              | 1.0.0    |
-| sign2mint          | Yes    |                                                       | 1.0.0    |
-| signtyp            | Links  |                                                       | 1.0.0    |
-| swojs_glossario    | Yes    |                                                       | 1.0.0    |
-| SignBank           | N/A    |                                                       | 1.0.0    |
-| wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960)   | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None    |
-| msasl              |        |                                                       | None     |
-| Video-Based CSL    |        |                                                       | None     |
-| RVL-SLLL ASL	     |        |                                                       | None     |
+| Dataset            | Videos                                                       | Poses                                                 | Versions |
+|--------------------|--------------------------------------------------------------|-------------------------------------------------------|----------|
+| aslg_pc12          | N/A                                                          | N/A                                                   | 0.0.1    |
+| rwth_phoenix2014_t | Yes                                                          | Holistic                                              | 3.0.0    |
+| autsl              | Yes                                                          | OpenPose, Holistic                                    | 1.0.0    |
+| dgs_corpus         | Yes                                                          | OpenPose, Holistic                                    | 3.0.0    |
+| how2sign           | Yes                                                          | OpenPose                                              | 1.0.0    |
+| sign2mint          | Yes                                                          |                                                       | 1.0.0    |
+| signtyp            | Links                                                        |                                                       | 1.0.0    |
+| swojs_glossario    | Yes                                                          |                                                       | 1.0.0    |
+| SignBank           | N/A                                                          |                                                       | 1.0.0    |
+| wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None     |
+| msasl              |                                                              |                                                       | None     |
+| Video-Based CSL    |                                                              |                                                       | None     |
+| RVL-SLLL ASL	      |                                                              |                                                       | None     |
+| ngt_corpus         | Yes                                                          |                                                       | 3.0.0    |
 
 ## Data Interface
 
@@ -76,12 +77,65 @@ We follow the following interface wherever possible to make it easy to swap data
 }
 ```
 
-### Why not Huggingface Datasets?
+## Adding a new dataset
+
+For general instructions, see the
+[TFDS guide to writing custom datasets](https://github.com/tensorflow/datasets/blob/master/docs/add_dataset.md).
+Instructions below are specific to this repository.
+
+Make a new folder inside `sign_language_datasets/datasets` with the same name as the dataset. As a convention, the name
+of the dataset should be lowercase and words should be separated by an underscore. Example:
+
+```sh
+cd sign_language_datasets/datasets
+tfds new new_dataset
+```
+
+For our purposes, creating a custom TFDS dataset means writing a new class which inherits from `tfds.core.GeneratorBasedBuilder`.
+If you use `tfds new` to create a new dataset then the dataset class is stored in a file with the exact
+same name as the dataset, i.e. `new_dataset.py`. `new_dataset.py` must contain a line similar to:
+
+```python
+class NewDataset(tfds.core.GeneratorBasedBuilder):
+```
+
+### Registering a new dataset
+
+The mechanism to add a custom dataset to TFDS' dataset registry is to import the class `NewDataset`. For this reason the folder
+`sign_language_datasets/datasets/new_dataset` must have an `__init__.py` file that imports the class
+`NewDataset`:
+
+```python
+from .new_dataset import NewDataset
+```
+
+Even though the name of the class is `NewDataset`, it will be available for loading in lowercase and uppercase characters
+are interpreted as the start of a new word that should be separated with an underscore. This means that the class can
+be loaded as follows:
+
+```python
+ds = tfds.load('new_dataset')
+```
+
+### Generating checksums
+
+The folder for the new dataset should contain a file `checksums.tsv` with checksums for every file in the dataset. This
+allows the TFDS download manager to check the integrity of the data it downloads. Use the `tfds build` tool to generate
+the checksum file:
+
+```sh
+tfds build --register_checksums new_dataset.py
+```
+
+Use a dataset configuration which includes all files (e.g. does include the video files if any) using the `--config`
+argument. The default behaviour is to build all configurations which might be redundant.
+
+## Why not Huggingface Datasets?
 Huggingface datasets do not work well with videos.
 From the lack of native support of the video type, to lack of support of arbitrary tensors.
 Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
 
-### Cite
+## Cite
 
 ```bibtex
 @misc{moryossef2021datasets, 

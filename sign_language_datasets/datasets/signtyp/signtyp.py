@@ -6,7 +6,7 @@ import requests
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from sign_language_datasets.datasets import SignDatasetConfig
+from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
 SignTyp is a work in progress. We currently have over 20,000 videos for signers from Brazil, China, Croatia, Denmark, Egypt, Estonia, Ethiopia, France, Germany, Haiti, Honduras, Iraq, Italy,Lithuania, Nepal, Nicaragua, the Philippines, Portugal, Russia, Rwanda, Sri Lanka, Turkey, Uganda, the United States and Venezuela. We have complete sets of approximately 1000 video recordings each for China, Denmark, Egypt, Ethiopia, Haiti, Honduras, Iraq, Lithuania, Portugal,the Phillipines, Russia (2 signers), Turkey, and the United States. Clipping has been completed for all sets except a second Russian signer.

@@ -6,9 +6,9 @@ import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 from tqdm import tqdm
 
-from sign_language_datasets.datasets.config import SignDatasetConfig
-from sign_language_datasets.utils.downloaders.aslpro import download_aslpro
-from sign_language_datasets.utils.downloaders.youtube import download_youtube
+from ...datasets.config import SignDatasetConfig
+from ...utils.downloaders.aslpro import download_aslpro
+from ...utils.downloaders.youtube import download_youtube
 
 _DESCRIPTION = """
 A large-scale dataset for Word-Level American Sign Language

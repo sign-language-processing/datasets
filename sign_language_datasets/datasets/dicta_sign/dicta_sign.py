@@ -1,14 +1,10 @@
 """A list of 1000+ concepts with a sign language equivalent in each of the four project languages."""
-import json
 from os import path
-
-import tensorflow as tf
 import tensorflow_datasets as tfds
 import re
-from tensorflow.io.gfile import GFile
 
-from sign_language_datasets.datasets import SignDatasetConfig
-from sign_language_datasets.utils.features import PoseFeature
+from ...datasets import SignDatasetConfig
+from ...utils.features import PoseFeature
 
 _DESCRIPTION = """
 A list of 1000+ concepts with a sign language equivalent in each of the four project languages

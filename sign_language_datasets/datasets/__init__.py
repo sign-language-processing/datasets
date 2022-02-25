@@ -11,3 +11,4 @@ from .signbank import SignBank
 from .signtyp import SignTyp
 from .swojs_glossario import SwojsGlossario
 from .wlasl import Wlasl
+from .ngt_corpus import NGTCorpus
