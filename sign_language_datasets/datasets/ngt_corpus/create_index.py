@@ -221,7 +221,7 @@ def create_structured_download_dict(force_rebuild: bool = False,
             sys.exit()
 
     with open(structured_json_path, "w") as outfile:
-        print("Writing structured download dict '%s'." % "ngt.json")
+        print("Writing structured download dict '%s'." % structured_json_path)
         json.dump(structured_download_dict, outfile)
 
 

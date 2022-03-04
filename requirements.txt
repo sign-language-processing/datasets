@@ -7,3 +7,5 @@ numpy
 pytest
 pytest-cov
 pympi-ling
+requests
+lxml

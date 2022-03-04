@@ -3,7 +3,7 @@
 .idea/
 old/
 __pycache__
-
+.coverage
 sign_language_datasets/datasets/msasl
 sign_language_datasets/datasets/ncslgr
 .coverage
