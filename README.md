@@ -56,6 +56,7 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 | Video-Based CSL    |                                                              |                                                       | None     |
 | RVL-SLLL ASL	      |                                                              |                                                       | None     |
 | ngt_corpus         | Yes                                                          |                                                       | 3.0.0    |
+| bobsl              | Yes                                                          | OpenPose                                              | 1.0.0    |
 
 ## Data Interface
 
