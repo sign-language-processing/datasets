@@ -1,10 +1,15 @@
 """A German Sign Language (DGS) lexicon for natural science subjects."""
 import json
+import os
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from ...datasets import SignDatasetConfig
+import urllib.request
+from cv2 import cv2
+
+from ...utils.signwriting.ocr import image_to_fsw
 
 _DESCRIPTION = """
 The specialist signs developed in the project break down barriers for deaf people 
@@ -20,6 +25,8 @@ students and pupils have access to a uniform and constantly expanding MINT speci
 # TODO(sign2mint): BibTeX citation
 _CITATION = """
 """
+
+OCR_CACHE_PATH = os.path.join(os.path.dirname(__file__), "ocr_cache.txt")
 
 
 class Sign2MINT(tfds.core.GeneratorBasedBuilder):
@@ -52,7 +59,8 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             "variants": tf.int32,
             "gebaerdenschrift": {
                 "url": tfds.features.Text(),
-                "symbolIds": tfds.features.Sequence(tfds.features.Text())
+                "symbolIds": tfds.features.Sequence(tfds.features.Text()),
+                "fsw": tfds.features.Text()
             }
         }
 
@@ -75,7 +83,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
 
         local_videos = {}
         if self._builder_config.include_video and self._builder_config.process_video:
-            with open(annotations_path, "r", encoding="utf-8")  as f:
+            with open(annotations_path, "r", encoding="utf-8") as f:
                 annotations = json.load(f)
                 videos = [a["videoLink"] for a in annotations]
                 video_paths = dl_manager.download(videos)
@@ -85,18 +93,44 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             'train': self._generate_examples(annotations_path, local_videos)
         }
 
+    ocr_cache = None
+
+    def _ocr(self, datum):
+        if self.ocr_cache is None:
+            with open(OCR_CACHE_PATH, "r") as f:
+                lines = [l.split(" ") for l in f.readlines()]
+                self.ocr_cache = {l[0]: l[1] for l in lines}
+
+        image_url = datum['gebaerdenschrift']['url'].replace("&transparent=true", "")
+        if image_url in self.ocr_cache:
+            return self.ocr_cache[image_url]
+
+        urllib.request.urlretrieve(image_url, "sign.png")
+        img_rgb = cv2.imread('sign.png')
+
+        symbols = datum['gebaerdenschrift']['symbolIds']
+
+        fsw = image_to_fsw(img_rgb, symbols)
+
+        with open(OCR_CACHE_PATH, "a") as f:
+            f.write(image_url + " " + fsw + "\n")
+
+        return fsw
+
     def _generate_examples(self, annotations_path, local_videos):
         """Yields examples."""
 
-        with open(annotations_path, "r", encoding="utf-8")  as f:
+        with open(annotations_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            for datum in data:
+            for i, datum in enumerate(data):
                 del datum["empfehlung"]  # remove unused property
 
                 video_link = datum["videoLink"]
                 del datum["videoLink"]
 
                 datum["video"] = local_videos[video_link] if video_link in local_videos else video_link
-                datum["gebaerdenschrift"]["symbolIds"] = [s["symbolKey"] for s in datum["gebaerdenschrift"]["symbolIds"]]
+                datum["gebaerdenschrift"]["symbolIds"] = [s["symbolKey"] for s in datum["gebaerdenschrift"]["symbolIds"]
+                                                          if s["symbolKey"] != ""]
+                datum["gebaerdenschrift"]["fsw"] = self._ocr(datum)
 
                 yield datum["id"], datum
