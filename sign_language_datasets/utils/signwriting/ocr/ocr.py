@@ -2,6 +2,7 @@
 This SignWriting OCR code is adapted from
 https://colab.research.google.com/drive/1x0OupzZNkQW1rCiDjEe1LX5V9k8_YF69#scrollTo=_1YX_pILnjFe
 """
+import functools
 from typing import List
 
 import numpy as np
@@ -57,20 +58,23 @@ def crop_whitespace(img):
     return cv2.copyMakeBorder(img[y:y + h, x:x + w], 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=(255, 255, 255))
 
 
-dirname = os.path.dirname(__file__)
-font_path = os.path.join(dirname, "assets/SuttonSignWritingOneD.ttf")
+@functools.lru_cache()
+def get_font():
+    dirname = os.path.dirname(__file__)
+    font_path = os.path.join(dirname, "assets/SuttonSignWritingOneD.ttf")
 
-font = ImageFont.truetype(font_path, 30)
+    return ImageFont.truetype(font_path, 30)
 
 
 def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
-    global font
+    font = get_font()
 
     # Adding border for conv calc to go over borders
     img_rgb = cv2.copyMakeBorder(image.copy(), 30, 30, 30, 30, cv2.BORDER_CONSTANT, value=(255, 255, 255))
     img_bin = rgb2bin(img_rgb, -0.5)
 
-    final_sign = "M" + shape_pos(img_rgb.shape)
+    img_width, img_height, _ = img_rgb.shape
+    final_sign = "M" + shape_pos([500, 500])
     # final_sign = "A" + "".join(symbols) + "M" + shape_pos(img_rgb.shape)
 
     # Create all convolutions
@@ -106,7 +110,8 @@ def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
 
         # 2. Select best match
         pt = best_match["point"][::-1]
-        final_sign += best_match["symbol"] + shape_pos(pt)
+        position = [int(500 - img_width/2) + pt[0], int(500 - img_height/2) + pt[1]]
+        final_sign += best_match["symbol"] + shape_pos(position)
 
         w, h = templates[idx].shape[:-1]
         cv2.rectangle(img_rgb, pt, (pt[0] + h, pt[1] + w), (0, 0, 255), 1)

@@ -122,7 +122,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
 
         with open(annotations_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            for i, datum in enumerate(data):
+            for datum in data:
                 del datum["empfehlung"]  # remove unused property
 
                 video_link = datum["videoLink"]

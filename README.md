@@ -10,7 +10,9 @@ pip install git+https://github.com/sign-language-processing/datasets.git
 ```
 
 #### PyPi
-Not available. Need to add automatic publication on push.
+```bash
+pip install sign-language-datasets
+```
 
 ## Usage
 
