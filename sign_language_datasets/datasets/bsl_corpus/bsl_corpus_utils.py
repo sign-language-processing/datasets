@@ -1,184 +1,43 @@
-import asyncio
 import re
+import io
+import contextlib
 import requests
 import os
+import pympi
 
 import tensorflow_datasets as tfds
 
+import tensorflow as tf
 from tensorflow_datasets.core.download import downloader
 from tensorflow_datasets.core import utils
+from tensorflow_datasets.core import units
 from tensorflow_datasets.core.download import checksums as checksums_lib
 
-from pyppeteer import launch
-from typing import Optional, List, Dict, Any
+from requests.adapters import HTTPAdapter, Retry
+from typing import Optional, List, Dict, Any, Tuple, Iterator, Iterable
 
 
-async def login_with_pyppeteer(page, username: str, password: str) -> None:
-    """
-
-    :param page:
-    :param username:
-    :param password:
-    :return:
-    """
-
-    # <td class="LoginLabel" align="center">
-
-    login_element = (await page.Jx('//td[@class="LoginLabel"]/a'))[0]
-
-    await asyncio.gather(
-        page.waitForNavigation(),
-        login_element.click()
-    )
-
-    # <a>Other Registered Users</a>
-
-    login_element = (await page.Jx('//a[contains(., "Other Registered Users")]'))[0]
-
-    await asyncio.gather(
-        page.waitForNavigation(),
-        login_element.click()
-    )
-
-    input_name = (await page.Jx('//TR[TD[@class = "LoginLabel" and text() = "Name:"]]/TD/INPUT'))[0]
-    input_password = (await page.Jx('//TR[TD[@class = "LoginLabel" and contains(text(), "Password:")]]/TD/INPUT'))[0]
-
-    await input_name.focus()
-    await page.keyboard.type(username)
-
-    await input_password.focus()
-    await page.keyboard.type(password)
-
-    # <input type="submit" class="But" value="Login">
-    submit_element = (await page.Jx('//input[@type = "submit"]'))[0]
-
-    await asyncio.gather(
-        page.waitForNavigation(),
-        submit_element.click()
-    )
-
-
-async def _download_with_pyppeteer(resource_url: str,
-                                   download_directory: str,
-                                   authenticate: bool = False,
-                                   username: Optional[str] = None,
-                                   password: Optional[str] = None,
-                                   headless: bool = True,
-                                   executable_path: Optional[str] = None,
-                                   runs_in_main_thread: bool = True) -> None:
-    """
-
-    :param resource_url:
-    :param download_directory:
-    :param authenticate:
-    :param username:
-    :param password:
-    :param headless:
-    :param executable_path:
-    :param runs_in_main_thread:
-    :return:
-    """
-    if runs_in_main_thread:
-        browser = await launch(headless=headless,
-                               executablePath=executable_path)
-    else:
-        browser = await launch(headless=headless,
-                               executablePath=executable_path,
-                               handleSIGINT=False,
-                               handleSIGTERM=False,
-                               handleSIGHUP=False)
-
-    page, = await browser.pages()
-
-    # taken from https://github.com/miyakogi/pyppeteer/issues/77#issuecomment-463752650
-
-    cdp = await page.target.createCDPSession()
-    await cdp.send('Page.setDownloadBehavior', {'behavior': 'allow', 'downloadPath': download_directory})
-
-    await page.goto(resource_url)
-
-    if authenticate:
-        assert None not in (username, password)
-
-        await login_with_pyppeteer(page=page, username=username, password=password)
-
-    # if digital consent pops up, click
-
-    # <a href="javascript:displayViewer();"><span class="But">Continue &gt;&gt;</span></a>
-
-    continue_element = await page.Jx('//a[span[contains(., "Continue")]]')
-
-    if len(continue_element) > 0:
-        await asyncio.gather(
-            page.waitForNavigation(),
-            continue_element[0].click()
-        )
-
-    if not headless:
-        await asyncio.sleep(10)
-
-    await page.waitForNavigation(options={"waitUntil": "networkidle0"})
-
-    await browser.close()
-
-
-def download_with_pyppeteer(resource_url: str,
-                            download_directory: str,
-                            authenticate: bool = False,
-                            username: Optional[str] = None,
-                            password: Optional[str] = None,
-                            headless: bool = True,
-                            executable_path: Optional[str] = None,
-                            runs_in_main_thread: bool = True) -> None:
-    """
-
-    :param resource_url:
-    :param download_directory:
-    :param authenticate:
-    :param username:
-    :param password:
-    :param headless:
-    :param executable_path:
-    :param runs_in_main_thread:
-    :return:
-    """
-
-    if runs_in_main_thread:
-        loop_fn = asyncio.get_event_loop
-    else:
-        loop_fn = asyncio.new_event_loop
-
-    loop_fn().run_until_complete(_download_with_pyppeteer(resource_url=resource_url,
-                                                          download_directory=download_directory,
-                                                          authenticate=authenticate,
-                                                          username=username,
-                                                          password=password,
-                                                          headless=headless,
-                                                          executable_path=executable_path,
-                                                          runs_in_main_thread=runs_in_main_thread))
-
-
-def generate_download_links(username: str,
-                            password: str,
-                            number_of_records: Optional[int] = None,
-                            base_url: str = "http://digital-collections.ucl.ac.uk/") -> List[Dict]:
+def login_with_user_token(username: str,
+                          password: str,
+                          base_url: str = "http://digital-collections.ucl.ac.uk/") -> str:
     """
 
     :param username:
     :param password:
-    :param number_of_records:
     :param base_url:
     :return:
     """
-
     # Get initial page to generate a user token
 
     initial_url = base_url + "R&?local_base=BSLCP"
-    initial_response = requests.get(initial_url).text
+    initial_response = requests.get(initial_url)
+
+    downloader._assert_status(initial_response)
+    initial_response = initial_response.text
 
     # Perform the login operation for the retrieved user token
 
-    redirect_url = re.search(r"<a href=\"(.*?)\">Researcher Login<\/a>", initial_response).groups()[0]
+    redirect_url = re.search(r"<a href=\"(.*?)\">Researcher Login</a>", initial_response).groups()[0]
 
     post_data = {
         "func": "login",
@@ -199,7 +58,17 @@ def generate_download_links(username: str,
 
     user_token = re.search(r"URL=.*?/R/(.*?)-", login_redirect_response).groups()[0]
 
-    # We are logged in, now let's search
+    return user_token
+
+
+def get_search_response(user_token: str,
+                        base_url: str = "http://digital-collections.ucl.ac.uk/") -> Tuple[str, str]:
+    """
+
+    :param user_token:
+    :param base_url:
+    :return:
+    """
     # The way this works is we have a TOKEN and a request identifier.
     # Seems like they store both, and show the relevant info for the identifier.
 
@@ -222,54 +91,204 @@ def generate_download_links(username: str,
         "selected_tag": "0"
     }
 
-    search_response = requests.post(search_url, data=post_data).text
+    search_response_text = requests.post(search_url, data=post_data).text
 
+    return search_url, search_response_text
+
+
+def generate_download_links(username: str,
+                            password: str,
+                            number_of_records: Optional[int] = None,
+                            base_url: str = "http://digital-collections.ucl.ac.uk/",
+                            renew_user_token_every_n_pages: int = 5) -> Iterator[List[Dict]]:
+    """
+    Yields 20 search results at a time
+
+    :param username:
+    :param password:
+    :param number_of_records:
+    :param base_url:
+    :param renew_user_token_every_n_pages:
+    :return:
+    """
     if number_of_records is None:
-        number_of_records = int(re.search(r"Records.*?of\s*(\d*)", search_response).groups()[0])
+        # do an initial search to find the total number of records
+        user_token = login_with_user_token(username=username, password=password, base_url=base_url)
 
-    results_page_response = ""  # all pages are concatenated into a long string
+        # We are logged in, now let's search
+        _, search_response_text = get_search_response(user_token=user_token, base_url=base_url)
+
+        number_of_records = int(re.search(r"Records.*?of\s*(\d*)", search_response_text).groups()[0])
 
     for i in range(1, number_of_records, 20):  # Page size is 20, no control over that that I have seen
+
+        if i == 1 or i % renew_user_token_every_n_pages == 0:
+            # generate a new user token for this result page
+            user_token = login_with_user_token(username=username, password=password, base_url=base_url)
+
+            # search again with new user token
+            search_url, _ = get_search_response(user_token=user_token, base_url=base_url)
+
+        results_page_response = ""  # all pages are concatenated into a long string
+
         results_page_url = f"{search_url}?func=results-jump-page&set_entry={i}&result_format=001"
         results_page_response += requests.get(results_page_url).text
 
-    index_data = []
+        index_data = []
 
-    last_index = 0
-    while True:
-        try:
-            start_section = results_page_response.index("<!-- START_SECTION --><!-- body-line -->", last_index)
-        except ValueError:  # substring not found
-            break
-        end_section = results_page_response.index("<!-- END_SECTION --><!-- body-line -->", last_index)
-        last_index = end_section + 1
+        last_index = 0
+        while True:
+            try:
+                start_section = results_page_response.index("<!-- START_SECTION --><!-- body-line -->", last_index)
+            except ValueError:  # substring not found
+                break
+            end_section = results_page_response.index("<!-- END_SECTION --><!-- body-line -->", last_index)
+            last_index = end_section + 1
 
-        cells = re.findall(r"<TD.*?>(.*?)</TD>", results_page_response[start_section:end_section])
-        downloads = re.findall(r"<A.*?open_window_delivery\(\"(.*?)\".*?ALT=\"(.*?)\"", cells[3])
-        datum = {
-            "id": cells[0],
-            "record_id": re.search(r">(.*?)<", cells[2]).groups()[0],
-            "downloads": {k: v.replace("&amp;", "&") for v, k in downloads}
-        }
-        index_data.append(datum)
+            cells = re.findall(r"<TD.*?>(.*?)</TD>", results_page_response[start_section:end_section])
+            downloads = re.findall(r"<A.*?open_window_delivery\(\"(.*?)\".*?ALT=\"(.*?)\"", cells[3])
+            datum = {
+                "id": cells[0],
+                "record_id": re.search(r">(.*?)<", cells[2]).groups()[0],
+                "downloads": {k: v.replace("&amp;", "&") for v, k in downloads}
+            }
+            index_data.append(datum)
 
-    return index_data
+        yield index_data
+
+
+def get_responses_from_container_url(container_url: str,
+                                     base_url: str,
+                                     max_retries: int = 3) -> Tuple[requests.Response,
+                                                                    requests.Response,
+                                                                    str]:
+    """
+
+    :param container_url:
+    :param base_url:
+    :param max_retries:
+    :return:
+    """
+    session = requests.Session()
+
+    retry = Retry(connect=max_retries, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    file_container_response = session.get(container_url)
+    downloader._assert_status(file_container_response)
+
+    file_container_response_text = file_container_response.text
+
+    cookie = file_container_response.headers['Set-Cookie'].split(';')[0]
+
+    file_container_frame_src = re.search(r'<FRAME SRC=\"/(.*?)\"', file_container_response_text).groups()[0]
+
+    file_container_frame_response = session.get(base_url + file_container_frame_src,
+                                                headers={'Cookie': cookie})
+    downloader._assert_status(file_container_frame_response)
+    file_container_frame_response_text = file_container_frame_response.text
+
+    metadata_url, consent_url = re.search(r'setLabelMetadataStream\(.*, \"(.*?)\", .*, .*, .*, \"(.*?)\"',
+                                          file_container_frame_response_text).groups()
+
+    metadata_response = requests.get(metadata_url)
+    downloader._assert_status(metadata_response)
+
+    # this returns either a consent reponse or directly the desired file content
+    consent_response_or_file_response = session.get(consent_url, stream=True, headers={'Cookie': cookie})
+    downloader._assert_status(consent_response_or_file_response)
+
+    return metadata_response, consent_response_or_file_response, cookie
+
+
+def get_metadata_from_response(metadata_response: requests.Response) -> dict:
+    """
+
+    :param metadata_response:
+    :return:
+    """
+    metadata_text = metadata_response.text
+    metadata_results = re.findall(r'<td>(.*?):</td>\s*<td>(.*?)<', metadata_text)
+    metadata = {k: v for k, v in metadata_results}
+
+    return metadata
+
+
+@contextlib.contextmanager
+def _stream_file_from_container_url(container_url: str,
+                                    base_url: str,
+                                    max_retries: int = 3,
+                                    **kwargs: Any) -> Iterator[Tuple[downloader.Response, Iterable[bytes]]]:
+    """
+
+    :param container_url:
+    :param base_url:
+    :param max_retries:
+    :param kwargs:
+    :return:
+    """
+    metadata_response, main_response, cookie = get_responses_from_container_url(container_url=container_url,
+                                                                                base_url=base_url,
+                                                                                max_retries=max_retries)
+
+    main_response_text = main_response.text
+
+    # search for copyrights uri in response
+    copyrights_uri_search_results = re.search(r'copyrights_pid.src = \"/(.*?)\"',main_response_text)
+
+    if copyrights_uri_search_results is None:
+        # assume consent form did not appear
+        yield (main_response, main_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
+    else:
+        # assume consent form did appear
+        with requests.Session() as session:
+            copyrights_uri = copyrights_uri_search_results.groups()[0]
+            copyright_response = session.get(base_url + copyrights_uri, headers={'Cookie': cookie}, **kwargs)
+            downloader._assert_status(copyright_response)
+
+            download_url = re.search(r'window.location.href=\'(.*?)\'', main_response_text).groups()[0]
+
+            with session.get(download_url, stream=True, headers={'Cookie': cookie}, **kwargs) as download_response:
+                downloader._assert_status(download_response)
+
+                yield (download_response, download_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
+
+
+def _get_file_name_bsl_corpus(response: downloader.Response) -> str:
+    """
+
+    :param response:
+    :return:
+    """
+    # alternative way to get file name: with open(metadata["Identifier"] + ".eaf")
+    file_name = re.search(r'filename=%22(.*?)%22', response.headers['Content-Disposition']).groups()[0]
+
+    return file_name
 
 
 # noinspection PyProtectedMember
 @utils.memoize()
-def get_downloader_with_pyppeteer(*args: Any, **kwargs: Any) -> '_DownloaderWithPyppeteer':
-    return _DownloaderWithPyppeteer(*args, **kwargs)
+def get_bsl_corpus_downloader(*args: Any, **kwargs: Any) -> '_BslCorpusDownloader':
+    return _BslCorpusDownloader(*args, **kwargs)
 
 
 # noinspection PyProtectedMember
-class _DownloaderWithPyppeteer(downloader._Downloader):
+class _BslCorpusDownloader(downloader._Downloader):
 
-    def __init__(self, username: str, password: str, **kwargs):
-        super(_DownloaderWithPyppeteer, self).__init__(**kwargs)
+    def __init__(self,
+                 username: str,
+                 password: str,
+                 max_retries: int = 3,
+                 base_url: str = "http://digital-collections.ucl.ac.uk/",
+                 **kwargs):
+        super(_BslCorpusDownloader, self).__init__(**kwargs)
 
         self.username = username
         self.password = password
+        self.max_retries = max_retries
+        self.base_url = base_url
 
     def _sync_download(self,
                        url: str,
@@ -291,65 +310,177 @@ class _DownloaderWithPyppeteer(downloader._Downloader):
         """
         # files can have unknown names as a fallback
 
-        filename = utils.basename_from_url(url)
-        out_path = os.path.join(destination_path, filename)
+        with _stream_file_from_container_url(container_url=url,
+                                             base_url=self.base_url,
+                                             max_retries=self.max_retries,
+                                             verify=verify) as (response, iter_content):
+            fname = _get_file_name_bsl_corpus(response)
+            path = os.path.join(destination_path, fname)
+            size = 0
 
-        download_with_pyppeteer(resource_url=url,
-                                download_directory=destination_path,
-                                authenticate=False,
-                                headless=True,
-                                runs_in_main_thread=False)
+            # Initialize the download size progress bar
+            size_mb = 0
+            unit_mb = units.MiB
+            total_size = int(response.headers.get('Content-length', 0)) // unit_mb
+            self._pbar_dl_size.update_total(total_size)
+            with tf.io.gfile.GFile(path, 'wb') as file_:
+                checksum = self._checksumer_cls()
+                for block in iter_content:
+                    size += len(block)
+                    checksum.update(block)
+                    file_.write(block)
 
-        url_info = checksums_lib.compute_url_info(
-            out_path, checksum_cls=self._checksumer_cls)
-        self._pbar_dl_size.update_total(url_info.size)
-        self._pbar_dl_size.update(url_info.size)
+                    # Update the download size progress bar
+                    size_mb += len(block)
+                    if size_mb > unit_mb:
+                        self._pbar_dl_size.update(size_mb // unit_mb)
+                        size_mb %= unit_mb
         self._pbar_url.update(1)
-        return downloader.DownloadResult(path=utils.as_path(out_path), url_info=url_info)
+        return downloader.DownloadResult(
+            path=utils.as_path(path),
+            url_info=checksums_lib.UrlInfo(
+                checksum=checksum.hexdigest(),
+                size=utils.Size(size),
+                filename=fname,
+            ),
+        )
 
 
-class DownloadManagerWithPyppeteer(tfds.download.DownloadManager):
+class DownloadManagerBslCorpus(tfds.download.DownloadManager):
 
-    def __init__(self, *, username: str, password: str, **kwargs):
+    def __init__(self, *, username: str,
+                 password: str,
+                 max_retries: int = 3,
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.username = username
         self.password = password
+        self.max_retries = max_retries
 
         self.__downloader = None
 
     @property
     def _downloader(self):
         if self.__downloader is None:
-            self.__downloader = get_downloader_with_pyppeteer(username=self.username, password=self.password)
+            self.__downloader = get_bsl_corpus_downloader(username=self.username,
+                                                          password=self.password,
+                                                          max_retries=self.max_retries)
         return self.__downloader
 
 
+def get_elan_sentences_bsl_corpus(elan_path: str) -> Iterator:
+    """
+    Third release notes and annotation conventions:
+    https://bslcorpusproject.org/wp-content/uploads/BSLCorpus_AnnotationConventions_v3.0_-March2017.pdf
+    https://bslcorpusproject.org/wp-content/uploads/Notes-to-the-3rd-release-of-BSL-Corpus-annotations.pdf
+
+    Names of tiers:
+
+    - "LH-IDgloss" for left hand glosses
+    - "RH-IDgloss" for right hand glosses
+    - "Free Translation" for English translation
+
+    :param elan_path:
+    :return:
+    """
+
+    eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
+
+    timeslots = eaf.timeslots
+
+    english_tier_name = "Free Translation"
+    if english_tier_name not in eaf.tiers:
+        return
+
+    # tiers is defined as follows (http://dopefishh.github.io/pympi/Elan.html):
+    #   {tier_name -> (aligned_annotations, reference_annotations, attributes, ordinal)}
+    # aligned_annotations:
+    #   [{id -> (begin_ts, end_ts, value, svg_ref)}]
+    # reference_annotations:
+    #   [{id -> (reference, value, previous, svg_ref)}]
+    #
+    # - "ts" means timeslot, which references a time value in miliseconds
+    # - "value" is the actual annotation content
+    # - "svg_ref" is an optional reference to an SVG image that is always None in our files
+
+    english_text = list(eaf.tiers[english_tier_name][0].values())
+
+    # collect all glosses in the entire ELAN file
+
+    all_glosses = []
+
+    for hand in ["R", "L"]:
+        hand_tier = hand + "H-IDgloss"
+        if hand_tier not in eaf.tiers:
+            continue
+
+        glosses = {}
+
+        for gloss_id, (start, end, value, _) in eaf.tiers[hand_tier][0].items():
+            glosses[gloss_id] = {"start": timeslots[start],
+                                 "end": timeslots[end],
+                                 "gloss": value,
+                                 "hand": hand}
+
+        all_glosses += list(glosses.values())
+
+    for (start, end, value, _) in english_text:
+        sentence = {"start": timeslots[start],
+                    "end": timeslots[end],
+                    "english": value}
+
+        # Add glosses whose timestamps are within this sentence
+        glosses_in_sentence = [item for item in all_glosses if
+                               item["start"] >= sentence["start"]
+                               and item["end"] <= sentence["end"]]
+
+        sentence["glosses"] = list(sorted(glosses_in_sentence, key=lambda d: d["start"]))
+
+        yield sentence
+
+
+
 if __name__ == "__main__":
+    # running this module as main writes around 6 *.eaf files tot he current directory
+
     BSLCP_USERNAME = os.environ["BSLCP_USERNAME"]
     BSLCP_PASSWORD = os.environ["BSLCP_PASSWORD"]
 
+    base_url = "http://digital-collections.ucl.ac.uk/"
+
     num_example_records = 20
 
-    data = generate_download_links(username=BSLCP_USERNAME, password=BSLCP_PASSWORD, number_of_records=num_example_records)
+    download_links_iterator = generate_download_links(username=BSLCP_USERNAME,
+                                                      password=BSLCP_PASSWORD,
+                                                      number_of_records=num_example_records)
 
     num_records_found = 0
 
-    for datum in data:
-        # look for a record with an ELAN file
-        if "EAF file" not in datum["downloads"].keys():
-            continue
+    for data_per_results_page in download_links_iterator:
 
-        num_records_found += 1
-        print()
-        print(datum)
-        resource_url_elan = datum["downloads"]["EAF file"]
+        for datum in data_per_results_page:
+            # look for a record with an ELAN file
+            if "EAF file" not in datum["downloads"].keys():
+                continue
 
-        executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        download_directory = "/Users/mathiasmuller/Desktop/bslcp_trial"
+            num_records_found += 1
+            print()
 
-        download_with_pyppeteer(resource_url=resource_url_elan,
-                                download_directory=download_directory,
-                                authenticate=False,
-                                headless=False,
-                                executable_path=executable_path)
+            resource_url_elan = datum["downloads"]["EAF file"]
+
+            print("resource_url_elan:")
+            print(resource_url_elan)
+
+            with _stream_file_from_container_url(container_url=resource_url_elan,
+                                                 base_url=base_url,
+                                                 max_retries=5) as (response, iter_content):
+
+                file_name = _get_file_name_bsl_corpus(response)
+                print("File name from response:")
+                print(file_name)
+                print()
+
+                with open(file_name, "wb") as outfile:
+                    for block in iter_content:
+                        outfile.write(block)

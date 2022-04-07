@@ -9,4 +9,4 @@ pytest-cov
 pympi-ling
 Pillow
 opencv-python
-pyppeteer
+requests

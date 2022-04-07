@@ -47,8 +47,9 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
 
     VERSION = tfds.core.Version('1.0.0')
     RELEASE_NOTES = {
-        # unknown if corpus files have release versions
-        '1.0.0': 'Initial release.',
+        # Third release of annotations:
+        # https://bslcorpusproject.org/wp-content/uploads/Notes-to-the-3rd-release-of-BSL-Corpus-annotations.pdf
+        '3.0.0': 'Third release.',
     }
 
     BUILDER_CONFIGS = [
@@ -80,7 +81,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         else:
             register_checksums_path = None
 
-        return bsl_corpus_utils.DownloadManagerWithPyppeteer(
+        return bsl_corpus_utils.DownloadManagerBslCorpus(
             download_dir=download_dir,
             extract_dir=extract_dir,
             manual_dir=manual_dir,
@@ -94,7 +95,8 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
             verify_ssl=download_config.verify_ssl,
             dataset_name=self.name,
             username=self.bslcp_username,
-            password=self.bslcp_password
+            password=self.bslcp_password,
+            max_retries=5
         )
 
     def _info(self) -> tfds.core.DatasetInfo:
@@ -124,29 +126,35 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
 
-        list_of_records = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
+        records_iterator = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
                                                                    password=self.bslcp_password,
-                                                                   number_of_records=40)  # TODO: remove this limit
+                                                                   number_of_records=None,
+                                                                   renew_user_token_every_n_pages=5)  # no limit on num records
 
-        index_data = {}
+        processed_data = {}
 
-        for record in list_of_records:
-            _id = record["record_id"]
-            eaf_url = record["downloads"].get("EAF file", None)
+        for records_per_result_page in records_iterator:
+            index_data = {}
 
-            if eaf_url is None:
-                continue
-            else:
-                datum = {"eaf": eaf_url}
-                index_data[_id] = datum
+            for record in records_per_result_page:
+                _id = record["record_id"]
+                eaf_url = record["downloads"].get("EAF file", None)
 
-        urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
+                if eaf_url is None:
+                    continue
+                else:
+                    datum = {"eaf": eaf_url}
+                    index_data[_id] = datum
 
-        local_paths = dl_manager.download(urls)
+            urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
 
-        processed_data = {
-            _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
-        }
+            local_paths = dl_manager.download(urls)
+
+            processed_data_per_results_page = {
+                _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
+            }
+
+            processed_data.update(processed_data_per_results_page)
 
         return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
