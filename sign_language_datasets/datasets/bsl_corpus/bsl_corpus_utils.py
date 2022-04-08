@@ -17,9 +17,9 @@ from requests.adapters import HTTPAdapter, Retry
 from typing import Optional, List, Dict, Any, Tuple, Iterator, Iterable
 
 
-def login_with_user_token(username: str,
-                          password: str,
-                          base_url: str = "http://digital-collections.ucl.ac.uk/") -> str:
+def login_with_credentials(username: str,
+                           password: str,
+                           base_url: str = "http://digital-collections.ucl.ac.uk/") -> str:
     """
 
     :param username:
@@ -113,7 +113,7 @@ def generate_download_links(username: str,
     """
     if number_of_records is None:
         # do an initial search to find the total number of records
-        user_token = login_with_user_token(username=username, password=password, base_url=base_url)
+        user_token = login_with_credentials(username=username, password=password, base_url=base_url)
 
         # We are logged in, now let's search
         _, search_response_text = get_search_response(user_token=user_token, base_url=base_url)
@@ -124,7 +124,7 @@ def generate_download_links(username: str,
 
         if i == 1 or i % renew_user_token_every_n_pages == 0:
             # generate a new user token for this result page
-            user_token = login_with_user_token(username=username, password=password, base_url=base_url)
+            user_token = login_with_credentials(username=username, password=password, base_url=base_url)
 
             # search again with new user token
             search_url, _ = get_search_response(user_token=user_token, base_url=base_url)

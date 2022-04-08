@@ -100,12 +100,17 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         )
 
     def _info(self) -> tfds.core.DatasetInfo:
-        """Returns the dataset metadata."""
+        """
+        Returns the dataset metadata.
+
+        Note: The corpus has much more metadata about each record. This meta data is currently not exposed
+              in this data loader. See `bsl_corpus_utils._stream_file_from_container_url` which also
+              returns a metadata dictionary.
+        """
         features = {
             "id": tfds.features.Text(),
             "paths": {
-                "eaf_0": tfds.features.Text(),
-                "eaf_1": tfds.features.Text(),
+                "eaf": tfds.features.Sequence(tfds.features.Text(), length=None),
             },
         }
 
@@ -129,7 +134,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
 
         records_iterator = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
                                                                     password=self.bslcp_password,
-                                                                    number_of_records=None, # no limit on num records
+                                                                    number_of_records=None,  # no limit on num records
                                                                     renew_user_token_every_n_pages=5)
 
         processed_data = {}
@@ -141,7 +146,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
                 _id = record["record_id"]
                 eaf_urls = record["downloads"].get("EAF file", None)
 
-                if len(eaf_urls) == 0:
+                if eaf_urls is None or len(eaf_urls) == 0:
                     continue
 
                 for eaf_index, eaf_url in enumerate(eaf_urls):
@@ -165,9 +170,16 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         """ Yields examples. """
 
         for _id, datum in list(data.items()):
+
+            eaf_files_as_list = []
+            eaf_keys = [k for k in datum.keys() if k.startswith("eaf")]
+
+            for eaf_key in sorted(eaf_keys):
+                eaf_files_as_list.append(str(datum[eaf_key]))
+
             features = {
                 "id": _id,
-                "paths": {t: str(datum[t]) if t in datum else "" for t in ["eaf_0", "eaf_1"]},
+                "paths": {"eaf": eaf_files_as_list},
             }
 
             if self._builder_config.include_video:

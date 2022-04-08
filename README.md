@@ -56,7 +56,7 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 | wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None     |
 | msasl              |                                                              |                                                        | None     |
 | Video-Based CSL    |                                                              |                                                        | None     |
-| RVL-SLLL ASL	      |                                                              |                                                        | None     |
+| RVL-SLLL ASL       |                                                              |                                                        | None     |
 | ngt_corpus         | Yes                                                          |                                                        | 3.0.0    |
 | bsl_corpus         | No                                                           | No                                                     | 3.0.0    |
 
