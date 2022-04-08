@@ -104,7 +104,8 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         features = {
             "id": tfds.features.Text(),
             "paths": {
-                "eaf": tfds.features.Text(),
+                "eaf_0": tfds.features.Text(),
+                "eaf_1": tfds.features.Text(),
             },
         }
 
@@ -127,9 +128,9 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
 
         records_iterator = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
-                                                                   password=self.bslcp_password,
-                                                                   number_of_records=None,
-                                                                   renew_user_token_every_n_pages=5)  # no limit on num records
+                                                                    password=self.bslcp_password,
+                                                                    number_of_records=None, # no limit on num records
+                                                                    renew_user_token_every_n_pages=5)
 
         processed_data = {}
 
@@ -138,12 +139,14 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
 
             for record in records_per_result_page:
                 _id = record["record_id"]
-                eaf_url = record["downloads"].get("EAF file", None)
+                eaf_urls = record["downloads"].get("EAF file", None)
 
-                if eaf_url is None:
+                if len(eaf_urls) == 0:
                     continue
-                else:
-                    datum = {"eaf": eaf_url}
+
+                for eaf_index, eaf_url in enumerate(eaf_urls):
+
+                    datum = {"eaf_" + str(eaf_index): eaf_url}
                     index_data[_id] = datum
 
             urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
@@ -164,7 +167,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         for _id, datum in list(data.items()):
             features = {
                 "id": _id,
-                "paths": {t: str(datum[t]) if t in datum else "" for t in ["eaf"]},
+                "paths": {t: str(datum[t]) if t in datum else "" for t in ["eaf_0", "eaf_1"]},
             }
 
             if self._builder_config.include_video:

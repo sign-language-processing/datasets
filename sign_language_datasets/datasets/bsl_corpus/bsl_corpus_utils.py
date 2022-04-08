@@ -147,10 +147,18 @@ def generate_download_links(username: str,
 
             cells = re.findall(r"<TD.*?>(.*?)</TD>", results_page_response[start_section:end_section])
             downloads = re.findall(r"<A.*?open_window_delivery\(\"(.*?)\".*?ALT=\"(.*?)\"", cells[3])
+
+            download_dict = {"Quicktime movie": [], "EAF file": [], "MP4 file": [], "MPEG file": [], "Unknown": []}
+
+            for url, file_type in downloads:
+                download_dict[file_type].append(url.replace("&amp;", "&"))
+
+            record_id = re.search(r">(.*?)<", cells[2]).groups()[0]
+
             datum = {
                 "id": cells[0],
-                "record_id": re.search(r">(.*?)<", cells[2]).groups()[0],
-                "downloads": {k: v.replace("&amp;", "&") for v, k in downloads}
+                "record_id": record_id,
+                "downloads": download_dict
             }
             index_data.append(datum)
 
@@ -220,7 +228,9 @@ def get_metadata_from_response(metadata_response: requests.Response) -> dict:
 def _stream_file_from_container_url(container_url: str,
                                     base_url: str,
                                     max_retries: int = 3,
-                                    **kwargs: Any) -> Iterator[Tuple[downloader.Response, Iterable[bytes]]]:
+                                    **kwargs: Any) -> Iterator[Tuple[downloader.Response,
+                                                                     Dict,
+                                                                     Iterable[bytes]]]:
     """
 
     :param container_url:
@@ -233,6 +243,8 @@ def _stream_file_from_container_url(container_url: str,
                                                                                 base_url=base_url,
                                                                                 max_retries=max_retries)
 
+    metadata = get_metadata_from_response(metadata_response)
+
     main_response_text = main_response.text
 
     # search for copyrights uri in response
@@ -240,7 +252,7 @@ def _stream_file_from_container_url(container_url: str,
 
     if copyrights_uri_search_results is None:
         # assume consent form did not appear
-        yield (main_response, main_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
+        yield (main_response, metadata, main_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
     else:
         # assume consent form did appear
         with requests.Session() as session:
@@ -253,19 +265,24 @@ def _stream_file_from_container_url(container_url: str,
             with session.get(download_url, stream=True, headers={'Cookie': cookie}, **kwargs) as download_response:
                 downloader._assert_status(download_response)
 
-                yield (download_response, download_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
+                yield (download_response, metadata, download_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
 
 
-def _get_file_name_bsl_corpus(response: downloader.Response) -> str:
+def _get_file_name_bsl_corpus(response: downloader.Response, metadata: Dict) -> str:
     """
 
     :param response:
+    :param metadata:
     :return:
     """
-    # alternative way to get file name: with open(metadata["Identifier"] + ".eaf")
-    file_name = re.search(r'filename=%22(.*?)%22', response.headers['Content-Disposition']).groups()[0]
+    response_file_name = re.search(r'filename=%22(.*?)%22', response.headers['Content-Disposition']).groups()[0]
 
-    return file_name
+    # return the response filename because in many cases the metadata filename is incorrect:
+    # a) Identifier is not really the file name, especially if there are several ELAN files for a single identifier
+    # b) instead of the identifier what is stored is the date, while in the "date" field some other information
+    #    is stored, such as "Mini-DVD". Example: M20c
+
+    return response_file_name
 
 
 # noinspection PyProtectedMember
@@ -313,8 +330,9 @@ class _BslCorpusDownloader(downloader._Downloader):
         with _stream_file_from_container_url(container_url=url,
                                              base_url=self.base_url,
                                              max_retries=self.max_retries,
-                                             verify=verify) as (response, iter_content):
-            fname = _get_file_name_bsl_corpus(response)
+                                             verify=verify) as (response, metadata, iter_content):
+            # fname = downloader._get_filename(response)
+            fname = _get_file_name_bsl_corpus(response, metadata)
             path = os.path.join(destination_path, fname)
             size = 0
 
@@ -442,7 +460,7 @@ def get_elan_sentences_bsl_corpus(elan_path: str) -> Iterator:
 
 
 if __name__ == "__main__":
-    # running this module as main writes around 6 *.eaf files tot he current directory
+    # running this module as main writes around 6 *.eaf files to the current directory
 
     BSLCP_USERNAME = os.environ["BSLCP_USERNAME"]
     BSLCP_PASSWORD = os.environ["BSLCP_PASSWORD"]
@@ -455,8 +473,6 @@ if __name__ == "__main__":
                                                       password=BSLCP_PASSWORD,
                                                       number_of_records=num_example_records)
 
-    num_records_found = 0
-
     for data_per_results_page in download_links_iterator:
 
         for datum in data_per_results_page:
@@ -464,23 +480,14 @@ if __name__ == "__main__":
             if "EAF file" not in datum["downloads"].keys():
                 continue
 
-            num_records_found += 1
-            print()
-
-            resource_url_elan = datum["downloads"]["EAF file"]
-
-            print("resource_url_elan:")
-            print(resource_url_elan)
+            resource_url_elan = datum["downloads"]["EAF file"][0]
 
             with _stream_file_from_container_url(container_url=resource_url_elan,
                                                  base_url=base_url,
-                                                 max_retries=5) as (response, iter_content):
+                                                 max_retries=5) as (response, metadata, iter_content):
 
-                file_name = _get_file_name_bsl_corpus(response)
-                print("File name from response:")
-                print(file_name)
-                print()
-
+                file_name = _get_file_name_bsl_corpus(response, metadata)
+                print("Found %s" % file_name)
                 with open(file_name, "wb") as outfile:
                     for block in iter_content:
                         outfile.write(block)
