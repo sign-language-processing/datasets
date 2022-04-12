@@ -38,7 +38,7 @@ def get_elan_sentences(elan_path: str):
             sentence = {"participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
 
             # Add English sentence
-            english_sentence = [val for (s2, e2, val2, _) in english_text if s == s2 and e == e2]
+            english_sentence = [val2 for (s2, e2, val2, _) in english_text if s == s2 and e == e2]
             sentence["english"] = english_sentence[0] if len(english_sentence) > 0 else None
 
             # Add glosses
