@@ -212,7 +212,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
                 # make sure that the video fps is as expected
 
-                for video_path in videos:
+                for video_path in videos.values():
                     if video_path == "":
                         continue
 
