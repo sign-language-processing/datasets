@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import cv2
 
 import numpy as np
 import tensorflow as tf
@@ -208,7 +209,19 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             if self._builder_config.include_video:
                 videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}
 
-                features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
+                fps_expected_by_loader = self._builder_config.fps if self._builder_config.fps is not None else default_fps
+
+                for video_path in videos:
+                    if video_path == "":
+                        continue
+
+                    # make sure that the video fps is as expected
+                    actual_video_fps = cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS)
+
+                    assert actual_video_fps == fps_expected_by_loader, \
+                        "Framerate of video '%s' is %f instead of %d" % (video_path, actual_video_fps, fps_expected_by_loader)
+
+                features["fps"] = fps_expected_by_loader
                 features["paths"]["videos"] = videos
                 if self._builder_config.process_video:
                     features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
