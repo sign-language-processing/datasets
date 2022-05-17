@@ -218,7 +218,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     # make sure that the video fps is as expected
                     actual_video_fps = cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS)
 
-                    assert actual_video_fps == fps_expected_by_loader, \
+                    assert actual_video_fps == float(fps_expected_by_loader), \
                         "Framerate of video '%s' is %f instead of %d" % (video_path, actual_video_fps, fps_expected_by_loader)
 
                 features["fps"] = fps_expected_by_loader
