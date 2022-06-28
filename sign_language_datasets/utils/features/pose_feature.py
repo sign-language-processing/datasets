@@ -68,7 +68,7 @@ class PoseFeature(feature.FeatureConnector):
       ```
     """
 
-    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1):
+    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1, dtype=tf.float32):
         """Construct the connector.
 
         Args:
@@ -90,6 +90,7 @@ class PoseFeature(feature.FeatureConnector):
         """
         # Set and validate values
         self._shape = shape or (None, None, None, 3)
+        self._dtype = dtype
         self._encoding_format = encoding_format or "pose"
 
         assert int(stride) == stride, "Video fps must be divisible by custom fps, when loading poses"
@@ -106,8 +107,8 @@ class PoseFeature(feature.FeatureConnector):
         # Image is returned as a 3-d uint8 tf.Tensor.
         conf_shape = tuple(list(self._shape)[:3])
         return {
-            "data": feature.TensorInfo(shape=self._shape, dtype=tf.float32),
-            "conf": feature.TensorInfo(shape=conf_shape, dtype=tf.float32),
+            "data": feature.TensorInfo(shape=self._shape, dtype=self._dtype),
+            "conf": feature.TensorInfo(shape=conf_shape, dtype=self._dtype),
             "fps": feature.TensorInfo(shape=(), dtype=tf.int32),
         }
 
