@@ -6,10 +6,13 @@ from os import path
 import requests
 import tensorflow_datasets as tfds
 import tensorflow as tf
+from pose_format import Pose
+from pose_format.numpy import NumPyPoseBody
 from tensorflow.python.platform.gfile import GFile
 
 from sign_language_datasets.utils.features import PoseFeature
-from .utils import get_framerate, read_mediapipe_surrey_format, read_openpose_surrey_format, reduce_pose_people
+from .utils import get_framerate, read_mediapipe_surrey_format, read_openpose_surrey_format, reduce_pose_people, \
+    convert_srt_time_to_frame
 
 from ...datasets import SignDatasetConfig
 import srt
@@ -93,11 +96,11 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
             "id": tfds.features.Text(),
             "source": tfds.features.Text(),  # srf|focusnews
             "fps": tf.int32,
-            "subtitles": tfds.features.Sequence({
+            "subtitle": {
+                "text": tfds.features.Text(),
                 "start": tfds.features.Text(),
                 "end": tfds.features.Text(),
-                "text": tfds.features.Text(),
-            }),
+            }
         }
 
         # Add poses if requested
@@ -111,10 +114,11 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
             else:
                 raise Exception("Unknown pose format")
 
-            features["pose"] = PoseFeature(shape=pose_shape, dtype=tf.float16)
+            features["pose"] = PoseFeature(shape=pose_shape)
 
         if self._builder_config.process_video:
             features["video"] = self._builder_config.video_feature((720, 640))
+            raise Exception("Video processing is not currently supported")
         else:
             features["video"] = tfds.features.Text()
 
@@ -185,33 +189,54 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
             for name in names:
                 video_path = path.join(directories['videos'], f'{name}.mp4')
                 subtitles_path = path.join(directories['subtitles'], f'{name}.srt')
-                openpose_path = path.join(directories['openpose'], f'{name}.openpose.tar.xz')
-                mediapipe_path = path.join(directories['mediapipe'], f'{name}.mediapipe.tar.xz')
 
-                datum = {
-                    "id": name,
-                    "source": dataset_id,
-                    "fps": get_framerate(video_path),
-                    "video": video_path
-                }
+                fps = get_framerate(video_path)
+
+                # # Load video
+                # video = None
+                # if self.builder_config.process_video:
+                #     video =
+
+                # Load poses
+                pose = None
+                if self.builder_config.include_pose is not None:
+                    if self.builder_config.include_pose == "openpose":
+                        openpose_path = path.join(directories['openpose'], f'{name}.openpose.tar.xz')
+                        pose = read_openpose_surrey_format(openpose_path, fps)
+
+                    if self.builder_config.include_pose == "holistic":
+                        mediapipe_path = path.join(directories['mediapipe'], f'{name}.mediapipe.tar.xz')
+                        pose = read_mediapipe_surrey_format(mediapipe_path, fps)
+
+                    reduce_pose_people(pose)
 
                 with GFile(subtitles_path, "r") as f:
                     subtitles = srt.parse(f.read())
-                    datum["subtitles"] = [{
-                        "start": str(s.start),
-                        "end": str(s.end),
-                        "text": s.content
-                    } for s in subtitles]
 
-                if self.builder_config.include_pose is not None:
-                    if self.builder_config.include_pose == "openpose":
-                        datum["pose"] = read_openpose_surrey_format(openpose_path, datum["fps"])
+                for i, s in enumerate(subtitles):
+                    datum = {
+                        "id": f'{name}_{i}',
+                        "source": dataset_id,
+                        "fps": fps,
+                        "subtitle": {
+                            "start": str(s.start),
+                            "end": str(s.end),
+                            "text": s.content
+                        }
+                    }
 
-                    if self.builder_config.include_pose == "holistic":
-                        datum["pose"] = read_mediapipe_surrey_format(mediapipe_path, datum["fps"])
-                        with open('holistic.poseheader', 'wb') as f:
-                            datum["pose"].header.write(f)
+                    frame_start = convert_srt_time_to_frame(s.start, fps)
+                    frame_end = convert_srt_time_to_frame(s.end, fps)
 
-                    reduce_pose_people(datum["pose"])
+                    if self.builder_config.process_video:
+                        pass  # TODO get the relevant video frames
+                    else:
+                        datum["video"] = video_path
 
-                yield datum["id"], datum
+                    if pose is not None:
+                        new_pose_data = pose.body.data[frame_start:frame_end]
+                        new_pose_confidence = pose.body.confidence[frame_start:frame_end]
+                        new_pose_body = NumPyPoseBody(data=new_pose_data, confidence=new_pose_confidence, fps=fps)
+                        datum["pose"] = Pose(header=pose.header, body=new_pose_body)
+
+                    yield datum["id"], datum
