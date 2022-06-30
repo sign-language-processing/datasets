@@ -1,5 +1,11 @@
 # WMT-SLT
 
+Until [merged by `tfds`](https://github.com/tensorflow/datasets/pull/3988), please install our branch, supporting authentication in datasets:
+```bash
+pip install git+ssh://git@github.com:AmitMY/datasets-1.git
+```
+
+
 ```py
 
 import tensorflow_datasets as tfds
