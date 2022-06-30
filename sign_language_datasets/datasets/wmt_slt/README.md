@@ -38,8 +38,8 @@ wmtslt = tfds.load(name='wmtslt', builder_kwargs={"config": config, **TOKENS})
 
 decode_str = lambda s: s.numpy().decode('utf-8')
 for datum in itertools.islice(wmtslt["train"], 0, 10):
-    first_subtitle = datum['subtitles'][0]
-    print(decode_str(first_subtitle['start']), '-', decode_str(first_subtitle['end']))
-    print(decode_str(first_subtitle['content']), '\n')
+    subtitle = datum['subtitle']
+    print(decode_str(subtitle['start']), '-', decode_str(subtitle['end']))
+    print(decode_str(subtitle['text']), '\n')
 
 ```
