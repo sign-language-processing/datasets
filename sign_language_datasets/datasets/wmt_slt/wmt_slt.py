@@ -11,7 +11,7 @@ from pose_format.numpy import NumPyPoseBody
 from tensorflow.python.platform.gfile import GFile
 
 from sign_language_datasets.utils.features import PoseFeature
-from .utils import get_framerate, read_mediapipe_surrey_format, read_openpose_surrey_format, reduce_pose_people, \
+from .utils import get_video_metadata, read_mediapipe_surrey_format, read_openpose_surrey_format, reduce_pose_people, \
     convert_srt_time_to_frame
 
 from ...datasets import SignDatasetConfig
@@ -105,8 +105,6 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
 
         # Add poses if requested
         if self._builder_config.include_pose is not None:
-            pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
-
             if self._builder_config.include_pose == "openpose":
                 pose_shape = (None, 1, 135, 2)
             elif self._builder_config.include_pose == "holistic":
@@ -190,7 +188,10 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
                 video_path = path.join(directories['videos'], f'{name}.mp4')
                 subtitles_path = path.join(directories['subtitles'], f'{name}.srt')
 
-                fps = get_framerate(video_path)
+                video_metadata = get_video_metadata(video_path)
+                fps = video_metadata["fps"]
+                width = video_metadata["width"]
+                height = video_metadata["height"]
 
                 # # Load video
                 # video = None
@@ -202,11 +203,11 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
                 if self.builder_config.include_pose is not None:
                     if self.builder_config.include_pose == "openpose":
                         openpose_path = path.join(directories['openpose'], f'{name}.openpose.tar.xz')
-                        pose = read_openpose_surrey_format(openpose_path, fps)
+                        pose = read_openpose_surrey_format(openpose_path, fps=fps, width=width, height=height)
 
                     if self.builder_config.include_pose == "holistic":
                         mediapipe_path = path.join(directories['mediapipe'], f'{name}.mediapipe.tar.xz')
-                        pose = read_mediapipe_surrey_format(mediapipe_path, fps)
+                        pose = read_mediapipe_surrey_format(mediapipe_path, fps=fps, width=width, height=height)
 
                     reduce_pose_people(pose)
 

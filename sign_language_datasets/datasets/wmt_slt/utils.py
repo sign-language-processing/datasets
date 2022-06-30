@@ -5,6 +5,8 @@ https://github.com/bricksdont/sign-sockeye-baselines/blob/f056c50765bf5f08841959
 
 import os
 import datetime
+from typing import Dict
+
 import cv2
 import tarfile
 import tempfile
@@ -18,7 +20,6 @@ from pose_format.pose_header import PoseHeaderDimensions
 from pose_format.utils.openpose_135 import load_openpose_135_directory
 from pose_format.utils.holistic import holistic_components
 from pose_format.utils.openpose import load_frames_directory_dict
-
 
 mp_holistic = mp.solutions.holistic
 FACEMESH_CONTOURS_POINTS = [str(p) for p in
@@ -36,7 +37,7 @@ def extract_tar_xz_file(filepath: str, target_dir: str):
         tar_handle.extractall(path=target_dir)
 
 
-def read_openpose_surrey_format(filepath: str, fps: int) -> Pose:
+def read_openpose_surrey_format(filepath: str, fps: int, width: int, height: int) -> Pose:
     """
     Read files of the form "focusnews.071.openpose.tar.xz".
     Assumes a 135 keypoint Openpose model.
@@ -52,13 +53,13 @@ def read_openpose_surrey_format(filepath: str, fps: int) -> Pose:
         openpose_dir = os.path.join(tmpdir_name, "openpose")
 
         # load directory
-        poses = load_openpose_135_directory(directory=openpose_dir, fps=fps)
+        poses = load_openpose_135_directory(directory=openpose_dir, fps=fps, width=width, height=height)
 
     return poses
 
 
-def formatted_holistic_pose():
-    dimensions = PoseHeaderDimensions(width=1000, height=1000, depth=1000)
+def formatted_holistic_pose(width=1000, height=1000):
+    dimensions = PoseHeaderDimensions(width=width, height=height, depth=width)
     header = PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10))
     body = NumPyPoseBody(fps=10,
                          data=np.zeros(shape=(1, 1, header.total_points(), 3)),
@@ -68,7 +69,7 @@ def formatted_holistic_pose():
                                {"FACE_LANDMARKS": FACEMESH_CONTOURS_POINTS})
 
 
-def load_mediapipe_directory(directory: str, fps: float = 24) -> Pose:
+def load_mediapipe_directory(directory: str, fps: int, width: int, height: int) -> Pose:
     """
 
     :param directory:
@@ -85,6 +86,7 @@ def load_mediapipe_directory(directory: str, fps: float = 24) -> Pose:
             if len(points) == 0:
                 points = [[0, 0, 0, 0] for _ in range(num_points)]
             return np.array([[x, y, z] for x, y, z, c in points]), np.array([c for x, y, z, c in points])
+
         face_data, face_confidence = load_landmarks("face_landmarks", 128)
         body_data, body_confidence = load_landmarks("pose_landmarks", 33)
         lh_data, lh_confidence = load_landmarks("left_hand_landmarks", 21)
@@ -103,14 +105,14 @@ def load_mediapipe_directory(directory: str, fps: float = 24) -> Pose:
             pose_body_conf[frame_id][0] = conf
         return NumPyPoseBody(data=pose_body_data, confidence=pose_body_conf, fps=fps)
 
-    pose = formatted_holistic_pose()
+    pose = formatted_holistic_pose(width=width, height=height)
 
     pose.body = load_mediapipe_frames()
 
     return pose
 
 
-def read_mediapipe_surrey_format(filepath: str, fps: int) -> Pose:
+def read_mediapipe_surrey_format(filepath: str, fps: int, width: int, height: int) -> Pose:
     """
     Read files of the form "focusnews.103.mediapipe.tar.xz"
     """
@@ -119,25 +121,28 @@ def read_mediapipe_surrey_format(filepath: str, fps: int) -> Pose:
         extract_tar_xz_file(filepath=filepath, target_dir=tmpdir_name)
         poses_dir = os.path.join(tmpdir_name, "poses")
         # load directory
-        pose = load_mediapipe_directory(directory=poses_dir, fps=fps)
+        pose = load_mediapipe_directory(directory=poses_dir, fps=fps, width=width, height=height)
     return pose
 
 
-
-def get_framerate(filename: str) -> int:
+def get_video_metadata(filename: str) -> Dict[str, int]:
     """
-    Get framerate from mp4 video.
+    Get metadata from mp4 video.
 
     :param filename:
     :return:
     """
     cap = cv2.VideoCapture(filename)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
 
-    return int(fps)
-
+    return {
+        "fps": fps,
+        "width": width,
+        "height": height
+    }
 
 
 def milliseconds_to_frame_index(milliseconds: int, fps: int) -> int:
