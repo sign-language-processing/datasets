@@ -5,6 +5,11 @@ Until [merged by `tfds`](https://github.com/tensorflow/datasets/pull/3988), plea
 pip install git+ssh://git@github.com:AmitMY/datasets-1.git
 ```
 
+Then install conditional dependencies:
+
+```bash
+pip install srt mediapipe
+```
 
 ```py
 

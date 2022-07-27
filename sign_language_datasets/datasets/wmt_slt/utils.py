@@ -12,7 +12,6 @@ import tarfile
 import tempfile
 
 import numpy as np
-import mediapipe as mp
 
 from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
@@ -20,10 +19,6 @@ from pose_format.pose_header import PoseHeaderDimensions
 from pose_format.utils.openpose_135 import load_openpose_135_directory
 from pose_format.utils.holistic import holistic_components
 from pose_format.utils.openpose import load_frames_directory_dict
-
-mp_holistic = mp.solutions.holistic
-FACEMESH_CONTOURS_POINTS = [str(p) for p in
-                            sorted(set([p for p_tup in list(mp_holistic.FACEMESH_CONTOURS) for p in p_tup]))]
 
 
 def extract_tar_xz_file(filepath: str, target_dir: str):
@@ -59,6 +54,19 @@ def read_openpose_surrey_format(filepath: str, fps: int, width: int, height: int
 
 
 def formatted_holistic_pose(width=1000, height=1000):
+
+    try:
+        import mediapipe as mp
+
+    except ImportError:
+        raise ImportError(
+            "Please install mediapipe with: pip install mediapipe"
+        )
+
+    mp_holistic = mp.solutions.holistic
+    FACEMESH_CONTOURS_POINTS = [str(p) for p in
+                                sorted(set([p for p_tup in list(mp_holistic.FACEMESH_CONTOURS) for p in p_tup]))]
+
     dimensions = PoseHeaderDimensions(width=width, height=height, depth=width)
     header = PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10))
     body = NumPyPoseBody(fps=10,
