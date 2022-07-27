@@ -17,7 +17,6 @@ from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
 from pose_format.pose_header import PoseHeaderDimensions
 from pose_format.utils.openpose_135 import load_openpose_135_directory
-from pose_format.utils.holistic import holistic_components
 from pose_format.utils.openpose import load_frames_directory_dict
 
 
@@ -57,6 +56,7 @@ def formatted_holistic_pose(width=1000, height=1000):
 
     try:
         import mediapipe as mp
+        from pose_format.utils.holistic import holistic_components
 
     except ImportError:
         raise ImportError(
