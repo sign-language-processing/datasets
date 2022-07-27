@@ -15,7 +15,6 @@ from .utils import get_video_metadata, read_mediapipe_surrey_format, read_openpo
     convert_srt_time_to_frame
 
 from ...datasets import SignDatasetConfig
-import srt
 
 _DESCRIPTION = """
 These are Standard German daily news (Tagesschau) and Swiss German weather forecast (Meteo) episodes broadcast and interpreted into Swiss German Sign Language by hearing interpreters (among them, children of Deaf adults, CODA) via Swiss National TV (Schweizerisches Radio und Fernsehen, SRF) (https://www.srf.ch/play/tv/sendung/tagesschau-in-gebaerdensprache?id=c40bed81-b150-0001-2b5a-1e90e100c1c0). For a more extended description of the data, visit https://www.wmt-slt.com/data.
@@ -181,6 +180,14 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
 
     def _generate_examples(self, datasets):
         """Yields examples."""
+
+        try:
+            import srt
+
+        except ImportError:
+            raise ImportError(
+                "Please install srt with: pip install srt"
+            )
 
         for dataset_id, directories in datasets.items():
             names = [n[:-len('.mp4')] for n in os.listdir(directories['videos'])]

@@ -5,10 +5,8 @@ tfds-nightly
 tensorflow>=2.4.0
 numpy
 pytest
-mediapipe
 pytest-cov
 pympi-ling
 Pillow
 opencv-python==4.5.5.64
 requests
-srt
