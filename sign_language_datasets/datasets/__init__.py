@@ -2,6 +2,7 @@ from .aslg_pc12 import AslgPc12
 from .autsl import AUTSL
 from .chicagofswild import ChicagoFSWild
 from .config import SignDatasetConfig
+from .dgs_types import DgsTypes
 from .dgs_corpus import DgsCorpus
 from .dicta_sign import DictaSign
 from .how2sign import How2Sign
