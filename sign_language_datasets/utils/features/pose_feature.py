@@ -7,6 +7,7 @@ from pose_format import Pose, PoseHeader
 from pose_format.numpy.pose_body import NumPyPoseBody
 from pose_format.utils.reader import BufferReader
 from tensorflow_datasets.core.features import feature
+from tensorflow_datasets.core.features.feature import Documentation
 from tensorflow_datasets.core.utils import type_utils, Json
 
 
@@ -68,7 +69,7 @@ class PoseFeature(feature.FeatureConnector):
       ```
     """
 
-    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1):
+    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1, dtype=tf.float32):
         """Construct the connector.
 
         Args:
@@ -90,7 +91,10 @@ class PoseFeature(feature.FeatureConnector):
         """
         # Set and validate values
         self._shape = shape or (None, None, None, 3)
+        self._dtype = dtype
         self._encoding_format = encoding_format or "pose"
+
+        self._doc = Documentation()
 
         assert int(stride) == stride, "Video fps must be divisible by custom fps, when loading poses"
         self.stride = int(stride)
@@ -106,8 +110,8 @@ class PoseFeature(feature.FeatureConnector):
         # Image is returned as a 3-d uint8 tf.Tensor.
         conf_shape = tuple(list(self._shape)[:3])
         return {
-            "data": feature.TensorInfo(shape=self._shape, dtype=tf.float32),
-            "conf": feature.TensorInfo(shape=conf_shape, dtype=tf.float32),
+            "data": feature.TensorInfo(shape=self._shape, dtype=self._dtype),
+            "conf": feature.TensorInfo(shape=conf_shape, dtype=self._dtype),
             "fps": feature.TensorInfo(shape=(), dtype=tf.int32),
         }
 
@@ -169,6 +173,10 @@ class PoseFeature(feature.FeatureConnector):
         return cls(shape=shape, encoding_format=encoding_format)
 
     def to_json_content(self) -> Json:
+        print("to_json_content", {
+            "shape": list(self._shape),
+            "encoding_format": self._encoding_format,
+        })
         return {
             "shape": list(self._shape),
             "encoding_format": self._encoding_format,

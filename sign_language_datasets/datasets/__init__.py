@@ -14,3 +14,4 @@ from .swojs_glossario import SwojsGlossario
 from .wlasl import Wlasl
 from .ngt_corpus import NGTCorpus
 from .bsl_corpus import BslCorpus
+from .wmt_slt import WMTSLT
