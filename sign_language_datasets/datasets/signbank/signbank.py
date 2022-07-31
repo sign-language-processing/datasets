@@ -22,6 +22,11 @@ the ISWA 2010 Font Reference Library and the RAND Keyboard for SignWriting.
 _CITATION = """
 """
 
+
+def is_signwriting(fsw: str) -> bool:
+    return bool(re.match(r'[A]?[abcdef0-9S]*?([BLMR])(\d{3})x(\d{3})', fsw))
+
+
 PUDDLES = {
     2: ["my", "mm"],  # Myanmar Dictionary",
     4: ["en", "us"],  # Dictionary US",
@@ -189,7 +194,7 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
             "country_code": tfds.features.Text(),
             "created_date": tfds.features.Text(),
             "modified_date": tfds.features.Text(),
-            "sign_writing": tfds.features.Text(),
+            "sign_writing": tfds.features.Sequence(tfds.features.Text()),
             "terms": tfds.features.Sequence(tfds.features.Text()),
             "user": tfds.features.Text(),
         }
@@ -238,8 +243,15 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
                     usr = child.attrib['usr'] if 'usr' in child.attrib else ''
                     texts = [c.text for c in child.getchildren() if c.tag != "src" and c.text is not None]
 
+                    signwriting_texts = []
+                    spoken_texts = []
+                    for text in texts:
+                        if is_signwriting(text):
+                            signwriting_texts.append(text)
+                        else:
+                            spoken_texts.append(text)
+
                     # print(child.attrib)
-                    # print(texts)
                     if len(texts) > 0:
                         sample_id = "_".join([str(puddle), _id, str(i)])
                         assumed_spoken_language_code, country_code = PUDDLES[puddle] if puddle in PUDDLES else ["", ""]
@@ -251,7 +263,7 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
                             'country_code': country_code,
                             "created_date": str(datetime.fromtimestamp(cdt)),
                             "modified_date": str(datetime.fromtimestamp(mdt)),
-                            "sign_writing": texts[0],
-                            "terms": texts[1:],
+                            "sign_writing": signwriting_texts,
+                            "terms": spoken_texts,
                             "user": usr
                         }
