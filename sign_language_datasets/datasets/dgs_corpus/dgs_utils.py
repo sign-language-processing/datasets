@@ -1,7 +1,7 @@
 import pympi
 
 
-def get_elan_sentences(elan_path: str, use_mouthing_tier: bool = False):
+def get_elan_sentences(elan_path: str):
 
     eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
@@ -33,14 +33,19 @@ def get_elan_sentences(elan_path: str, use_mouthing_tier: bool = False):
                     if ref in gloss:  # 2 files have a missing reference
                         gloss[ref][tier] = val
 
-            if use_mouthing_tier:
-                tier_name = "Mundbild_Mundgestik_" + participant
-                items = eaf.tiers[tier_name][1]
-                for ref, val, _1, _2 in items.values():
-                    if ref in gloss:
-                        gloss[ref]["Mundbild_Mundgestik"] = val
-
             all_glosses += list(gloss.values())
+
+        all_mouthings = []
+
+        tier_name = "Mundbild_Mundgestik_" + participant
+        items = eaf.tiers[tier_name][0]
+
+        # structure of entries:
+        # {'a2768296': ('ts42', 'ts43', 'tochter', None), ... }
+
+        for s, e, val, _ in items.values():
+            mouthing_entry = {"start": timeslots[s], "end": timeslots[e], "mouthing": val}
+            all_mouthings.append(mouthing_entry)
 
         for (s, e, val, _) in german_text:
             sentence = {"participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
@@ -53,6 +58,14 @@ def get_elan_sentences(elan_path: str, use_mouthing_tier: bool = False):
             sentence["glosses"] = list(
                 sorted(
                     [item for item in all_glosses if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]],
+                    key=lambda d: d["start"],
+                )
+            )
+
+            # add mouthings
+            sentence["mouthings"] = list(
+                sorted(
+                    [item for item in all_mouthings if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]],
                     key=lambda d: d["start"],
                 )
             )
