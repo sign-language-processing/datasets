@@ -1,7 +1,8 @@
 import pympi
 
 
-def get_elan_sentences(elan_path: str):
+def get_elan_sentences(elan_path: str, use_mouthing_tier: bool = False):
+
     eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
     timeslots = eaf.timeslots
@@ -31,6 +32,13 @@ def get_elan_sentences(elan_path: str):
                 for ref, val, _1, _2 in items.values():
                     if ref in gloss:  # 2 files have a missing reference
                         gloss[ref][tier] = val
+
+            if use_mouthing_tier:
+                tier_name = "Mundbild_Mundgestik_" + participant
+                items = eaf.tiers[tier_name][1]
+                for ref, val, _1, _2 in items.values():
+                    if ref in gloss:
+                        gloss[ref]["Mundbild_Mundgestik"] = val
 
             all_glosses += list(gloss.values())
 
