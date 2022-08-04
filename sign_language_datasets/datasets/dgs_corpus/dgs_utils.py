@@ -2,6 +2,7 @@ import pympi
 
 
 def get_elan_sentences(elan_path: str):
+
     eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
     timeslots = eaf.timeslots
@@ -34,6 +35,18 @@ def get_elan_sentences(elan_path: str):
 
             all_glosses += list(gloss.values())
 
+        all_mouthings = []
+
+        tier_name = "Mundbild_Mundgestik_" + participant
+        items = eaf.tiers[tier_name][0]
+
+        # structure of entries:
+        # {'a2768296': ('ts42', 'ts43', 'tochter', None), ... }
+
+        for s, e, val, _ in items.values():
+            mouthing_entry = {"start": timeslots[s], "end": timeslots[e], "mouthing": val}
+            all_mouthings.append(mouthing_entry)
+
         for (s, e, val, _) in german_text:
             sentence = {"participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
 
@@ -45,6 +58,14 @@ def get_elan_sentences(elan_path: str):
             sentence["glosses"] = list(
                 sorted(
                     [item for item in all_glosses if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]],
+                    key=lambda d: d["start"],
+                )
+            )
+
+            # add mouthings
+            sentence["mouthings"] = list(
+                sorted(
+                    [item for item in all_mouthings if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]],
                     key=lambda d: d["start"],
                 )
             )
