@@ -7,7 +7,7 @@ import tensorflow_datasets as tfds
 
 from ...datasets import SignDatasetConfig
 import urllib.request
-from cv2 import cv2
+import cv2
 
 from ...utils.signwriting.ocr import image_to_fsw
 

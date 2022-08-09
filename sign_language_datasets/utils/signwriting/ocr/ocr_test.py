@@ -1,7 +1,7 @@
 """ocr tests"""
 import os
 from unittest import TestCase
-from cv2 import cv2
+import cv2
 
 from sign_language_datasets.utils.signwriting.ocr import image_to_fsw
 

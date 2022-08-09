@@ -7,7 +7,7 @@ from typing import List
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-from cv2 import cv2
+import cv2
 from PIL import Image, ImageDraw, ImageFont
 import os
 
