@@ -10,7 +10,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
-from typing import Dict, Any, Set, Optional
+from typing import Dict, Any, Set, Optional, List
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
@@ -102,24 +102,28 @@ def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
     return poses
 
 
-def load_split(split_name: str) -> Dict[str, str]:
+def load_split(split_name: str) -> Dict[str, List[str]]:
     """
+    Loads a split from the file system. What is loaded must be a JSON object with the following structure:
 
-    :param split_name:
-    :return:
+    {"train": ..., "dev": ..., "test": ...}
+
+    :param split_name: An identifier for a predefined split or a filepath to a custom split file.
+    :return: The split loaded as a dictionary.
     """
     if split_name not in _KNOWN_SPLITS.keys():
-        if not path.exists(split_name):
-            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either." % split_name)
-
         # assume that the supplied string is a path on the file system
+        if not path.exists(split_name):
+            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either.\n"
+                             "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS)))
+
         split_path = split_name
     else:
         # the supplied string is an identifier for a predefined split
         split_path = _KNOWN_SPLITS[split_name]
 
     with open(split_path) as infile:
-        split = json.load(infile)  # type: Dict[str, str]
+        split = json.load(infile)  # type: Dict[str, List[str]]
 
     return split
 
