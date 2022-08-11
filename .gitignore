@@ -10,3 +10,4 @@ sign_language_datasets/datasets/ncslgr
 build/
 dist/
 sign_language_datasets.egg-info/
+.DS_Store

@@ -44,6 +44,10 @@ _POSE_HEADERS = {
     "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.poseheader"),
 }
 
+_KNOWN_SPLITS = {
+    "3.0.0-uzh-document": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-document.json"),
+}
+
 
 def convert_dgs_dict_to_openpose_frames(input_dict: Dict[str, Any]) -> OpenPoseFrames:
     """
@@ -96,6 +100,20 @@ def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
         poses[person] = load_openpose(frames, fps=fps, width=width, height=height, depth=0, num_frames=num_frames)
 
     return poses
+
+
+def load_split(split_name: str) -> Dict[str, str]:
+    """
+
+    :param split_name:
+    :return:
+    """
+    if split_name not in _KNOWN_SPLITS.keys():
+        raise ValueError("Split '%s' is not a known data split." % split_name)
+
+    split = json.load(_KNOWN_SPLITS[split_name])  # type: Dict[str, str]
+
+    return split
 
 
 class DgsCorpus(tfds.core.GeneratorBasedBuilder):
@@ -193,7 +211,19 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
         }
 
-        return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
+        if self._builder_config.split is not None:
+            split = load_split(self._builder_config.split)
+
+            train_data = {key: value for key, value in processed_data.items() if key in split["train"]}
+            dev_data = {key: value for key, value in processed_data.items() if key in split["dev"]}
+            test_data = {key: value for key, value in processed_data.items() if key in split["test"]}
+
+            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": train_data}),
+                    tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"data": dev_data}),
+                    tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"data": test_data})]
+
+        else:
+            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
     def _generate_examples(self, data):
         """ Yields examples. """
