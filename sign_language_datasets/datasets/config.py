@@ -14,6 +14,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         include_pose: Optional[str] = None,
         fps: Optional[float] = None,
         resolution: Optional[Tuple[int, int]] = None,
+        split: Optional[str] = None,
         extra: dict = {},
         **kwargs,
     ):
@@ -24,6 +25,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
           include_pose: str, what pose data to include.
           fps: float, what pose data to include.
           resolution: (int, int), what resolution of videos to load.
+          split: specify a known split identifier (optional)
           **kwargs: keyword arguments forwarded to super.
         """
         super(SignDatasetConfig, self).__init__(**kwargs)
@@ -33,6 +35,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
 
         self.fps = fps
         self.resolution = resolution
+        self.split = split
         self.extra = extra
 
     def ffmpeg_args(self):

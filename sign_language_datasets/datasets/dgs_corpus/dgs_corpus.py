@@ -10,7 +10,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
-from typing import Dict, Any, Set, Optional
+from typing import Dict, Any, Set, Optional, List
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
@@ -42,6 +42,10 @@ INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/dgs.json"
 _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
     "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.poseheader"),
+}
+
+_KNOWN_SPLITS = {
+    "3.0.0-uzh-document": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-document.json"),
 }
 
 
@@ -96,6 +100,32 @@ def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
         poses[person] = load_openpose(frames, fps=fps, width=width, height=height, depth=0, num_frames=num_frames)
 
     return poses
+
+
+def load_split(split_name: str) -> Dict[str, List[str]]:
+    """
+    Loads a split from the file system. What is loaded must be a JSON object with the following structure:
+
+    {"train": ..., "dev": ..., "test": ...}
+
+    :param split_name: An identifier for a predefined split or a filepath to a custom split file.
+    :return: The split loaded as a dictionary.
+    """
+    if split_name not in _KNOWN_SPLITS.keys():
+        # assume that the supplied string is a path on the file system
+        if not path.exists(split_name):
+            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either.\n"
+                             "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS)))
+
+        split_path = split_name
+    else:
+        # the supplied string is an identifier for a predefined split
+        split_path = _KNOWN_SPLITS[split_name]
+
+    with open(split_path) as infile:
+        split = json.load(infile)  # type: Dict[str, List[str]]
+
+    return split
 
 
 class DgsCorpus(tfds.core.GeneratorBasedBuilder):
@@ -193,7 +223,19 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
         }
 
-        return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
+        if self._builder_config.split is not None:
+            split = load_split(self._builder_config.split)
+
+            train_data = {key: value for key, value in processed_data.items() if key in split["train"]}
+            dev_data = {key: value for key, value in processed_data.items() if key in split["dev"]}
+            test_data = {key: value for key, value in processed_data.items() if key in split["test"]}
+
+            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": train_data}),
+                    tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"data": dev_data}),
+                    tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"data": test_data})]
+
+        else:
+            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
     def _generate_examples(self, data):
         """ Yields examples. """
