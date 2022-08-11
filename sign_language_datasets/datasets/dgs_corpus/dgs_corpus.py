@@ -111,7 +111,8 @@ def load_split(split_name: str) -> Dict[str, str]:
     if split_name not in _KNOWN_SPLITS.keys():
         raise ValueError("Split '%s' is not a known data split." % split_name)
 
-    split = json.load(_KNOWN_SPLITS[split_name])  # type: Dict[str, str]
+    with open(_KNOWN_SPLITS[split_name]) as infile:
+        split = json.load(infile)  # type: Dict[str, str]
 
     return split
 
