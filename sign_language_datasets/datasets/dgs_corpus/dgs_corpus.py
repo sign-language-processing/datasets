@@ -109,9 +109,16 @@ def load_split(split_name: str) -> Dict[str, str]:
     :return:
     """
     if split_name not in _KNOWN_SPLITS.keys():
-        raise ValueError("Split '%s' is not a known data split." % split_name)
+        if not path.exists(split_name):
+            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either." % split_name)
 
-    with open(_KNOWN_SPLITS[split_name]) as infile:
+        # assume that the supplied string is a path on the file system
+        split_path = split_name
+    else:
+        # the supplied string is an identifier for a predefined split
+        split_path = _KNOWN_SPLITS[split_name]
+
+    with open(split_path) as infile:
         split = json.load(infile)  # type: Dict[str, str]
 
     return split
