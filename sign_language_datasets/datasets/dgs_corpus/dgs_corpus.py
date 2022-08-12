@@ -250,7 +250,16 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             }
 
             if self._builder_config.include_video:
-                videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}
+                videos = {}
+                for participant in ["a", "b", "c"]:
+                    video_key = "video_" + participant
+
+                    if video_key not in datum.keys() or datum[video_key] is None:
+                        video = ""
+                    else:
+                        video = str(datum[video_key])
+
+                    videos[participant] = video
 
                 # make sure that the video fps is as expected
 
