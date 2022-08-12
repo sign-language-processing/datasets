@@ -3,3 +3,4 @@ global-include *.poseheader
 global-include *.tsv
 global-include *.png
 global-include *.ttf
+global-include *.json
