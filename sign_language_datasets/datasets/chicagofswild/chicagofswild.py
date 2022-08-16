@@ -7,6 +7,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
@@ -87,6 +88,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         archive = dl_manager.download_and_extract(self._version_details("url"))
 

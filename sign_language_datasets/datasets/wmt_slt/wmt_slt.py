@@ -13,6 +13,7 @@ from tensorflow.python.platform.gfile import GFile
 from sign_language_datasets.utils.features import PoseFeature
 from .utils import get_video_metadata, read_mediapipe_surrey_format, read_openpose_surrey_format, reduce_pose_people, \
     convert_srt_time_to_frame
+from ..warning import dataset_warning
 
 from ...datasets import SignDatasetConfig
 
@@ -146,6 +147,8 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
         return archive
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+        dataset_warning(self)
+
         srf_poses = self.download_zenodo_deposit(dl_manager, ZENODO_DEPOSIT_ID_SRF_POSES, self.zenodo_srf_poses_token)
         srf_poses_dir = path.join(srf_poses, 'srf', 'parallel')
 

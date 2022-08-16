@@ -4,6 +4,7 @@ import json
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
@@ -77,6 +78,8 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
             return {m["o:id"]: m["o:original_url"] for m in media}
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+        dataset_warning(self)
+
         annotations_path, media_path = dl_manager.download([
             "http://swojs.ibict.br/portal/api/items?page",
             "http://swojs.ibict.br/portal/api/media?page"

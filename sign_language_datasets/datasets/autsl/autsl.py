@@ -11,6 +11,7 @@ from tensorflow.io.gfile import GFile
 from tensorflow_datasets.core.download.resource import get_dl_dirname
 from tqdm import tqdm
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
 
@@ -149,6 +150,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         # Download labels
         train_labels = dl_manager.download(_TRAIN_LABELS)

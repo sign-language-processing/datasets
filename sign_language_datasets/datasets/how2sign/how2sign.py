@@ -7,6 +7,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from pose_format.utils.openpose import load_openpose_directory
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
 
@@ -98,6 +99,7 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         # Define what files are required to download
         download_keys = []
