@@ -8,6 +8,7 @@ import tensorflow_datasets as tfds
 from os import path
 
 from sign_language_datasets.utils.features import PoseFeature
+from ..warning import dataset_warning
 
 from ...datasets.config import SignDatasetConfig
 
@@ -181,6 +182,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         # Source 1: GALEX
         galex_data = self.get_galex_data(dl_manager)

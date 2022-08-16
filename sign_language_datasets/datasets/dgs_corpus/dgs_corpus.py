@@ -14,6 +14,7 @@ from typing import Dict, Any, Set, Optional, List
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
 
@@ -186,6 +187,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         index_path = dl_manager.download(INDEX_URL)
 

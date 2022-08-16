@@ -5,6 +5,7 @@ import os
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 import urllib.request
 import cv2
@@ -79,6 +80,8 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+        dataset_warning(self)
+
         annotations_path = dl_manager.download("https://sign2mint.de/api/entries/all/")
 
         local_videos = {}

@@ -7,6 +7,7 @@ from tensorflow_datasets.core import download
 from tensorflow_datasets.core import utils
 
 from . import bsl_corpus_utils
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
@@ -131,6 +132,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         records_iterator = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
                                                                     password=self.bslcp_password,

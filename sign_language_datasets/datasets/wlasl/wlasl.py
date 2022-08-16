@@ -6,6 +6,7 @@ import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 from tqdm import tqdm
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.downloaders.aslpro import download_aslpro
 from ...utils.downloaders.youtube import download_youtube
@@ -101,6 +102,7 @@ class Wlasl(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         data_index_path = dl_manager.download(_INDEX_URL)
 

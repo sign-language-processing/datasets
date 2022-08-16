@@ -3,6 +3,8 @@
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
+from sign_language_datasets.datasets.warning import dataset_warning
+
 _DESCRIPTION = """
 A large synthetic collection of parallel English and ASL-Gloss texts.
 There are two string features: text, and gloss.
@@ -41,6 +43,8 @@ class AslgPc12(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
+
         gloss_path, text_path = dl_manager.download([_GLOSS_URL, _TEXT_URL])
 
         return {

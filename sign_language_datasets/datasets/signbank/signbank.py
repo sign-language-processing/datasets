@@ -8,6 +8,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tqdm import tqdm
 
+from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
@@ -210,6 +211,7 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         index = dl_manager.download("http://signbank.org/signpuddle2.0/data/spml/")
         regex = r"\"sgn[\d]+.spml\""

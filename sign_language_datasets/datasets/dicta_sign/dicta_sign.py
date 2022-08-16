@@ -3,6 +3,7 @@ from os import path
 import tensorflow_datasets as tfds
 import re
 
+from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 from ...utils.features import PoseFeature
 
@@ -82,6 +83,8 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+        dataset_warning(self)
+
         concepts_path = dl_manager.download(
             "https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_eng.html")
 

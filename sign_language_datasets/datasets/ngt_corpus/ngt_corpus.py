@@ -9,6 +9,7 @@ import tensorflow_datasets as tfds
 
 from typing import Optional
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 
 _DESCRIPTION = """
@@ -136,6 +137,7 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         index_path = dl_manager.download(INDEX_URL)
 

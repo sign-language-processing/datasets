@@ -6,6 +6,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
+from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
 
@@ -84,6 +85,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
+        dataset_warning(self)
 
         urls = [_VIDEO_ANNOTATIONS_URL if self._builder_config.include_video else _ANNOTATIONS_URL]
 
