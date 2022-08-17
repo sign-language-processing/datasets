@@ -114,7 +114,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
-                    "frequencies": None,
+                    "frequencies": [],
                     "hamnosys": re.findall(r'a class=\"ham\".*?>(.*?)<', content)[0],
                     "views": [{
                         "name": "front",
