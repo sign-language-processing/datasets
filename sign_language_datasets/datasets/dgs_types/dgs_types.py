@@ -3,6 +3,7 @@
 import re
 from collections import defaultdict
 
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
@@ -79,6 +80,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         features = {
             "id": tfds.features.Text(),
             "glosses": tfds.features.Sequence(tfds.features.Text()),
+            "frequencies": tfds.features.Sequence(tf.int32),
             "hamnosys": tfds.features.Text(),
             "views": tfds.features.Sequence(video_feature)
         }
@@ -112,6 +114,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
+                    "frequencies": [],
                     "hamnosys": re.findall(r'a class=\"ham\".*?>(.*?)<', content)[0],
                     "views": [{
                         "name": "front",
@@ -131,11 +134,16 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
     def get_dgs_data(self, dl_manager: tfds.download.DownloadManager):
         MEINE_DGS = "https://www.sign-lang.uni-hamburg.de/meinedgs/"
         dgs_index = dl_manager.download(MEINE_DGS + "ling/types_de.html")
+
         gloss_map = defaultdict(list)
+        gloss_frequencies = defaultdict(list)
+
         with open(dgs_index, "r", encoding="utf-8") as f:
-            for match in re.finditer(r'<p>(.*?) \(\d* Tokens\)( → )?(.*?)</p>', f.read()):
+            for match in re.finditer(r'<p>(.*?) \((\d+) Tokens?\)( → )?(.*?)</p>', f.read()):
                 gloss_id = re.findall(r'\.\.\/types\/(.*?)\.html', match.group(0))[0]
-                gloss_text = match.group(1) if match.group(3) != "" else re.findall(r'>(.*?)<', match.group(1))[0]
+                gloss_frequency = int(match.group(2))
+                gloss_frequencies[gloss_id].append(gloss_frequency)
+                gloss_text = match.group(1) if match.group(3) is not None else re.findall(r'>(.*?)<', match.group(1))[0]
                 gloss_map[gloss_id].append(gloss_text)
 
         gloss_ids = list(gloss_map.keys())
@@ -162,11 +170,14 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                     })
                     video_urls[view_video_url] = view_video_url
 
+            frequencies = gloss_frequencies[gloss_id]
+
             hamnosys_search = re.findall(r'class=\"hamnosys\".*?>(.*?)<', content)
             hamnosys = hamnosys_search[0] if len(hamnosys_search) > 0 else ""
 
             data.append({
                 "id": gloss_id,
+                "frequencies": frequencies,
                 "glosses": glosses,
                 "hamnosys": hamnosys,
                 "views": views
