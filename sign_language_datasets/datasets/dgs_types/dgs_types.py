@@ -112,6 +112,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
+                    "frequency": None,
                     "hamnosys": re.findall(r'a class=\"ham\".*?>(.*?)<', content)[0],
                     "views": [{
                         "name": "front",
@@ -133,9 +134,10 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         dgs_index = dl_manager.download(MEINE_DGS + "ling/types_de.html")
         gloss_map = defaultdict(list)
         with open(dgs_index, "r", encoding="utf-8") as f:
-            for match in re.finditer(r'<p>(.*?) \(\d* Tokens\)( → )?(.*?)</p>', f.read()):
+            for match in re.finditer(r'<p>(.*?) \((\d*) Tokens?\)( → )?(.*?)</p>', f.read()):
                 gloss_id = re.findall(r'\.\.\/types\/(.*?)\.html', match.group(0))[0]
-                gloss_text = match.group(1) if match.group(3) != "" else re.findall(r'>(.*?)<', match.group(1))[0]
+                gloss_frequency = int(match.group(1))
+                gloss_text = match.group(2) if match.group(4) != "" else re.findall(r'>(.*?)<', match.group(2))[0]
                 gloss_map[gloss_id].append(gloss_text)
 
         gloss_ids = list(gloss_map.keys())
@@ -167,6 +169,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
             data.append({
                 "id": gloss_id,
+                "frequency": gloss_frequency,
                 "glosses": glosses,
                 "hamnosys": hamnosys,
                 "views": views
