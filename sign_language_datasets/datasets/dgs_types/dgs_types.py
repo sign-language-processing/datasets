@@ -112,7 +112,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
-                    "frequency": None,
+                    "frequencies": None,
                     "hamnosys": re.findall(r'a class=\"ham\".*?>(.*?)<', content)[0],
                     "views": [{
                         "name": "front",
@@ -132,11 +132,15 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
     def get_dgs_data(self, dl_manager: tfds.download.DownloadManager):
         MEINE_DGS = "https://www.sign-lang.uni-hamburg.de/meinedgs/"
         dgs_index = dl_manager.download(MEINE_DGS + "ling/types_de.html")
+
         gloss_map = defaultdict(list)
+        gloss_frequencies = defaultdict(list)
+
         with open(dgs_index, "r", encoding="utf-8") as f:
             for match in re.finditer(r'<p>(.*?) \((\d*) Tokens?\)( → )?(.*?)</p>', f.read()):
                 gloss_id = re.findall(r'\.\.\/types\/(.*?)\.html', match.group(0))[0]
                 gloss_frequency = int(match.group(1))
+                gloss_frequencies[gloss_id].append(gloss_frequency)
                 gloss_text = match.group(2) if match.group(4) != "" else re.findall(r'>(.*?)<', match.group(2))[0]
                 gloss_map[gloss_id].append(gloss_text)
 
@@ -164,12 +168,14 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                     })
                     video_urls[view_video_url] = view_video_url
 
+            frequencies = gloss_frequencies[gloss_id]
+
             hamnosys_search = re.findall(r'class=\"hamnosys\".*?>(.*?)<', content)
             hamnosys = hamnosys_search[0] if len(hamnosys_search) > 0 else ""
 
             data.append({
                 "id": gloss_id,
-                "frequency": gloss_frequency,
+                "frequencies": frequencies,
                 "glosses": glosses,
                 "hamnosys": hamnosys,
                 "views": views
