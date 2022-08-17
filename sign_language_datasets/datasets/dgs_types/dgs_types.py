@@ -3,6 +3,7 @@
 import re
 from collections import defaultdict
 
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
@@ -79,6 +80,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         features = {
             "id": tfds.features.Text(),
             "glosses": tfds.features.Sequence(tfds.features.Text()),
+            "frequencies": tfds.features.Sequence(tf.int32),
             "hamnosys": tfds.features.Text(),
             "views": tfds.features.Sequence(video_feature)
         }
