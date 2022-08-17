@@ -137,11 +137,11 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         gloss_frequencies = defaultdict(list)
 
         with open(dgs_index, "r", encoding="utf-8") as f:
-            for match in re.finditer(r'<p>(.*?) \((\d*) Tokens?\)( → )?(.*?)</p>', f.read()):
+            for match in re.finditer(r'<p>(.*?) \((\d+) Tokens?\)( → )?(.*?)</p>', f.read()):
                 gloss_id = re.findall(r'\.\.\/types\/(.*?)\.html', match.group(0))[0]
-                gloss_frequency = int(match.group(1))
+                gloss_frequency = int(match.group(2))
                 gloss_frequencies[gloss_id].append(gloss_frequency)
-                gloss_text = match.group(2) if match.group(4) != "" else re.findall(r'>(.*?)<', match.group(2))[0]
+                gloss_text = match.group(1) if match.group(3) is not None else re.findall(r'>(.*?)<', match.group(1))[0]
                 gloss_map[gloss_id].append(gloss_text)
 
         gloss_ids = list(gloss_map.keys())
