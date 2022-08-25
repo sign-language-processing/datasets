@@ -145,7 +145,7 @@ Furthermore, they currently have memory leaks that prevent from saving even the 
 ```bibtex
 @misc{moryossef2021datasets, 
     title={Sign Language Datasets},
-    author={Moryossef, Amit},
+    author={Moryossef, Amit and M\"{u}ller, Mathias},
     howpublished={\url{https://github.com/sign-language-processing/datasets}},
     year={2021}
 }
