@@ -28,15 +28,12 @@ def rgb2bin(img, neg=0.1):
 
 
 def key2swu(key):
-    return chr(0x40001 +
-               ((int(key[1:4], 16) - 256) * 96) +
-               ((int(key[4:5], 16)) * 16) +
-               int(key[5:6], 16))
+    return chr(0x40001 + ((int(key[1:4], 16) - 256) * 96) + ((int(key[4:5], 16)) * 16) + int(key[5:6], 16))
 
 
 def shape_pos(shape):
     x, y = shape[:2]
-    return f'{x:03}x{y:03}'
+    return f"{x:03}x{y:03}"
 
 
 def crop_whitespace(img):
@@ -55,7 +52,7 @@ def crop_whitespace(img):
     if x + w < img.shape[1]:
         w += 1
 
-    return cv2.copyMakeBorder(img[y:y + h, x:x + w], 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+    return cv2.copyMakeBorder(img[y : y + h, x : x + w], 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=(255, 255, 255))
 
 
 @functools.lru_cache()
@@ -110,7 +107,7 @@ def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
 
         # 2. Select best match
         pt = best_match["point"][::-1]
-        position = [int(500 - img_width/2) + pt[0], int(500 - img_height/2) + pt[1]]
+        position = [int(500 - img_width / 2) + pt[0], int(500 - img_height / 2) + pt[1]]
         final_sign += best_match["symbol"] + shape_pos(position)
 
         w, h = templates[idx].shape[:-1]
@@ -128,14 +125,14 @@ def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
         # 4. Prevent collisions with this match
         for conv in convs:
             x, y = pt
-            conv[y - 2:y + 4, x - 2:x + 4] = 0
+            conv[y - 2 : y + 4, x - 2 : x + 4] = 0
 
     return final_sign
 
 
 if __name__ == "__main__":
-    img_rgb = cv2.imread('assets/sign.png')
-    symbols = ['S1f520', 'S1f528', 'S23c04', 'S23c1c', 'S2fb04', 'S2ff00', 'S33b10']
+    img_rgb = cv2.imread("assets/sign.png")
+    symbols = ["S1f520", "S1f528", "S23c04", "S23c1c", "S2fb04", "S2ff00", "S33b10"]
 
     fsw = image_to_fsw(img_rgb, symbols)
     print("fsw", fsw)

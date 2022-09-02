@@ -79,8 +79,7 @@ def convert_dgs_dict_to_openpose_frames(input_dict: Dict[str, Any]) -> OpenPoseF
     return frames
 
 
-def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
-                 num_frames: Optional[int] = None) -> Dict[str, Pose]:
+def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None, num_frames: Optional[int] = None) -> Dict[str, Pose]:
     """
     Load OpenPose in the particular format used by DGS (one single file vs. one file for each frame).
 
@@ -126,8 +125,10 @@ def load_split(split_name: str) -> Dict[str, List[str]]:
     if split_name not in _KNOWN_SPLITS.keys():
         # assume that the supplied string is a path on the file system
         if not path.exists(split_name):
-            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either.\n"
-                             "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS)))
+            raise ValueError(
+                "Split '%s' is not a known data split identifier and does not exist as a file either.\n"
+                "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS))
+            )
 
         split_path = split_name
     else:
@@ -144,9 +145,7 @@ DEFAULT_FPS = 50
 
 
 class DgsCorpusConfig(SignDatasetConfig):
-    def __init__(self, data_type: Literal['document', 'sentence'] = 'document',
-                 split: str = None,
-                 **kwargs):
+    def __init__(self, data_type: Literal["document", "sentence"] = "document", split: str = None, **kwargs):
         """
         :param split: An identifier for a predefined split or a filepath to a custom split file.
         :param data_type: Whether to return documents or sentences as data.
@@ -198,20 +197,18 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                 "end": tf.int32,
                 "german": tfds.features.Text(),
                 "english": tfds.features.Text(),
-                "glosses": tfds.features.Sequence({
-                    "start": tf.int32,
-                    "end": tf.int32,
-                    "gloss": tfds.features.Text(),
-                    "hand": tfds.features.Text(),
-                    "Lexeme_Sign": tfds.features.Text(),
-                    "Gebärde": tfds.features.Text(),
-                    "Sign": tfds.features.Text(),
-                }),
-                "mouthings": tfds.features.Sequence({
-                    "start": tf.int32,
-                    "end": tf.int32,
-                    "mouthing": tfds.features.Text()
-                }),
+                "glosses": tfds.features.Sequence(
+                    {
+                        "start": tf.int32,
+                        "end": tf.int32,
+                        "gloss": tfds.features.Text(),
+                        "hand": tfds.features.Text(),
+                        "Lexeme_Sign": tfds.features.Text(),
+                        "Gebärde": tfds.features.Text(),
+                        "Sign": tfds.features.Text(),
+                    }
+                ),
+                "mouthings": tfds.features.Sequence({"start": tf.int32, "end": tf.int32, "mouthing": tfds.features.Text()}),
             }
 
         if self._builder_config.include_video:
@@ -286,10 +283,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
         local_paths = dl_manager.download(urls)
 
-        data = {
-            _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in
-            index_data.items()
-        }
+        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()}
 
         if self._builder_config.split is not None:
             split = load_split(self._builder_config.split)
@@ -298,9 +292,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             dev_args = {"data": data, "split": split["dev"]}
             test_args = {"data": data, "split": split["test"]}
 
-            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs=train_args),
-                    tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs=dev_args),
-                    tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs=test_args)]
+            return [
+                tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs=train_args),
+                tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs=dev_args),
+                tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs=test_args),
+            ]
 
         else:
             return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data})]
@@ -326,8 +322,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             actual_video_fps = cap.get(cv2.CAP_PROP_FPS)
             cap.release()
 
-            assert math.isclose(actual_video_fps, float(DEFAULT_FPS)), \
-                "Framerate of video '%s' is %f instead of %d" % (video_path, actual_video_fps, DEFAULT_FPS)
+            assert math.isclose(actual_video_fps, float(DEFAULT_FPS)), "Framerate of video '%s' is %f instead of %d" % (
+                video_path,
+                actual_video_fps,
+                DEFAULT_FPS,
+            )
 
         features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else DEFAULT_FPS
         features["paths"]["videos"] = videos
@@ -366,8 +365,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             if self._builder_config.data_type == "document":
                 features["poses"] = poses
                 if self._builder_config.process_video:
-                    features["videos"] = {t: v if v != "" else default_video
-                                          for t, v in features["paths"]["videos"].items()}
+                    features["videos"] = {t: v if v != "" else default_video for t, v in features["paths"]["videos"].items()}
                 yield _id, features
             else:
                 sentences = list(get_elan_sentences(datum["eaf"]))
@@ -388,9 +386,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
                     if poses is not None:
                         pose = poses[sentence["participant"].lower()]
-                        sub_pose_body = NumPyPoseBody(fps=pose.body.fps,
-                                                      data=pose.body.data[start_frame:end_frame],
-                                                      confidence=pose.body.confidence[start_frame:end_frame])
+                        sub_pose_body = NumPyPoseBody(
+                            fps=pose.body.fps,
+                            data=pose.body.data[start_frame:end_frame],
+                            confidence=pose.body.confidence[start_frame:end_frame],
+                        )
                         features["pose"] = Pose(pose.header, sub_pose_body)
 
                     if self._builder_config.process_video:

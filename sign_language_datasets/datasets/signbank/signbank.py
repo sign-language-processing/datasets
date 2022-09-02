@@ -25,7 +25,7 @@ _CITATION = """
 
 
 def is_signwriting(fsw: str) -> bool:
-    return bool(re.match(r'[A]?[abcdef0-9S]*?([BLMR])(\d{3})x(\d{3})', fsw))
+    return bool(re.match(r"[A]?[abcdef0-9S]*?([BLMR])(\d{3})x(\d{3})", fsw))
 
 
 PUDDLES = {
@@ -176,14 +176,12 @@ PUDDLES = {
 class SignBank(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for SignBank dataset."""
 
-    VERSION = tfds.core.Version('1.0.0')
+    VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
-        '1.0.0': 'Initial release.',
+        "1.0.0": "Initial release.",
     }
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=False)
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=False)]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -217,13 +215,12 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
         regex = r"\"sgn[\d]+.spml\""
         with open(index, "r", encoding="utf-8") as f:
             matches = [match.group()[1:-1] for match in re.finditer(regex, f.read(), re.MULTILINE)]
-            spml_urls = ["http://signbank.org/signpuddle2.0/data/spml/" + match
-                         for match in matches if match != "sgn0.spml"]
+            spml_urls = ["http://signbank.org/signpuddle2.0/data/spml/" + match for match in matches if match != "sgn0.spml"]
 
         spmls = dl_manager.download(spml_urls)
 
         return {
-            'train': self._generate_examples(spmls),
+            "train": self._generate_examples(spmls),
         }
 
     def _generate_examples(self, spmls: List[str]):
@@ -234,15 +231,15 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
             tree = ET.parse(spml)
             root = tree.getroot()
 
-            puddle = int(root.attrib['puddle'])
+            puddle = int(root.attrib["puddle"])
 
             children = root.getchildren()
             for child in children:
                 if child.tag == "entry":
-                    _id = child.attrib['id']
-                    mdt = int(child.attrib['mdt']) if 'mdt' in child.attrib and child.attrib['mdt'] != '' else 0
-                    cdt = int(child.attrib['cdt']) if 'cdt' in child.attrib and child.attrib['cdt'] != '' else mdt
-                    usr = child.attrib['usr'] if 'usr' in child.attrib else ''
+                    _id = child.attrib["id"]
+                    mdt = int(child.attrib["mdt"]) if "mdt" in child.attrib and child.attrib["mdt"] != "" else 0
+                    cdt = int(child.attrib["cdt"]) if "cdt" in child.attrib and child.attrib["cdt"] != "" else mdt
+                    usr = child.attrib["usr"] if "usr" in child.attrib else ""
                     texts = [c.text for c in child.getchildren() if c.tag != "src" and c.text is not None]
 
                     signwriting_texts = []
@@ -259,13 +256,13 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
                         assumed_spoken_language_code, country_code = PUDDLES[puddle] if puddle in PUDDLES else ["", ""]
                         i += 1
                         yield sample_id, {
-                            'puddle': puddle,
-                            'id': _id,
-                            'assumed_spoken_language_code': assumed_spoken_language_code,
-                            'country_code': country_code,
+                            "puddle": puddle,
+                            "id": _id,
+                            "assumed_spoken_language_code": assumed_spoken_language_code,
+                            "country_code": country_code,
                             "created_date": str(datetime.fromtimestamp(cdt)),
                             "modified_date": str(datetime.fromtimestamp(mdt)),
                             "sign_writing": signwriting_texts,
                             "terms": spoken_texts,
-                            "user": usr
+                            "user": usr,
                         }

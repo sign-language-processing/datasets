@@ -108,18 +108,18 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
         """Returns the dataset metadata."""
         features = {
             "id": tfds.features.Text(),
-            "paths": {
-                "eaf": tfds.features.Text(),
-            },
+            "paths": {"eaf": tfds.features.Text(),},
         }
 
         if self._builder_config.include_video:
             features["fps"] = tf.int32
             video_ids = ["a", "b", "c"]
             if self._builder_config.process_video:
-                features["videos"] = {"a": self._builder_config.video_feature(_VIDEO_RESOLUTION),
-                                      "b": self._builder_config.video_feature(_VIDEO_RESOLUTION),
-                                      "c": self._builder_config.video_feature(_VIDEO_RESOLUTION_C)}
+                features["videos"] = {
+                    "a": self._builder_config.video_feature(_VIDEO_RESOLUTION),
+                    "b": self._builder_config.video_feature(_VIDEO_RESOLUTION),
+                    "c": self._builder_config.video_feature(_VIDEO_RESOLUTION_C),
+                }
             features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
         # Add poses if requested

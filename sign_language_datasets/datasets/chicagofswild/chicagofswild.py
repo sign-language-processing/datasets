@@ -32,18 +32,12 @@ month = {December}
 """
 
 _VERSIONS = {
-    "2.0.0": {
-        "name": "ChicagoFSWildPlus",
-        "url": "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"
-    },
-    "1.0.0": {
-        "name": "ChicagoFSWild",
-        "url": "https://dl.ttic.edu/ChicagoFSWild.tgz"
-    }
+    "2.0.0": {"name": "ChicagoFSWildPlus", "url": "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"},
+    "1.0.0": {"name": "ChicagoFSWild", "url": "https://dl.ttic.edu/ChicagoFSWild.tgz"},
 }
 
-_CHICAGO_FS_WILD_PLUS_URL = 'https://dl.ttic.edu/ChicagoFSWildPlus.tgz'
-_CHICAGO_FS_WILD_URL = 'https://dl.ttic.edu/ChicagoFSWild.tgz'
+_CHICAGO_FS_WILD_PLUS_URL = "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"
+_CHICAGO_FS_WILD_URL = "https://dl.ttic.edu/ChicagoFSWild.tgz"
 
 
 class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
@@ -64,11 +58,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
             "video_url": tfds.features.Text(),
             "start": tfds.features.Text(),
             "signer": tfds.features.Text(),
-            "metadata": {
-                "frames": tf.int32,
-                "width": tf.int32,
-                "height": tf.int32,
-            },
+            "metadata": {"frames": tf.int32, "width": tf.int32, "height": tf.int32,},
         }
 
         if self._builder_config.include_video:
@@ -114,7 +104,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
             tar.close()
 
         with GFile(path.join(archive_directory, v_name + ".csv"), "r") as csv_file:
-            csv_data = csv.reader(csv_file, delimiter=',')
+            csv_data = csv.reader(csv_file, delimiter=",")
             next(csv_data)  # Ignore the header
 
             for row in csv_data:
@@ -128,17 +118,12 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
                         "video_url": row[2],
                         "start": row[3],
                         "signer": row[-1],
-                        "metadata": {
-                            "frames": int(row[4]),
-                            "width": int(row[5]),
-                            "height": int(row[6])
-                        }
+                        "metadata": {"frames": int(row[4]), "width": int(row[5]), "height": int(row[6])},
                     }
 
                     if self._builder_config.include_video:
                         frames_base = path.join(frames_directory, row[1])
 
-                        datum["video"] = [path.join(frames_base, name) for name in
-                                          sorted(tf.io.gfile.listdir(frames_base))]
+                        datum["video"] = [path.join(frames_base, name) for name in sorted(tf.io.gfile.listdir(frames_base))]
 
                     yield _id, datum

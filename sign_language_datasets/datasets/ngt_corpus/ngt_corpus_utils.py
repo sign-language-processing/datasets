@@ -61,23 +61,15 @@ def get_elan_sentences_ngt_corpus(elan_path: str):
             glosses = {}
 
             for gloss_id, (start, end, value, _) in eaf.tiers[hand_tier][0].items():
-                glosses[gloss_id] = {"start": timeslots[start],
-                                     "end": timeslots[end],
-                                     "gloss": value,
-                                     "hand": hand}
+                glosses[gloss_id] = {"start": timeslots[start], "end": timeslots[end], "gloss": value, "hand": hand}
 
             all_glosses += list(glosses.values())
 
         for (start, end, value, _) in dutch_text:
-            sentence = {"participant": participant,
-                        "start": timeslots[start],
-                        "end": timeslots[end],
-                        "dutch": value}
+            sentence = {"participant": participant, "start": timeslots[start], "end": timeslots[end], "dutch": value}
 
             # Add glosses whose timestamps are within this sentence
-            glosses_in_sentence = [item for item in all_glosses if
-                                   item["start"] >= sentence["start"]
-                                   and item["end"] <= sentence["end"]]
+            glosses_in_sentence = [item for item in all_glosses if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]]
 
             sentence["glosses"] = list(sorted(glosses_in_sentence, key=lambda d: d["start"]))
 

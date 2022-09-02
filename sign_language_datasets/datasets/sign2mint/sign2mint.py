@@ -33,9 +33,9 @@ OCR_CACHE_PATH = os.path.join(os.path.dirname(__file__), "ocr_cache.txt")
 class Sign2MINT(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for sign2mint dataset."""
 
-    VERSION = tfds.core.Version('1.0.0')
+    VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
-        '1.0.0': 'Initial release.',
+        "1.0.0": "Initial release.",
     }
 
     BUILDER_CONFIGS = [
@@ -61,8 +61,8 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             "gebaerdenschrift": {
                 "url": tfds.features.Text(),
                 "symbolIds": tfds.features.Sequence(tfds.features.Text()),
-                "fsw": tfds.features.Text()
-            }
+                "fsw": tfds.features.Text(),
+            },
         }
 
         if self._builder_config.include_video and self._builder_config.process_video:
@@ -92,9 +92,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
                 video_paths = dl_manager.download(videos)
                 local_videos = {k: v for k, v in zip(videos, video_paths)}
 
-        return {
-            'train': self._generate_examples(annotations_path, local_videos)
-        }
+        return {"train": self._generate_examples(annotations_path, local_videos)}
 
     ocr_cache = None
 
@@ -104,14 +102,14 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
                 lines = [l.split(" ") for l in f.readlines()]
                 self.ocr_cache = {l[0]: l[1] for l in lines}
 
-        image_url = datum['gebaerdenschrift']['url'].replace("&transparent=true", "")
+        image_url = datum["gebaerdenschrift"]["url"].replace("&transparent=true", "")
         if image_url in self.ocr_cache:
             return self.ocr_cache[image_url]
 
         urllib.request.urlretrieve(image_url, "sign.png")
-        img_rgb = cv2.imread('sign.png')
+        img_rgb = cv2.imread("sign.png")
 
-        symbols = datum['gebaerdenschrift']['symbolIds']
+        symbols = datum["gebaerdenschrift"]["symbolIds"]
 
         fsw = image_to_fsw(img_rgb, symbols)
 
@@ -132,8 +130,9 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
                 del datum["videoLink"]
 
                 datum["video"] = local_videos[video_link] if video_link in local_videos else video_link
-                datum["gebaerdenschrift"]["symbolIds"] = [s["symbolKey"] for s in datum["gebaerdenschrift"]["symbolIds"]
-                                                          if s["symbolKey"] != ""]
+                datum["gebaerdenschrift"]["symbolIds"] = [
+                    s["symbolKey"] for s in datum["gebaerdenschrift"]["symbolIds"] if s["symbolKey"] != ""
+                ]
                 datum["gebaerdenschrift"]["fsw"] = self._ocr(datum)
 
                 yield datum["id"], datum

@@ -109,8 +109,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             citation=_CITATION,
         )
 
-    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int,
-                                        pwd: str = None):
+    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int, pwd: str = None):
         """Download and extract multipart zip file"""
 
         # Write OpenPose disclaimer
@@ -159,16 +158,13 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         # Load videos if needed
         if self._builder_config.include_video:
-            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18,
-                                                               pwd=self.train_decryption_key)
+            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18, pwd=self.train_decryption_key)
             train_videos = os.path.join(train_parts, "train")
 
-            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3,
-                                                               pwd=self.valid_decryption_key)
+            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3, pwd=self.valid_decryption_key)
             valid_videos = os.path.join(valid_parts, "val")
 
-            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3,
-                                                              pwd=self.test_decryption_key)
+            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3, pwd=self.test_decryption_key)
             test_videos = os.path.join(test_parts, "test")
         else:
             train_videos = valid_videos = test_videos = None
@@ -185,23 +181,20 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         splits = [
             tfds.core.SplitGenerator(
-                name=tfds.Split.TEST,
-                gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels},
+                name=tfds.Split.TEST, gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TRAIN,
-                gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels},
+                name=tfds.Split.TRAIN, gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels},
             ),
             tfds.core.SplitGenerator(
                 name=tfds.Split.VALIDATION,
                 gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels},
-            )
+            ),
         ]
 
         return splits
 
-    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None],
-                           labels_path: Union[str, None]):
+    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None], labels_path: Union[str, None]):
         """Yields examples."""
 
         if labels_path is not None:

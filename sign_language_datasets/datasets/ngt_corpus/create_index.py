@@ -80,7 +80,7 @@ base_path = "https://archive.mpi.nl"
 
 
 def get_sub_pages(html):
-    return [x for x in re.findall('<strong class=\"field-content\"><a href=\"(.*)\">.*</a></strong>', html)]
+    return [x for x in re.findall('<strong class="field-content"><a href="(.*)">.*</a></strong>', html)]
 
 
 def create_flat_download_dict() -> dict:
@@ -92,7 +92,7 @@ def create_flat_download_dict() -> dict:
         with urllib.request.urlopen(base_path + next_page) as response:
             html = response.read().decode("utf-8")
 
-            next_search = re.search('<a href=\"(.*?)\">next</a>', html)
+            next_search = re.search('<a href="(.*?)">next</a>', html)
             next_page = next_search.group(1) if next_search else None
 
             sub_pages += get_sub_pages(html)
@@ -115,8 +115,9 @@ def create_flat_download_dict() -> dict:
             html = response.read().decode("utf-8")
 
             files = re.findall(
-                'title=\"view item\">(.*)</a></div>\n<div class=\"flat-compound-buttons\">\n<div class=\"flat-compound-download\"><a href=\"(.*)\" class=\"flat-compound-download\" title=\"download file\"></a>',
-                html)
+                'title="view item">(.*)</a></div>\n<div class="flat-compound-buttons">\n<div class="flat-compound-download"><a href="(.*)" class="flat-compound-download" title="download file"></a>',
+                html,
+            )
             for file in files:
                 flat_download_dict[file[0]] = base_path + file[1]
 
@@ -149,8 +150,7 @@ def get_info_from_mpg_filename(filename: str) -> Tuple[Optional[str], str]:
         speaker_id = None
     else:
         speaker_id = filename.split("_")[1].split(".")[0]
-        assert speaker_id.startswith("S"), "Speaker ID of filename '%s' does not start with S: '%s'" \
-                                           % (filename, speaker_id)
+        assert speaker_id.startswith("S"), "Speaker ID of filename '%s' does not start with S: '%s'" % (filename, speaker_id)
 
     if "_b" in filename:
         view = "b"
@@ -165,9 +165,9 @@ def get_info_from_mpg_filename(filename: str) -> Tuple[Optional[str], str]:
     return speaker_id, view
 
 
-def create_structured_download_dict(force_rebuild: bool = False,
-                                    flat_json_path: str = "ngt_flat.json",
-                                    structured_json_path: str = "ngt.json"):
+def create_structured_download_dict(
+    force_rebuild: bool = False, flat_json_path: str = "ngt_flat.json", structured_json_path: str = "ngt.json"
+):
     """
 
     :param force_rebuild:

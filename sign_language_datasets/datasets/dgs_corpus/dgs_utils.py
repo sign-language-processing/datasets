@@ -48,13 +48,7 @@ def get_elan_sentences(elan_path: str):
             all_mouthings.append(mouthing_entry)
 
         for _id, (s, e, val, _) in german_text.items():
-            sentence = {
-                "id": _id,
-                "participant": participant,
-                "start": timeslots[s],
-                "end": timeslots[e],
-                "german": val
-            }
+            sentence = {"id": _id, "participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
 
             # Add English sentence
             english_sentence = [val2 for (s2, e2, val2, _) in english_text if s == s2 and e == e2]

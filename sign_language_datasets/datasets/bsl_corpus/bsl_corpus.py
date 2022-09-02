@@ -46,11 +46,11 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
   The dataset currently loads annotations only, and ignores video files.
   """
 
-    VERSION = tfds.core.Version('1.0.0')
+    VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
         # Third release of annotations:
         # https://bslcorpusproject.org/wp-content/uploads/Notes-to-the-3rd-release-of-BSL-Corpus-annotations.pdf
-        '3.0.0': 'Third release.',
+        "3.0.0": "Third release.",
     }
 
     BUILDER_CONFIGS = [
@@ -67,12 +67,9 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _make_download_manager(self, download_dir, download_config):
         """Creates a new download manager object."""
-        download_dir = (
-                download_dir or os.path.join(self._data_dir_root, "downloads"))
-        extract_dir = (
-                download_config.extract_dir or os.path.join(download_dir, "extracted"))
-        manual_dir = (
-                download_config.manual_dir or os.path.join(download_dir, "manual"))
+        download_dir = download_dir or os.path.join(self._data_dir_root, "downloads")
+        extract_dir = download_config.extract_dir or os.path.join(download_dir, "extracted")
+        manual_dir = download_config.manual_dir or os.path.join(download_dir, "manual")
 
         if download_config.register_checksums:
             # Note: Error will be raised here if user try to record checksums
@@ -97,7 +94,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
             dataset_name=self.name,
             username=self.bslcp_username,
             password=self.bslcp_password,
-            max_retries=5
+            max_retries=5,
         )
 
     def _info(self) -> tfds.core.DatasetInfo:
@@ -110,9 +107,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         """
         features = {
             "id": tfds.features.Text(),
-            "paths": {
-                "eaf": tfds.features.Sequence(tfds.features.Text(), length=None),
-            },
+            "paths": {"eaf": tfds.features.Sequence(tfds.features.Text(), length=None),},
         }
 
         if self._builder_config.include_video:
@@ -134,10 +129,12 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         dataset_warning(self)
 
-        records_iterator = bsl_corpus_utils.generate_download_links(username=self.bslcp_username,
-                                                                    password=self.bslcp_password,
-                                                                    number_of_records=None,  # no limit on num records
-                                                                    renew_user_token_every_n_pages=5)
+        records_iterator = bsl_corpus_utils.generate_download_links(
+            username=self.bslcp_username,
+            password=self.bslcp_password,
+            number_of_records=None,  # no limit on num records
+            renew_user_token_every_n_pages=5,
+        )
 
         processed_data = {}
 

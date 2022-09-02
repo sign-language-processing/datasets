@@ -33,27 +33,25 @@ _SPLITS = {
         "rgb_clips_side": "https://drive.google.com/uc?id=1PIYIIOxR2vnUDzSHdq3uyoUCoIJvsuNW&export=download",
         "bfh_2d_front": "https://drive.google.com/uc?id=1lnsDN-LxcsroOmetdG5_sXYXZ7setlS4&export=download",
         "bfh_2d_side": None,
-        "translation": None
+        "translation": None,
     },
     tfds.Split.VALIDATION: {
         "rgb_clips_front": "https://drive.google.com/uc?id=1oVZyTWhHShyqshC2kUrfWnBF8apIR7Z1&export=download",
         "rgb_clips_side": "https://drive.google.com/uc?id=1vJVV777_bmSeA2_k7iGdZu2izooeKUrq&export=download",
         "bfh_2d_front": "https://drive.google.com/uc?id=1aOhRknNWj8APdxHmwJdQrMo5xuIGNXxM&export=download",
         "bfh_2d_side": None,
-        "translation": None
+        "translation": None,
     },
     tfds.Split.TEST: {
         "rgb_clips_front": "https://drive.google.com/uc?id=1d6GHqu0_8IGiKbu3sTZHtMb0DGhbHSMu&export=download",
         "rgb_clips_side": "https://drive.google.com/uc?id=1gKV_TloCbMyMhOdYvr_a-6I-PTf0Sjyi&export=download",
         "bfh_2d_front": "https://drive.google.com/uc?id=1quj8Ipm56pH65KAKK3Pc-sqZ0ozw2gSe&export=download",
         "bfh_2d_side": None,
-        "translation": None
+        "translation": None,
     },
 }
 
-_POSE_HEADERS = {
-    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")
-}
+_POSE_HEADERS = {"openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")}
 
 
 class How2Sign(tfds.core.GeneratorBasedBuilder):
@@ -62,17 +60,12 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
     VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True, include_pose="openpose")
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True, include_pose="openpose")]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
 
-        features = {
-            "id": tfds.features.Text(),
-            "fps": tf.int32
-        }
+        features = {"id": tfds.features.Text(), "fps": tf.int32}
 
         if self._builder_config.include_video:
             features["video"] = {
@@ -115,20 +108,16 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
         url_map = {u: d for u, d in zip(urls, downloads)}  # Map local paths
 
         return [
-            tfds.core.SplitGenerator(
-                name=name,
-                gen_kwargs={k: url_map[v] if v is not None else None for k, v in split.items()},
-            ) for name, split in _SPLITS.items()]
+            tfds.core.SplitGenerator(name=name, gen_kwargs={k: url_map[v] if v is not None else None for k, v in split.items()},)
+            for name, split in _SPLITS.items()
+        ]
 
-    def _generate_examples(self,
-                           rgb_clips_front: str, rgb_clips_side: str,
-                           bfh_2d_front: str, bfh_2d_side: str,
-                           translation: str):
+    def _generate_examples(self, rgb_clips_front: str, rgb_clips_side: str, bfh_2d_front: str, bfh_2d_side: str, translation: str):
         """ Yields examples. """
 
         # TODO get ids from translation file
         ids = []
-        ids = [p[:-len('-rgb_front.mp4')] for p in os.listdir(path.join(rgb_clips_front, 'raw_videos'))]
+        ids = [p[: -len("-rgb_front.mp4")] for p in os.listdir(path.join(rgb_clips_front, "raw_videos"))]
         ids = ids[:10]
 
         for _id in ids:
@@ -139,12 +128,12 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
 
             if self.builder_config.include_video:
                 datum["video"] = {
-                    "front": path.join(rgb_clips_front, 'raw_videos', _id + "-rgb_front.mp4"),
-                    "side": path.join(rgb_clips_side, 'raw_videos', _id + "-rgb_side.mp4"),
+                    "front": path.join(rgb_clips_front, "raw_videos", _id + "-rgb_front.mp4"),
+                    "side": path.join(rgb_clips_side, "raw_videos", _id + "-rgb_side.mp4"),
                 }
 
             if self._builder_config.include_pose == "openpose":
-                front_path = path.join(bfh_2d_front, 'openpose_output', 'json', _id + '-rgb_front')
+                front_path = path.join(bfh_2d_front, "openpose_output", "json", _id + "-rgb_front")
                 front_pose = load_openpose_directory(front_path, fps=24, width=1280, height=720)
 
                 # TODO add side pose when available

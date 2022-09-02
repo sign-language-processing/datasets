@@ -17,9 +17,7 @@ from requests.adapters import HTTPAdapter, Retry
 from typing import Optional, List, Dict, Any, Tuple, Iterator, Iterable
 
 
-def login_with_credentials(username: str,
-                           password: str,
-                           base_url: str = "http://digital-collections.ucl.ac.uk/") -> str:
+def login_with_credentials(username: str, password: str, base_url: str = "http://digital-collections.ucl.ac.uk/") -> str:
     """
 
     :param username:
@@ -61,8 +59,7 @@ def login_with_credentials(username: str,
     return user_token
 
 
-def get_search_response(user_token: str,
-                        base_url: str = "http://digital-collections.ucl.ac.uk/") -> Tuple[str, str]:
+def get_search_response(user_token: str, base_url: str = "http://digital-collections.ucl.ac.uk/") -> Tuple[str, str]:
     """
 
     :param user_token:
@@ -72,7 +69,7 @@ def get_search_response(user_token: str,
     # The way this works is we have a TOKEN and a request identifier.
     # Seems like they store both, and show the relevant info for the identifier.
 
-    search_url = base_url + 'R/' + user_token + '-00001'
+    search_url = base_url + "R/" + user_token + "-00001"
     post_data = {
         "func": "search-advanced-go",
         "file_format_code": "WEX",
@@ -88,7 +85,7 @@ def get_search_response(user_token: str,
         "request3": "",
         "media_type": "ALL",
         "selected_otype": "",
-        "selected_tag": "0"
+        "selected_tag": "0",
     }
 
     search_response_text = requests.post(search_url, data=post_data).text
@@ -96,11 +93,13 @@ def get_search_response(user_token: str,
     return search_url, search_response_text
 
 
-def generate_download_links(username: str,
-                            password: str,
-                            number_of_records: Optional[int] = None,
-                            base_url: str = "http://digital-collections.ucl.ac.uk/",
-                            renew_user_token_every_n_pages: int = 5) -> Iterator[List[Dict]]:
+def generate_download_links(
+    username: str,
+    password: str,
+    number_of_records: Optional[int] = None,
+    base_url: str = "http://digital-collections.ucl.ac.uk/",
+    renew_user_token_every_n_pages: int = 5,
+) -> Iterator[List[Dict]]:
     """
     Yields 20 search results at a time
 
@@ -155,21 +154,15 @@ def generate_download_links(username: str,
 
             record_id = re.search(r">(.*?)<", cells[2]).groups()[0]
 
-            datum = {
-                "id": cells[0],
-                "record_id": record_id,
-                "downloads": download_dict
-            }
+            datum = {"id": cells[0], "record_id": record_id, "downloads": download_dict}
             index_data.append(datum)
 
         yield index_data
 
 
-def get_responses_from_container_url(container_url: str,
-                                     base_url: str,
-                                     max_retries: int = 3) -> Tuple[requests.Response,
-                                                                    requests.Response,
-                                                                    str]:
+def get_responses_from_container_url(
+    container_url: str, base_url: str, max_retries: int = 3
+) -> Tuple[requests.Response, requests.Response, str]:
     """
 
     :param container_url:
@@ -181,31 +174,31 @@ def get_responses_from_container_url(container_url: str,
 
     retry = Retry(connect=max_retries, backoff_factor=0.5)
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
 
     file_container_response = session.get(container_url)
     downloader._assert_status(file_container_response)
 
     file_container_response_text = file_container_response.text
 
-    cookie = file_container_response.headers['Set-Cookie'].split(';')[0]
+    cookie = file_container_response.headers["Set-Cookie"].split(";")[0]
 
-    file_container_frame_src = re.search(r'<FRAME SRC=\"/(.*?)\"', file_container_response_text).groups()[0]
+    file_container_frame_src = re.search(r"<FRAME SRC=\"/(.*?)\"", file_container_response_text).groups()[0]
 
-    file_container_frame_response = session.get(base_url + file_container_frame_src,
-                                                headers={'Cookie': cookie})
+    file_container_frame_response = session.get(base_url + file_container_frame_src, headers={"Cookie": cookie})
     downloader._assert_status(file_container_frame_response)
     file_container_frame_response_text = file_container_frame_response.text
 
-    metadata_url, consent_url = re.search(r'setLabelMetadataStream\(.*, \"(.*?)\", .*, .*, .*, \"(.*?)\"',
-                                          file_container_frame_response_text).groups()
+    metadata_url, consent_url = re.search(
+        r"setLabelMetadataStream\(.*, \"(.*?)\", .*, .*, .*, \"(.*?)\"", file_container_frame_response_text
+    ).groups()
 
     metadata_response = requests.get(metadata_url)
     downloader._assert_status(metadata_response)
 
     # this returns either a consent reponse or directly the desired file content
-    consent_response_or_file_response = session.get(consent_url, stream=True, headers={'Cookie': cookie})
+    consent_response_or_file_response = session.get(consent_url, stream=True, headers={"Cookie": cookie})
     downloader._assert_status(consent_response_or_file_response)
 
     return metadata_response, consent_response_or_file_response, cookie
@@ -218,19 +211,16 @@ def get_metadata_from_response(metadata_response: requests.Response) -> dict:
     :return:
     """
     metadata_text = metadata_response.text
-    metadata_results = re.findall(r'<td>(.*?):</td>\s*<td>(.*?)<', metadata_text)
+    metadata_results = re.findall(r"<td>(.*?):</td>\s*<td>(.*?)<", metadata_text)
     metadata = {k: v for k, v in metadata_results}
 
     return metadata
 
 
 @contextlib.contextmanager
-def _stream_file_from_container_url(container_url: str,
-                                    base_url: str,
-                                    max_retries: int = 3,
-                                    **kwargs: Any) -> Iterator[Tuple[downloader.Response,
-                                                                     Dict,
-                                                                     Iterable[bytes]]]:
+def _stream_file_from_container_url(
+    container_url: str, base_url: str, max_retries: int = 3, **kwargs: Any
+) -> Iterator[Tuple[downloader.Response, Dict, Iterable[bytes]]]:
     """
 
     :param container_url:
@@ -239,16 +229,16 @@ def _stream_file_from_container_url(container_url: str,
     :param kwargs:
     :return:
     """
-    metadata_response, main_response, cookie = get_responses_from_container_url(container_url=container_url,
-                                                                                base_url=base_url,
-                                                                                max_retries=max_retries)
+    metadata_response, main_response, cookie = get_responses_from_container_url(
+        container_url=container_url, base_url=base_url, max_retries=max_retries
+    )
 
     metadata = get_metadata_from_response(metadata_response)
 
     main_response_text = main_response.text
 
     # search for copyrights uri in response
-    copyrights_uri_search_results = re.search(r'copyrights_pid.src = \"/(.*?)\"',main_response_text)
+    copyrights_uri_search_results = re.search(r"copyrights_pid.src = \"/(.*?)\"", main_response_text)
 
     if copyrights_uri_search_results is None:
         # assume consent form did not appear
@@ -257,12 +247,12 @@ def _stream_file_from_container_url(container_url: str,
         # assume consent form did appear
         with requests.Session() as session:
             copyrights_uri = copyrights_uri_search_results.groups()[0]
-            copyright_response = session.get(base_url + copyrights_uri, headers={'Cookie': cookie}, **kwargs)
+            copyright_response = session.get(base_url + copyrights_uri, headers={"Cookie": cookie}, **kwargs)
             downloader._assert_status(copyright_response)
 
-            download_url = re.search(r'window.location.href=\'(.*?)\'', main_response_text).groups()[0]
+            download_url = re.search(r"window.location.href=\'(.*?)\'", main_response_text).groups()[0]
 
-            with session.get(download_url, stream=True, headers={'Cookie': cookie}, **kwargs) as download_response:
+            with session.get(download_url, stream=True, headers={"Cookie": cookie}, **kwargs) as download_response:
                 downloader._assert_status(download_response)
 
                 yield (download_response, metadata, download_response.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE))
@@ -275,7 +265,7 @@ def _get_file_name_bsl_corpus(response: downloader.Response, metadata: Dict) -> 
     :param metadata:
     :return:
     """
-    response_file_name = re.search(r'filename=%22(.*?)%22', response.headers['Content-Disposition']).groups()[0]
+    response_file_name = re.search(r"filename=%22(.*?)%22", response.headers["Content-Disposition"]).groups()[0]
 
     # return the response filename because in many cases the metadata filename is incorrect:
     # a) Identifier is not really the file name, especially if there are several ELAN files for a single identifier
@@ -287,19 +277,15 @@ def _get_file_name_bsl_corpus(response: downloader.Response, metadata: Dict) -> 
 
 # noinspection PyProtectedMember
 @utils.memoize()
-def get_bsl_corpus_downloader(*args: Any, **kwargs: Any) -> '_BslCorpusDownloader':
+def get_bsl_corpus_downloader(*args: Any, **kwargs: Any) -> "_BslCorpusDownloader":
     return _BslCorpusDownloader(*args, **kwargs)
 
 
 # noinspection PyProtectedMember
 class _BslCorpusDownloader(downloader._Downloader):
-
-    def __init__(self,
-                 username: str,
-                 password: str,
-                 max_retries: int = 3,
-                 base_url: str = "http://digital-collections.ucl.ac.uk/",
-                 **kwargs):
+    def __init__(
+        self, username: str, password: str, max_retries: int = 3, base_url: str = "http://digital-collections.ucl.ac.uk/", **kwargs
+    ):
         super(_BslCorpusDownloader, self).__init__(**kwargs)
 
         self.username = username
@@ -307,10 +293,7 @@ class _BslCorpusDownloader(downloader._Downloader):
         self.max_retries = max_retries
         self.base_url = base_url
 
-    def _sync_download(self,
-                       url: str,
-                       destination_path: str,
-                       verify: bool = True) -> downloader.DownloadResult:
+    def _sync_download(self, url: str, destination_path: str, verify: bool = True) -> downloader.DownloadResult:
         """Synchronous version of `download` method.
         To download through a proxy, the `HTTP_PROXY`, `HTTPS_PROXY`,
         `REQUESTS_CA_BUNDLE`,... environment variables can be exported, as
@@ -327,10 +310,11 @@ class _BslCorpusDownloader(downloader._Downloader):
         """
         # files can have unknown names as a fallback
 
-        with _stream_file_from_container_url(container_url=url,
-                                             base_url=self.base_url,
-                                             max_retries=self.max_retries,
-                                             verify=verify) as (response, metadata, iter_content):
+        with _stream_file_from_container_url(container_url=url, base_url=self.base_url, max_retries=self.max_retries, verify=verify) as (
+            response,
+            metadata,
+            iter_content,
+        ):
             # fname = downloader._get_filename(response)
             fname = _get_file_name_bsl_corpus(response, metadata)
             path = os.path.join(destination_path, fname)
@@ -339,9 +323,9 @@ class _BslCorpusDownloader(downloader._Downloader):
             # Initialize the download size progress bar
             size_mb = 0
             unit_mb = units.MiB
-            total_size = int(response.headers.get('Content-length', 0)) // unit_mb
+            total_size = int(response.headers.get("Content-length", 0)) // unit_mb
             self._pbar_dl_size.update_total(total_size)
-            with tf.io.gfile.GFile(path, 'wb') as file_:
+            with tf.io.gfile.GFile(path, "wb") as file_:
                 checksum = self._checksumer_cls()
                 for block in iter_content:
                     size += len(block)
@@ -355,21 +339,12 @@ class _BslCorpusDownloader(downloader._Downloader):
                         size_mb %= unit_mb
         self._pbar_url.update(1)
         return downloader.DownloadResult(
-            path=utils.as_path(path),
-            url_info=checksums_lib.UrlInfo(
-                checksum=checksum.hexdigest(),
-                size=utils.Size(size),
-                filename=fname,
-            ),
+            path=utils.as_path(path), url_info=checksums_lib.UrlInfo(checksum=checksum.hexdigest(), size=utils.Size(size), filename=fname,),
         )
 
 
 class DownloadManagerBslCorpus(tfds.download.DownloadManager):
-
-    def __init__(self, *, username: str,
-                 password: str,
-                 max_retries: int = 3,
-                 **kwargs):
+    def __init__(self, *, username: str, password: str, max_retries: int = 3, **kwargs):
         super().__init__(**kwargs)
 
         self.username = username
@@ -381,9 +356,7 @@ class DownloadManagerBslCorpus(tfds.download.DownloadManager):
     @property
     def _downloader(self):
         if self.__downloader is None:
-            self.__downloader = get_bsl_corpus_downloader(username=self.username,
-                                                          password=self.password,
-                                                          max_retries=self.max_retries)
+            self.__downloader = get_bsl_corpus_downloader(username=self.username, password=self.password, max_retries=self.max_retries)
         return self.__downloader
 
 
@@ -436,27 +409,19 @@ def get_elan_sentences_bsl_corpus(elan_path: str) -> Iterator:
         glosses = {}
 
         for gloss_id, (start, end, value, _) in eaf.tiers[hand_tier][0].items():
-            glosses[gloss_id] = {"start": timeslots[start],
-                                 "end": timeslots[end],
-                                 "gloss": value,
-                                 "hand": hand}
+            glosses[gloss_id] = {"start": timeslots[start], "end": timeslots[end], "gloss": value, "hand": hand}
 
         all_glosses += list(glosses.values())
 
     for (start, end, value, _) in english_text:
-        sentence = {"start": timeslots[start],
-                    "end": timeslots[end],
-                    "english": value}
+        sentence = {"start": timeslots[start], "end": timeslots[end], "english": value}
 
         # Add glosses whose timestamps are within this sentence
-        glosses_in_sentence = [item for item in all_glosses if
-                               item["start"] >= sentence["start"]
-                               and item["end"] <= sentence["end"]]
+        glosses_in_sentence = [item for item in all_glosses if item["start"] >= sentence["start"] and item["end"] <= sentence["end"]]
 
         sentence["glosses"] = list(sorted(glosses_in_sentence, key=lambda d: d["start"]))
 
         yield sentence
-
 
 
 if __name__ == "__main__":
@@ -469,9 +434,9 @@ if __name__ == "__main__":
 
     num_example_records = 20
 
-    download_links_iterator = generate_download_links(username=BSLCP_USERNAME,
-                                                      password=BSLCP_PASSWORD,
-                                                      number_of_records=num_example_records)
+    download_links_iterator = generate_download_links(
+        username=BSLCP_USERNAME, password=BSLCP_PASSWORD, number_of_records=num_example_records
+    )
 
     for data_per_results_page in download_links_iterator:
 
@@ -482,9 +447,11 @@ if __name__ == "__main__":
 
             resource_url_elan = datum["downloads"]["EAF file"][0]
 
-            with _stream_file_from_container_url(container_url=resource_url_elan,
-                                                 base_url=base_url,
-                                                 max_retries=5) as (response, metadata, iter_content):
+            with _stream_file_from_container_url(container_url=resource_url_elan, base_url=base_url, max_retries=5) as (
+                response,
+                metadata,
+                iter_content,
+            ):
 
                 file_name = _get_file_name_bsl_corpus(response, metadata)
                 print("Found %s" % file_name)
