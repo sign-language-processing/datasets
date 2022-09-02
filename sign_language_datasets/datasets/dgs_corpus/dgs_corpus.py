@@ -13,7 +13,9 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from os import path
-from typing import Dict, Any, Set, Optional, List, Literal
+from typing import Dict, Any, Set, Optional, List
+
+from pose_format.numpy import NumPyPoseBody
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
@@ -21,6 +23,11 @@ from .dgs_utils import get_elan_sentences
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 _DESCRIPTION = """
 Parallel corpus for German Sign Language (DGS) with German and English annotations
@@ -137,7 +144,8 @@ DEFAULT_FPS = 50
 
 
 class DgsCorpusConfig(SignDatasetConfig):
-    def __init__(self, data_type: Literal['document', 'sentence'] = 'document', split: str = "3.0.0-uzh-document",
+    def __init__(self, data_type: Literal['document', 'sentence'] = 'document',
+                 split: str = None,
                  **kwargs):
         """
         :param split: An identifier for a predefined split or a filepath to a custom split file.
@@ -147,6 +155,10 @@ class DgsCorpusConfig(SignDatasetConfig):
 
         self.data_type = data_type
         self.split = split
+
+        # Verify split matches data type
+        if self.split in _KNOWN_SPLITS and not self.split.endswith(self.data_type):
+            raise ValueError(f"Split '{self.split}' is not compatible with data type '{self.data_type}'.")
 
 
 class DgsCorpus(tfds.core.GeneratorBasedBuilder):
@@ -190,7 +202,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     "start": tf.int32,
                     "end": tf.int32,
                     "gloss": tfds.features.Text(),
-                    "hand": tfds.features.Text()
+                    "hand": tfds.features.Text(),
+                    "Lexeme_Sign": tfds.features.Text(),
+                    "Gebärde": tfds.features.Text(),
+                    "Sign": tfds.features.Text(),
                 }),
                 "mouthings": tfds.features.Sequence({
                     "start": tf.int32,
@@ -340,7 +355,13 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     poses = get_openpose(datum["openpose"], fps=DEFAULT_FPS)
 
                 if self._builder_config.include_pose == "holistic":
-                    poses = {t: datum["holistic_" + t] for t in ["a", "b"]}
+                    poses = {}
+                    for person in ["a", "b"]:
+                        if datum["holistic_" + person] is not None:
+                            with open(datum["holistic_" + person], "rb") as f:
+                                poses[person] = Pose.read(f.read())
+                        else:
+                            poses[person] = None
 
             if self._builder_config.data_type == "document":
                 features["poses"] = poses
@@ -354,17 +375,32 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     if split is not None and sentence["id"] not in split[_id]:
                         continue
 
-                    features = copy(features)  # Unclear if necessary, but better safe than sorry
+                    if sentence["english"] is None:
+                        sentence["english"] = ""
 
+                    features = copy(features)  # Unclear if necessary, but better safe than sorry
                     features["sentence"] = sentence
+
+                    start_time = sentence["start"] / 1000
+                    start_frame = int(start_time * DEFAULT_FPS)
+                    end_time = sentence["end"] / 1000
+                    end_frame = math.ceil(end_time * DEFAULT_FPS)
+
                     if poses is not None:
-                        features["pose"] = poses[sentence["participant"]]  # TODO crop pose
+                        pose = poses[sentence["participant"].lower()]
+                        sub_pose_body = NumPyPoseBody(fps=pose.body.fps,
+                                                      data=pose.body.data[start_frame:end_frame],
+                                                      confidence=pose.body.confidence[start_frame:end_frame])
+                        features["pose"] = Pose(pose.header, sub_pose_body)
 
                     if self._builder_config.process_video:
                         videos = features["paths"]["videos"]
-                        if videos[sentence["participant"]] == "":
+                        if videos[sentence["participant"].lower()] == "":
                             features["video"] = default_video
                         else:
-                            features["video"] = videos[sentence["participant"]]  # TODO crop video
+                            features["video"] = {
+                                "video": videos[sentence["participant"].lower()],
+                                "ffmpeg_args": ["-ss", str(start_time), "-to", str(end_time)],
+                            }
 
                     yield f'{features["id"]}_{sentence["id"]}', features
