@@ -102,16 +102,13 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
 
         return [
             tfds.core.SplitGenerator(
-                name=tfds.Split.VALIDATION,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"},
+                name=tfds.Split.VALIDATION, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TEST,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"},
+                name=tfds.Split.TEST, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TRAIN,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"},
+                name=tfds.Split.TRAIN, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"},
             ),
         ]
 

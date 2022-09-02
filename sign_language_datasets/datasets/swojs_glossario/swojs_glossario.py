@@ -35,9 +35,9 @@ def get_transcription(datum):
 class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for swojs_glossario dataset."""
 
-    VERSION = tfds.core.Version('1.0.0')
+    VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
-        '1.0.0': 'Initial release.',
+        "1.0.0": "Initial release.",
     }
 
     BUILDER_CONFIGS = [
@@ -55,7 +55,7 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
             "modified_date": tfds.features.Text(),
             "sign_writing": tfds.features.Sequence(tfds.features.Text()),
             "spoken_language": tfds.features.Sequence(tfds.features.Text()),
-            "signed_language": tfds.features.Sequence(tfds.features.Text())
+            "signed_language": tfds.features.Sequence(tfds.features.Text()),
         }
 
         if self._builder_config.include_video and self._builder_config.process_video:
@@ -73,23 +73,22 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
         )
 
     def get_media_dict(self, media_path):
-        with open(media_path, "r", encoding="utf-8")  as g:
+        with open(media_path, "r", encoding="utf-8") as g:
             media = json.load(g)
             return {m["o:id"]: m["o:original_url"] for m in media}
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         dataset_warning(self)
 
-        annotations_path, media_path = dl_manager.download([
-            "http://swojs.ibict.br/portal/api/items?page",
-            "http://swojs.ibict.br/portal/api/media?page"
-        ])
+        annotations_path, media_path = dl_manager.download(
+            ["http://swojs.ibict.br/portal/api/items?page", "http://swojs.ibict.br/portal/api/media?page"]
+        )
 
         media_dict = self.get_media_dict(media_path)
 
         local_videos = {}
         if self._builder_config.include_video and self._builder_config.process_video:
-            with open(annotations_path, "r", encoding="utf-8")  as f:
+            with open(annotations_path, "r", encoding="utf-8") as f:
                 annotations = json.load(f)
 
                 medias = [_id for _id in [get_media_id(a) for a in annotations] if _id is not None]
@@ -98,14 +97,12 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
                 video_paths = dl_manager.download(media_urls)
                 local_videos = {k: v for k, v in zip(medias, video_paths)}
 
-        return {
-            'train': self._generate_examples(annotations_path, local_videos, media_dict)
-        }
+        return {"train": self._generate_examples(annotations_path, local_videos, media_dict)}
 
     def _generate_examples(self, annotations_path, local_videos, media_dict):
         """Yields examples."""
 
-        with open(annotations_path, "r", encoding="utf-8")  as f:
+        with open(annotations_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             for datum in data:
                 features = {
@@ -115,16 +112,14 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
                     "modified_date": datum["o:modified"]["@value"],
                     "sign_writing": get_transcription(datum),
                     "spoken_language": [],
-                    "signed_language": []
+                    "signed_language": [],
                 }
 
                 if "http://www.lingvoj.org/ontology:originalLanguage" in datum:
-                    features["spoken_language"] = [t["@value"] for t in
-                                                   datum["http://www.lingvoj.org/ontology:originalLanguage"]]
+                    features["spoken_language"] = [t["@value"] for t in datum["http://www.lingvoj.org/ontology:originalLanguage"]]
 
                 if "http://www.lingvoj.org/ontology:targetLanguage" in datum:
-                    features["signed_language"] = [t["@value"] for t in
-                                                   datum["http://www.lingvoj.org/ontology:targetLanguage"]]
+                    features["signed_language"] = [t["@value"] for t in datum["http://www.lingvoj.org/ontology:targetLanguage"]]
 
                 media_id = get_media_id(datum)
                 if media_id in local_videos:

@@ -173,10 +173,7 @@ class PoseFeature(feature.FeatureConnector):
         return cls(shape=shape, encoding_format=encoding_format)
 
     def to_json_content(self) -> Json:
-        print("to_json_content", {
-            "shape": list(self._shape),
-            "encoding_format": self._encoding_format,
-        })
+        print("to_json_content", {"shape": list(self._shape), "encoding_format": self._encoding_format,})
         return {
             "shape": list(self._shape),
             "encoding_format": self._encoding_format,

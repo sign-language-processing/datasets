@@ -30,7 +30,7 @@ class TFDSTorchDataset(torch.utils.data.IterableDataset):
 if __name__ == "__main__":
     # Fast download and load dataset using TFDS
     config = SignDatasetConfig(name="holistic-poses", version="1.0.0", include_video=False, include_pose="holistic")
-    dicta_sign = tfds.load(name='dicta_sign', builder_kwargs={"config": config})
+    dicta_sign = tfds.load(name="dicta_sign", builder_kwargs={"config": config})
 
     # Convert to torch dataset
     train_dataset = TFDSTorchDataset(dicta_sign["train"])

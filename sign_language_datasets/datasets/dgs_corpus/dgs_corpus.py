@@ -68,8 +68,7 @@ def convert_dgs_dict_to_openpose_frames(input_dict: Dict[str, Any]) -> OpenPoseF
     return frames
 
 
-def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None,
-                 num_frames: Optional[int] = None) -> Dict[str, Pose]:
+def get_openpose(openpose_path: str, fps: int, people: Optional[Set] = None, num_frames: Optional[int] = None) -> Dict[str, Pose]:
     """
     Load OpenPose in the particular format used by DGS (one single file vs. one file for each frame).
 
@@ -115,8 +114,10 @@ def load_split(split_name: str) -> Dict[str, List[str]]:
     if split_name not in _KNOWN_SPLITS.keys():
         # assume that the supplied string is a path on the file system
         if not path.exists(split_name):
-            raise ValueError("Split '%s' is not a known data split identifier and does not exist as a file either.\n"
-                             "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS)))
+            raise ValueError(
+                "Split '%s' is not a known data split identifier and does not exist as a file either.\n"
+                "Known split identifiers are: %s" % (split_name, str(_KNOWN_SPLITS))
+            )
 
         split_path = split_name
     else:
@@ -232,9 +233,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             dev_data = {key: value for key, value in processed_data.items() if key in split["dev"]}
             test_data = {key: value for key, value in processed_data.items() if key in split["test"]}
 
-            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": train_data}),
-                    tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"data": dev_data}),
-                    tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"data": test_data})]
+            return [
+                tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": train_data}),
+                tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"data": dev_data}),
+                tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"data": test_data}),
+            ]
 
         else:
             return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
@@ -273,8 +276,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     actual_video_fps = cap.get(cv2.CAP_PROP_FPS)
                     cap.release()
 
-                    assert math.isclose(actual_video_fps, float(default_fps)), \
-                        "Framerate of video '%s' is %f instead of %d" % (video_path, actual_video_fps, default_fps)
+                    assert math.isclose(actual_video_fps, float(default_fps)), "Framerate of video '%s' is %f instead of %d" % (
+                        video_path,
+                        actual_video_fps,
+                        default_fps,
+                    )
 
                 features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
                 features["paths"]["videos"] = videos

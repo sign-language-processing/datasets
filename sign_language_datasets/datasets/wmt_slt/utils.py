@@ -59,22 +59,20 @@ def formatted_holistic_pose(width=1000, height=1000):
         from pose_format.utils.holistic import holistic_components
 
     except ImportError:
-        raise ImportError(
-            "Please install mediapipe with: pip install mediapipe"
-        )
+        raise ImportError("Please install mediapipe with: pip install mediapipe")
 
     mp_holistic = mp.solutions.holistic
-    FACEMESH_CONTOURS_POINTS = [str(p) for p in
-                                sorted(set([p for p_tup in list(mp_holistic.FACEMESH_CONTOURS) for p in p_tup]))]
+    FACEMESH_CONTOURS_POINTS = [str(p) for p in sorted(set([p for p_tup in list(mp_holistic.FACEMESH_CONTOURS) for p in p_tup]))]
 
     dimensions = PoseHeaderDimensions(width=width, height=height, depth=width)
     header = PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10))
-    body = NumPyPoseBody(fps=10,
-                         data=np.zeros(shape=(1, 1, header.total_points(), 3)),
-                         confidence=np.zeros(shape=(1, 1, header.total_points())))
+    body = NumPyPoseBody(
+        fps=10, data=np.zeros(shape=(1, 1, header.total_points(), 3)), confidence=np.zeros(shape=(1, 1, header.total_points()))
+    )
     pose = Pose(header, body)
-    return pose.get_components(["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"],
-                               {"FACE_LANDMARKS": FACEMESH_CONTOURS_POINTS})
+    return pose.get_components(
+        ["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"], {"FACE_LANDMARKS": FACEMESH_CONTOURS_POINTS}
+    )
 
 
 def load_mediapipe_directory(directory: str, fps: int, width: int, height: int) -> Pose:
@@ -146,11 +144,7 @@ def get_video_metadata(filename: str) -> Dict[str, int]:
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
 
-    return {
-        "fps": fps,
-        "width": width,
-        "height": height
-    }
+    return {"fps": fps, "width": width, "height": height}
 
 
 def milliseconds_to_frame_index(milliseconds: int, fps: int) -> int:

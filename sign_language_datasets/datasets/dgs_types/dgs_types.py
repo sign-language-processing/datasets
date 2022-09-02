@@ -36,9 +36,7 @@ _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
 }
 
-_POSE_URLS = {
-    "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dgs_types/"
-}
+_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dgs_types/"}
 
 
 class DgsTypes(tfds.core.GeneratorBasedBuilder):
@@ -60,15 +58,9 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         """Returns the dataset metadata."""
 
         if self._builder_config.process_video:
-            video_feature = {
-                "name": tfds.features.Text(),
-                "video": self._builder_config.video_feature((640, 360))
-            }
+            video_feature = {"name": tfds.features.Text(), "video": self._builder_config.video_feature((640, 360))}
         else:
-            video_feature = {
-                "name": tfds.features.Text(),
-                "video": tfds.features.Text()
-            }
+            video_feature = {"name": tfds.features.Text(), "video": tfds.features.Text()}
 
         # Add poses if requested
         if self._builder_config.include_pose == "holistic":
@@ -82,7 +74,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
             "glosses": tfds.features.Sequence(tfds.features.Text()),
             "frequencies": tfds.features.Sequence(tf.int32),
             "hamnosys": tfds.features.Text(),
-            "views": tfds.features.Sequence(video_feature)
+            "views": tfds.features.Sequence(video_feature),
         }
 
         return tfds.core.DatasetInfo(
@@ -95,12 +87,12 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         )
 
     def get_galex_data(self, dl_manager: tfds.download.DownloadManager):
-        GALEX = 'https://www.sign-lang.uni-hamburg.de/galex/'
+        GALEX = "https://www.sign-lang.uni-hamburg.de/galex/"
         index_urls = [f"{GALEX}tystatus/x{i}.html" for i in [2, 3, 4]]
         gloss_urls = set()
         for p in dl_manager.download(index_urls):
             with open(p, "r", encoding="utf-8") as f:
-                for match in re.finditer(r'<p class=\"XREF\"><a href=\"\.\.\/(.*?)\"', f.read()):
+                for match in re.finditer(r"<p class=\"XREF\"><a href=\"\.\.\/(.*?)\"", f.read()):
                     match_url = match.group(1)
                     gloss_urls.add(GALEX + match_url)
 
@@ -109,17 +101,14 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         for p in dl_manager.download(list(gloss_urls)):
             with open(p, "r", encoding="utf-8") as f:
                 content = f.read()
-                gloss = re.findall(r'span class=\"Gloss\">(.*?)<', content)[0]
-                video = re.findall(r'source src=\"\.\.\/(.*?)\"', content)[0]
+                gloss = re.findall(r"span class=\"Gloss\">(.*?)<", content)[0]
+                video = re.findall(r"source src=\"\.\.\/(.*?)\"", content)[0]
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
                     "frequencies": [],
-                    "hamnosys": re.findall(r'a class=\"ham\".*?>(.*?)<', content)[0],
-                    "views": [{
-                        "name": "front",
-                        "video": video
-                    }]
+                    "hamnosys": re.findall(r"a class=\"ham\".*?>(.*?)<", content)[0],
+                    "views": [{"name": "front", "video": video}],
                 }
                 data.append(datum)
                 video_urls[video] = GALEX + video
@@ -139,11 +128,11 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         gloss_frequencies = defaultdict(list)
 
         with open(dgs_index, "r", encoding="utf-8") as f:
-            for match in re.finditer(r'<p>(.*?) \((\d+) Tokens?\)( → )?(.*?)</p>', f.read()):
-                gloss_id = re.findall(r'\.\.\/types\/(.*?)\.html', match.group(0))[0]
+            for match in re.finditer(r"<p>(.*?) \((\d+) Tokens?\)( → )?(.*?)</p>", f.read()):
+                gloss_id = re.findall(r"\.\.\/types\/(.*?)\.html", match.group(0))[0]
                 gloss_frequency = int(match.group(2))
                 gloss_frequencies[gloss_id].append(gloss_frequency)
-                gloss_text = match.group(1) if match.group(3) is not None else re.findall(r'>(.*?)<', match.group(1))[0]
+                gloss_text = match.group(1) if match.group(3) is not None else re.findall(r">(.*?)<", match.group(1))[0]
                 gloss_map[gloss_id].append(gloss_text)
 
         gloss_ids = list(gloss_map.keys())
@@ -158,30 +147,21 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
             views = []
 
-            video_src = re.findall(r'<source src=\"(.*?)\"', content)
+            video_src = re.findall(r"<source src=\"(.*?)\"", content)
             if len(video_src) > 0:
                 full_src = video_src[0]
-                views_info = re.findall(r'class=\"perspectives\".*?\'_(\d)\'.*?>(.*?)<', content)
+                views_info = re.findall(r"class=\"perspectives\".*?\'_(\d)\'.*?>(.*?)<", content)
                 for view_id, view_name in views_info:
-                    view_video_url = full_src.replace('_1.mp4', f'_{view_id}.mp4')
-                    views.append({
-                        "name": view_name,
-                        "video": view_video_url
-                    })
+                    view_video_url = full_src.replace("_1.mp4", f"_{view_id}.mp4")
+                    views.append({"name": view_name, "video": view_video_url})
                     video_urls[view_video_url] = view_video_url
 
             frequencies = gloss_frequencies[gloss_id]
 
-            hamnosys_search = re.findall(r'class=\"hamnosys\".*?>(.*?)<', content)
+            hamnosys_search = re.findall(r"class=\"hamnosys\".*?>(.*?)<", content)
             hamnosys = hamnosys_search[0] if len(hamnosys_search) > 0 else ""
 
-            data.append({
-                "id": gloss_id,
-                "frequencies": frequencies,
-                "glosses": glosses,
-                "hamnosys": hamnosys,
-                "views": views
-            })
+            data.append({"id": gloss_id, "frequencies": frequencies, "glosses": glosses, "hamnosys": hamnosys, "views": views})
 
         if self.builder_config.include_video:
             video_paths = dl_manager.download(video_urls)
@@ -205,8 +185,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
         # Poses
         if self.builder_config.include_pose == "holistic":
-            pose_urls = {datum['id']: _POSE_URLS + f"{datum['id']}_{view['name']}.pose"
-                         for datum in data for view in datum["views"]}
+            pose_urls = {datum["id"]: _POSE_URLS + f"{datum['id']}_{view['name']}.pose" for datum in data for view in datum["views"]}
             local_poses = dl_manager.download(pose_urls)
 
         return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data})]

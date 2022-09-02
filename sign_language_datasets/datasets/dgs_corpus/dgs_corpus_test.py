@@ -18,15 +18,15 @@ from pose_format.pose import Pose
 OPENPOSE_TOTAL_KEYPOINTS = 137
 OPENPOSE_COMPONENTS_USED = ["pose_keypoints_2d", "face_keypoints_2d", "hand_left_keypoints_2d", "hand_right_keypoints_2d"]
 OPENPOSE_COMPONENTS_UNUSED = ["pose_keypoints_3d", "face_keypoints_3d", "hand_left_keypoints_3d", "hand_right_keypoints_3d"]
-OPENPOSE_NUM_POINTS_PER_COMPONENT = {"pose_keypoints_2d": 25,
-                                     "face_keypoints_2d": 70,
-                                     "hand_left_keypoints_2d": 21,
-                                     "hand_right_keypoints_2d": 21}
+OPENPOSE_NUM_POINTS_PER_COMPONENT = {
+    "pose_keypoints_2d": 25,
+    "face_keypoints_2d": 70,
+    "hand_left_keypoints_2d": 21,
+    "hand_right_keypoints_2d": 21,
+}
 
 
-def _generate_dgs_openpose_data(camera_names: List[str],
-                                num_frames: int = 10,
-                                num_people: int = 1) -> List[Dict]:
+def _generate_dgs_openpose_data(camera_names: List[str], num_frames: int = 10, num_people: int = 1) -> List[Dict]:
     data = []  # type: List[Dict]
 
     for camera_name in camera_names:
@@ -62,10 +62,9 @@ def _generate_dgs_openpose_data(camera_names: List[str],
     return data
 
 
-def _generate_dgs_openpose_file(filehandle: tempfile.NamedTemporaryFile,
-                                camera_names: List[str],
-                                num_frames: int = 10,
-                                num_people: int = 1) -> None:
+def _generate_dgs_openpose_file(
+    filehandle: tempfile.NamedTemporaryFile, camera_names: List[str], num_frames: int = 10, num_people: int = 1
+) -> None:
 
     data = _generate_dgs_openpose_data(camera_names, num_frames, num_people)
     json.dump(data, filehandle)
@@ -73,15 +72,13 @@ def _generate_dgs_openpose_file(filehandle: tempfile.NamedTemporaryFile,
 
 
 def _gzip_file(filepath_in: str, filepath_out: str) -> None:
-    with open(filepath_in, 'rb') as filehandle_in:
-        with gzip.open(filepath_out, 'wb') as filehandle_out:
+    with open(filepath_in, "rb") as filehandle_in:
+        with gzip.open(filepath_out, "wb") as filehandle_out:
             shutil.copyfileobj(filehandle_in, filehandle_out)
 
 
 @contextmanager
-def _create_tmp_dgs_openpose_file(camera_names: List[str],
-                                  num_frames: int = 10,
-                                  num_people: int = 1) -> str:
+def _create_tmp_dgs_openpose_file(camera_names: List[str], num_frames: int = 10, num_people: int = 1) -> str:
     with tempfile.NamedTemporaryFile(mode="w+") as filehandle:
         _generate_dgs_openpose_file(filehandle, camera_names, num_frames, num_people)
 
@@ -92,13 +89,11 @@ def _create_tmp_dgs_openpose_file(camera_names: List[str],
 
 
 class TestDgsCorpusAuxiliaryFunctions(TestCase):
-
     def test_convert_dgs_dict_to_openpose_frames(self):
 
         input_dict = {"7": {"people": [1, 2, 3]}, "8": {"people": [4, 5, 6]}}
 
-        expected_output = {7: {"people": [1, 2, 3], "frame_id": 7},
-                           8: {"people": [4, 5, 6], "frame_id": 8}}
+        expected_output = {7: {"people": [1, 2, 3], "frame_id": 7}, 8: {"people": [4, 5, 6], "frame_id": 8}}
 
         actual_output = dgs_corpus.convert_dgs_dict_to_openpose_frames(input_dict)
 
@@ -112,9 +107,9 @@ class TestDgsCorpusAuxiliaryFunctions(TestCase):
 
         people_to_extract = {"a", "b"}
 
-        with _create_tmp_dgs_openpose_file(camera_names=camera_names_in_mock_data,
-                                           num_frames=num_frames_in_mock_data,
-                                           num_people=num_people_in_mock_data) as filepath:
+        with _create_tmp_dgs_openpose_file(
+            camera_names=camera_names_in_mock_data, num_frames=num_frames_in_mock_data, num_people=num_people_in_mock_data
+        ) as filepath:
             poses = dgs_corpus.get_openpose(openpose_path=filepath, fps=50, people=people_to_extract)
 
             for pose in poses.values():
@@ -128,9 +123,9 @@ class TestDgsCorpusAuxiliaryFunctions(TestCase):
 
         people_to_extract = {"a", "b"}
 
-        with _create_tmp_dgs_openpose_file(camera_names=camera_names_in_mock_data,
-                                           num_frames=num_frames_in_mock_data,
-                                           num_people=num_people_in_mock_data) as filepath:
+        with _create_tmp_dgs_openpose_file(
+            camera_names=camera_names_in_mock_data, num_frames=num_frames_in_mock_data, num_people=num_people_in_mock_data
+        ) as filepath:
             poses = dgs_corpus.get_openpose(openpose_path=filepath, fps=50, people=people_to_extract)
 
             for person in poses.keys():

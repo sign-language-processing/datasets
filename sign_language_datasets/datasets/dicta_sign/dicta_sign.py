@@ -21,12 +21,7 @@ _CITATION = """
 }
 """
 
-SPOKEN_LANGUAGES = {
-    "BSL": "en",
-    "DGS": "de",
-    "LSF": "fr",
-    "GSL": "el"
-}
+SPOKEN_LANGUAGES = {"BSL": "en", "DGS": "de", "LSF": "fr", "GSL": "el"}
 
 _POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dicta_sign.tar.gz"}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.header")}
@@ -35,9 +30,9 @@ _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "h
 class DictaSign(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for sign2mint dataset."""
 
-    VERSION = tfds.core.Version('1.0.0')
+    VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
-        '1.0.0': 'Initial release.',
+        "1.0.0": "Initial release.",
     }
 
     BUILDER_CONFIGS = [
@@ -55,7 +50,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
             "spoken_language": tfds.features.Text(),
             "text": tfds.features.Text(),
             "gloss": tfds.features.Text(),
-            "hamnosys": tfds.features.Text()
+            "hamnosys": tfds.features.Text(),
         }
 
         resolution = (320, 240)
@@ -85,8 +80,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         dataset_warning(self)
 
-        concepts_path = dl_manager.download(
-            "https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_eng.html")
+        concepts_path = dl_manager.download("https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_eng.html")
 
         if self._builder_config.include_pose is not None:
             poses_path = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
@@ -120,7 +114,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
                         "text": match[0],
                         "gloss": match[3],
                         "hamnosys": match[4],
-                        "video": "https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/" + match[2]
+                        "video": "https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/" + match[2],
                     }
                     if not any(map(lambda t: concept["video"].endswith(t), filter_videos)):
                         concepts.append(concept)
@@ -132,15 +126,13 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
             for video_path, concept in zip(video_paths, concepts):
                 concept["video"] = video_path if self._builder_config.process_video else str(video_path)
 
-        return {
-            'train': self._generate_examples(concepts, poses_path)
-        }
+        return {"train": self._generate_examples(concepts, poses_path)}
 
     def _generate_examples(self, concepts, poses_path: str):
         """Yields examples."""
 
         for concept in concepts:
             if poses_path is not None:
-                concept["pose"] = path.join(poses_path, 'dicta_sign', concept["id"] + ".pose")
+                concept["pose"] = path.join(poses_path, "dicta_sign", concept["id"] + ".pose")
 
             yield concept["id"], concept

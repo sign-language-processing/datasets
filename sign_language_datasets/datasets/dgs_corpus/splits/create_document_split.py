@@ -46,27 +46,28 @@ def get_split_indexes(total_size: int, dev_size: int, test_size) -> Tuple[np.arr
 
 
 config = SignDatasetConfig(name="only-annotations", version="1.0.0", include_video=False, include_pose=None)
-dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config))
+dgs_corpus = tfds.load("dgs_corpus", builder_kwargs=dict(config=config))
 
 
 def get_split(dev_size: int, test_size: int):
-    ids = np.array([datum["id"].numpy().decode("utf-8") for datum in dgs_corpus["train"] if
-                    datum["id"] not in INCORRECT_FRAMERATE])
+    ids = np.array([datum["id"].numpy().decode("utf-8") for datum in dgs_corpus["train"] if datum["id"] not in INCORRECT_FRAMERATE])
 
     train_indexes, dev_indexes, test_indexes = get_split_indexes(len(ids), dev_size=dev_size, test_size=test_size)
 
     print("Number of entire files in each split:")
     print(str({"train": len(train_indexes), "dev": len(dev_indexes), "test": len(test_indexes)}))
 
-    return {"dgs_corpus_version": "3.0.0",
-            "train": list(ids[train_indexes]),
-            "dev": list(ids[dev_indexes]),
-            "test": list(ids[test_indexes])}
+    return {
+        "dgs_corpus_version": "3.0.0",
+        "train": list(ids[train_indexes]),
+        "dev": list(ids[dev_indexes]),
+        "test": list(ids[test_indexes]),
+    }
 
 
 split = get_split(dev_size=10, test_size=10)
 
-with open('split.json', 'w') as outfile:
+with open("split.json", "w") as outfile:
     json.dump(split, outfile, indent=4)
 
 # ! cat split.json
@@ -86,11 +87,11 @@ sentences_found = {"train": 0, "dev": 0, "test": 0, "none": 0}
 
 for datum in dgs_corpus["train"]:
 
-    _id = datum["id"].numpy().decode('utf-8')
+    _id = datum["id"].numpy().decode("utf-8")
 
     split_name = get_split_name_from_id(_id)
 
-    elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
+    elan_path = datum["paths"]["eaf"].numpy().decode("utf-8")
     sentences = get_elan_sentences(elan_path)
 
     for sentence in sentences:
