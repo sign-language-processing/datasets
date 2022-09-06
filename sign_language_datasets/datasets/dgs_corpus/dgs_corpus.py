@@ -179,6 +179,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
+
+        assert isinstance(self._builder_config, DgsCorpusConfig), \
+            "Builder config for dgs_corpus must be an instance of DgsCorpusConfig"
+
         features = {
             "id": tfds.features.Text(),
             "paths": {
@@ -363,7 +367,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                             poses[person] = None
 
             if self._builder_config.data_type == "document":
-                features["poses"] = poses
+                if poses is not None:
+                    features["poses"] = poses
                 if self._builder_config.process_video:
                     features["videos"] = {t: v if v != "" else default_video for t, v in features["paths"]["videos"].items()}
                 yield _id, features
