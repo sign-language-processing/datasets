@@ -371,6 +371,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     features["poses"] = poses
                 if self._builder_config.process_video:
                     features["videos"] = {t: v if v != "" else default_video for t, v in features["paths"]["videos"].items()}
+                features["id"] = _id
                 yield _id, features
             else:
                 sentences = list(get_elan_sentences(datum["eaf"]))
@@ -407,5 +408,6 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                                 "video": videos[sentence["participant"].lower()],
                                 "ffmpeg_args": ["-ss", str(start_time), "-to", str(end_time)],
                             }
-
-                    yield f'{features["id"]}_{sentence["id"]}', features
+                    document_sentence_id = f'{features["id"]}_{sentence["id"]}'
+                    features["id"] = document_sentence_id
+                    yield document_sentence_id, features
