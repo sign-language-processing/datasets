@@ -14,7 +14,6 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         include_pose: Optional[str] = None,
         fps: Optional[float] = None,
         resolution: Optional[Tuple[int, int]] = None,
-        split: Optional[str] = None,
         extra: dict = {},
         **kwargs,
     ):
@@ -35,7 +34,6 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
 
         self.fps = fps
         self.resolution = resolution
-        self.split = split
         self.extra = extra
 
     def ffmpeg_args(self):
@@ -68,5 +66,13 @@ class VideoFeature(tfds.features.Video):
         if isinstance(video_or_path_or_fobj, list) and isinstance(video_or_path_or_fobj[0], str):
             _, h, w, _ = self.shape
             video_or_path_or_fobj = [cv2.resize(cv2.imread(f), (w, h)) for f in video_or_path_or_fobj]
+
+        # In case where additional ffmpeg parameters are needed
+        if isinstance(video_or_path_or_fobj, dict) and "video" in video_or_path_or_fobj and isinstance(video_or_path_or_fobj["video"], str):
+            old_args = list(self._extra_ffmpeg_args)
+            self._extra_ffmpeg_args += video_or_path_or_fobj["ffmpeg_args"]
+            result = super(VideoFeature, self).encode_example(video_or_path_or_fobj["video"])
+            self._extra_ffmpeg_args = old_args
+            return result
 
         return super(VideoFeature, self).encode_example(video_or_path_or_fobj)

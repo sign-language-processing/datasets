@@ -12,7 +12,7 @@ def get_elan_sentences(elan_path: str):
         if german_tier_name not in eaf.tiers:
             continue
 
-        german_text = list(eaf.tiers[german_tier_name][0].values())
+        german_text = eaf.tiers[german_tier_name][0]
 
         english_tier_name = "Translation_into_English_" + participant
         english_text = list(eaf.tiers[english_tier_name][0].values()) if english_tier_name in eaf.tiers else []
@@ -47,8 +47,8 @@ def get_elan_sentences(elan_path: str):
             mouthing_entry = {"start": timeslots[s], "end": timeslots[e], "mouthing": val}
             all_mouthings.append(mouthing_entry)
 
-        for (s, e, val, _) in german_text:
-            sentence = {"participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
+        for _id, (s, e, val, _) in german_text.items():
+            sentence = {"id": _id, "participant": participant, "start": timeslots[s], "end": timeslots[e], "german": val}
 
             # Add English sentence
             english_sentence = [val2 for (s2, e2, val2, _) in english_text if s == s2 and e == e2]

@@ -1,7 +1,10 @@
 """Public DGS Corpus: parallel corpus for German Sign Language (DGS) with German and English annotations"""
+from __future__ import annotations
 
 import gzip
 import json
+from copy import copy
+
 import cv2
 import math
 
@@ -11,12 +14,20 @@ import tensorflow_datasets as tfds
 
 from os import path
 from typing import Dict, Any, Set, Optional, List
+
+from pose_format.numpy import NumPyPoseBody
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
+from .dgs_utils import get_elan_sentences
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 _DESCRIPTION = """
 Parallel corpus for German Sign Language (DGS) with German and English annotations
@@ -130,6 +141,25 @@ def load_split(split_name: str) -> Dict[str, List[str]]:
     return split
 
 
+DEFAULT_FPS = 50
+
+
+class DgsCorpusConfig(SignDatasetConfig):
+    def __init__(self, data_type: Literal["document", "sentence"] = "document", split: str = None, **kwargs):
+        """
+        :param split: An identifier for a predefined split or a filepath to a custom split file.
+        :param data_type: Whether to return documents or sentences as data.
+        """
+        super().__init__(**kwargs)
+
+        self.data_type = data_type
+        self.split = split
+
+        # Verify split matches data type
+        if self.split in _KNOWN_SPLITS and not self.split.endswith(self.data_type):
+            raise ValueError(f"Split '{self.split}' is not compatible with data type '{self.data_type}'.")
+
+
 class DgsCorpus(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for dgs_corpus dataset."""
 
@@ -139,15 +169,20 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
     }
 
     BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True, include_pose="openpose"),
-        SignDatasetConfig(name="videos", include_video=True, include_pose=None),
-        SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
-        SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
-        SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
+        DgsCorpusConfig(name="default", include_video=True, include_pose="openpose"),
+        DgsCorpusConfig(name="videos", include_video=True, include_pose=None),
+        DgsCorpusConfig(name="openpose", include_video=False, include_pose="openpose"),
+        DgsCorpusConfig(name="holistic", include_video=False, include_pose="holistic"),
+        DgsCorpusConfig(name="annotations", include_video=False, include_pose=None),
+        DgsCorpusConfig(name="sentences", include_video=False, include_pose=None, data_type="sentence"),
     ]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
+
+        assert isinstance(self._builder_config, DgsCorpusConfig), \
+            "Builder config for dgs_corpus must be an instance of DgsCorpusConfig"
+
         features = {
             "id": tfds.features.Text(),
             "paths": {
@@ -158,11 +193,38 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             },
         }
 
+        if self._builder_config.data_type == "sentence":
+            features["document_id"] = tfds.features.Text()
+            features["sentence"] = {
+                "id": tfds.features.Text(),
+                "participant": tfds.features.Text(),
+                "start": tf.int32,
+                "end": tf.int32,
+                "german": tfds.features.Text(),
+                "english": tfds.features.Text(),
+                "glosses": tfds.features.Sequence(
+                    {
+                        "start": tf.int32,
+                        "end": tf.int32,
+                        "gloss": tfds.features.Text(),
+                        "hand": tfds.features.Text(),
+                        "Lexeme_Sign": tfds.features.Text(),
+                        "Gebärde": tfds.features.Text(),
+                        "Sign": tfds.features.Text(),
+                    }
+                ),
+                "mouthings": tfds.features.Sequence({"start": tf.int32, "end": tf.int32, "mouthing": tfds.features.Text()}),
+            }
+
         if self._builder_config.include_video:
             features["fps"] = tf.int32
             video_ids = ["a", "b", "c"]
             if self._builder_config.process_video:
-                features["videos"] = {_id: self._builder_config.video_feature((640, 360)) for _id in video_ids}
+                video_feature = self._builder_config.video_feature((640, 360))
+                if self._builder_config.data_type == "document":
+                    features["videos"] = {_id: video_feature for _id in video_ids}
+                else:
+                    features["video"] = video_feature
             features["paths"]["videos"] = {_id: tfds.features.Text() for _id in video_ids}
 
         # Add poses if requested
@@ -175,7 +237,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             if self._builder_config.include_pose == "holistic":
                 pose_shape = (None, 1, 543, 3)
 
-            features["poses"] = {_id: PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path) for _id in ["a", "b"]}
+            pose_feature = PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
+            if self._builder_config.data_type == "document":
+                features["poses"] = {_id: pose_feature for _id in ["a", "b"]}
+            else:
+                features["pose"] = pose_feature
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -222,75 +288,128 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
         local_paths = dl_manager.download(urls)
 
-        processed_data = {
-            _id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()
-        }
+        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()}
 
         if self._builder_config.split is not None:
             split = load_split(self._builder_config.split)
 
-            train_data = {key: value for key, value in processed_data.items() if key in split["train"]}
-            dev_data = {key: value for key, value in processed_data.items() if key in split["dev"]}
-            test_data = {key: value for key, value in processed_data.items() if key in split["test"]}
+            train_args = {"data": data, "split": split["train"]}
+            dev_args = {"data": data, "split": split["dev"]}
+            test_args = {"data": data, "split": split["test"]}
 
             return [
-                tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": train_data}),
-                tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"data": dev_data}),
-                tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"data": test_data}),
+                tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs=train_args),
+                tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs=dev_args),
+                tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs=test_args),
             ]
 
         else:
-            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
+            return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data})]
 
-    def _generate_examples(self, data):
+    def _include_videos(self, datum: Any, features: Any):
+        videos = {}
+        for participant in ["a", "b", "c"]:
+            video_key = "video_" + participant
+
+            if video_key not in datum.keys() or datum[video_key] is None:
+                video = ""
+            else:
+                video = str(datum[video_key])
+
+            videos[participant] = video
+
+        # make sure that the video fps is as expected
+        for video_path in videos.values():
+            if video_path == "":
+                continue
+
+            cap = cv2.VideoCapture(video_path)
+            actual_video_fps = cap.get(cv2.CAP_PROP_FPS)
+            cap.release()
+
+            assert math.isclose(actual_video_fps, float(DEFAULT_FPS)), "Framerate of video '%s' is %f instead of %d" % (
+                video_path,
+                actual_video_fps,
+                DEFAULT_FPS,
+            )
+
+        features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else DEFAULT_FPS
+        features["paths"]["videos"] = videos
+
+    def _generate_examples(self, data, split: List[str] | Dict[str, List[str]] = None):
         """ Yields examples. """
 
-        default_fps = 50
         default_video = np.zeros((0, 0, 0, 3))  # Empty video
 
-        for _id, datum in list(data.items()):
+        for document_id, datum in list(data.items()):
+            if split is not None and document_id not in split:
+                continue
+
             features = {
-                "id": _id,
+                "id": document_id,
                 "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]},
             }
 
             if self._builder_config.include_video:
-                videos = {}
-                for participant in ["a", "b", "c"]:
-                    video_key = "video_" + participant
+                self._include_videos(datum, features)
 
-                    if video_key not in datum.keys() or datum[video_key] is None:
-                        video = ""
-                    else:
-                        video = str(datum[video_key])
+            poses = None
+            if self._builder_config.include_pose is not None:
+                if self._builder_config.include_pose == "openpose":
+                    poses = get_openpose(datum["openpose"], fps=DEFAULT_FPS)
 
-                    videos[participant] = video
+                if self._builder_config.include_pose == "holistic":
+                    poses = {}
+                    for person in ["a", "b"]:
+                        if datum["holistic_" + person] is not None:
+                            with open(datum["holistic_" + person], "rb") as f:
+                                poses[person] = Pose.read(f.read())
+                        else:
+                            poses[person] = None
 
-                # make sure that the video fps is as expected
-
-                for video_path in videos.values():
-                    if video_path == "":
+            if self._builder_config.data_type == "document":
+                if poses is not None:
+                    features["poses"] = poses
+                if self._builder_config.process_video:
+                    features["videos"] = {t: v if v != "" else default_video for t, v in features["paths"]["videos"].items()}
+                features["id"] = document_id
+                yield document_id, features
+            else:
+                sentences = list(get_elan_sentences(datum["eaf"]))
+                for sentence in sentences:
+                    if split is not None and sentence["id"] not in split[_id]:
                         continue
 
-                    cap = cv2.VideoCapture(video_path)
-                    actual_video_fps = cap.get(cv2.CAP_PROP_FPS)
-                    cap.release()
+                    if sentence["english"] is None:
+                        sentence["english"] = ""
 
-                    assert math.isclose(actual_video_fps, float(default_fps)), "Framerate of video '%s' is %f instead of %d" % (
-                        video_path,
-                        actual_video_fps,
-                        default_fps,
-                    )
+                    features = copy(features)  # Unclear if necessary, but better safe than sorry
+                    features["sentence"] = sentence
 
-                features["fps"] = self._builder_config.fps if self._builder_config.fps is not None else default_fps
-                features["paths"]["videos"] = videos
-                if self._builder_config.process_video:
-                    features["videos"] = {t: v if v != "" else default_video for t, v in videos.items()}
+                    start_time = sentence["start"] / 1000
+                    start_frame = int(start_time * DEFAULT_FPS)
+                    end_time = sentence["end"] / 1000
+                    end_frame = math.ceil(end_time * DEFAULT_FPS)
 
-            if self._builder_config.include_pose == "openpose":
-                features["poses"] = get_openpose(datum["openpose"], fps=default_fps)
+                    if poses is not None:
+                        pose = poses[sentence["participant"].lower()]
+                        sub_pose_body = NumPyPoseBody(
+                            fps=pose.body.fps,
+                            data=pose.body.data[start_frame:end_frame],
+                            confidence=pose.body.confidence[start_frame:end_frame],
+                        )
+                        features["pose"] = Pose(pose.header, sub_pose_body)
 
-            if self._builder_config.include_pose == "holistic":
-                features["poses"] = {t: datum["holistic_" + t] for t in ["a", "b"]}
-
-            yield _id, features
+                    if self._builder_config.process_video:
+                        videos = features["paths"]["videos"]
+                        if videos[sentence["participant"].lower()] == "":
+                            features["video"] = default_video
+                        else:
+                            features["video"] = {
+                                "video": videos[sentence["participant"].lower()],
+                                "ffmpeg_args": ["-ss", str(start_time), "-to", str(end_time)],
+                            }
+                    document_sentence_id = f'{document_id}_{sentence["id"]}'
+                    features["document_id"] = document_id
+                    features["id"] = document_sentence_id
+                    yield document_sentence_id, features

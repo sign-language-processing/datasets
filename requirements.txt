@@ -1,3 +1,4 @@
+typing-extensions
 python-dotenv
 tqdm
 pose-format>=0.0.3
