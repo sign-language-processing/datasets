@@ -194,6 +194,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         }
 
         if self._builder_config.data_type == "sentence":
+            features["document_id"] = tfds.features.Text()
             features["sentence"] = {
                 "id": tfds.features.Text(),
                 "participant": tfds.features.Text(),
@@ -340,12 +341,12 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
         default_video = np.zeros((0, 0, 0, 3))  # Empty video
 
-        for _id, datum in list(data.items()):
-            if split is not None and _id not in split:
+        for document_id, datum in list(data.items()):
+            if split is not None and document_id not in split:
                 continue
 
             features = {
-                "id": _id,
+                "id": document_id,
                 "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]},
             }
 
@@ -371,8 +372,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     features["poses"] = poses
                 if self._builder_config.process_video:
                     features["videos"] = {t: v if v != "" else default_video for t, v in features["paths"]["videos"].items()}
-                features["id"] = _id
-                yield _id, features
+                features["id"] = document_id
+                yield document_id, features
             else:
                 sentences = list(get_elan_sentences(datum["eaf"]))
                 for sentence in sentences:
@@ -408,6 +409,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                                 "video": videos[sentence["participant"].lower()],
                                 "ffmpeg_args": ["-ss", str(start_time), "-to", str(end_time)],
                             }
-                    document_sentence_id = f'{features["id"]}_{sentence["id"]}'
+                    document_sentence_id = f'{document_id}_{sentence["id"]}'
+                    features["document_id"] = document_id
                     features["id"] = document_sentence_id
                     yield document_sentence_id, features
