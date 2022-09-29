@@ -378,7 +378,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             else:
                 sentences = list(get_elan_sentences(datum["eaf"]))
                 for sentence in sentences:
-                    if split is not None and sentence["id"] not in split[_id]:
+                    if split is not None and sentence["id"] not in split[document_id]:
                         continue
 
                     if sentence["english"] is None:
