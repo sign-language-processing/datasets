@@ -58,6 +58,7 @@ _POSE_HEADERS = {
 
 _KNOWN_SPLITS = {
     "3.0.0-uzh-document": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-document.json"),
+    "3.0.0-uzh-sentence": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-sentence.json")
 }
 
 
@@ -377,7 +378,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             else:
                 sentences = list(get_elan_sentences(datum["eaf"]))
                 for sentence in sentences:
-                    if split is not None and sentence["id"] not in split[_id]:
+                    if split is not None and sentence["id"] not in split[document_id]:
                         continue
 
                     if sentence["english"] is None:
