@@ -58,6 +58,7 @@ _POSE_HEADERS = {
 
 _KNOWN_SPLITS = {
     "3.0.0-uzh-document": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-document.json"),
+    "3.0.0-uzh-sentence": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-sentence.json")
 }
 
 
