@@ -8,7 +8,8 @@ from pose_format.numpy.pose_body import NumPyPoseBody
 from pose_format.utils.reader import BufferReader
 from tensorflow_datasets.core.features import feature
 from tensorflow_datasets.core.features.feature import Documentation
-from tensorflow_datasets.core.utils import type_utils, Json
+from tensorflow_datasets.core.utils import Json
+from etils import epath
 
 
 def read_header(header_path: str):
@@ -140,7 +141,7 @@ class PoseFeature(feature.FeatureConnector):
             return self.encode_body(pose_body)
         elif isinstance(pose_path_or_fobj, Pose):
             return self.encode_body(pose_path_or_fobj.body)
-        elif isinstance(pose_path_or_fobj, type_utils.PathLikeCls):
+        elif isinstance(pose_path_or_fobj, epath.PathLikeCls):
             pose_path_or_fobj = os.fspath(pose_path_or_fobj)
             with tf.io.gfile.GFile(pose_path_or_fobj, "rb") as pose_f:
                 encoded_pose = pose_f.read()
