@@ -11,7 +11,7 @@ print(packages)
 setup(
     name="sign-language-datasets",
     packages=packages,
-    version="0.1.4",
+    version="0.1.5",
     description="TFDS Datasets for sign language",
     author="Amit Moryossef",
     author_email="amitmoryossef@gmail.com",
