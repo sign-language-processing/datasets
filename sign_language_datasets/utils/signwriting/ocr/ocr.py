@@ -8,7 +8,6 @@ from typing import List
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 import cv2
-from PIL import Image, ImageDraw, ImageFont
 import os
 
 
@@ -57,6 +56,8 @@ def crop_whitespace(img):
 
 @functools.lru_cache()
 def get_font():
+    from PIL import ImageFont
+
     dirname = os.path.dirname(__file__)
     font_path = os.path.join(dirname, "assets/SuttonSignWritingOneD.ttf")
 
@@ -64,6 +65,12 @@ def get_font():
 
 
 def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
+    try:
+        from PIL import Image, ImageDraw
+    except ImportError:
+        raise ImportError("Please install pillow with: pip install Pillow")
+
+
     font = get_font()
 
     # Adding border for conv calc to go over borders

@@ -10,6 +10,7 @@ from .rwth_phoenix2014_t import RWTHPhoenix2014T
 from .sign2mint import Sign2MINT
 from .signbank import SignBank
 from .signtyp import SignTyp
+from .signsuisse import SignSuisse
 from .swojs_glossario import SwojsGlossario
 from .wlasl import Wlasl
 from .ngt_corpus import NGTCorpus
