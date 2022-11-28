@@ -9,12 +9,7 @@ from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 
 _DESCRIPTION = """
-Waren Sie schon immer neugierig darauf, wie die Gebärdensprache funktioniert? Folgen Sie einem Gebärdensprache-Kurs und möchten Ihren Wortschatz ausbauen? Oder sind Sie selber gehörlos und stellen fest, dass Ihnen eine Gebärde fehlt?
-
-Genau dafür ist unsere Website da! Hier finden Sie ein in seiner Art einmaliges Lexikon, das alle drei Schweizer Gebärdensprachen zusammenfasst: die Deutschschweizerische Gebärdensprache (DSGS), die Langue des Signes Française (LSF) und die Lingua Italiana dei Segni (LIS). 
-
-Um gleich loszulegen, geben Sie einfach den gesuchten Begriff in das obige Feld ein.
-"""
+Ein umfangreiches interaktives Lexikon der drei Gebärdensprachen der Schweiz (Deutschschweizerische Gebärdensprache DSGS, Langue des Signes Française LSF und Lingua Italiana dei Segni LIS). Herausgegeben vom Schweizerischen Gehörlosenbund (SGB-FSS)."""
 
 # TODO(signsuisse): BibTeX citation
 _CITATION = """
@@ -37,7 +32,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
     ]
 
     def _info(self) -> tfds.core.DatasetInfo:
-        """Returns the dataset metadata."""
+        """Return s the dataset metadata."""
 
         features = {
             "id": tfds.features.Text(),
