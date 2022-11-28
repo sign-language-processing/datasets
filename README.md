@@ -42,25 +42,26 @@ rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(co
 
 ## Datasets
 
-| Dataset            | Videos                                                       | Poses                                                  | Versions  |
-|--------------------|--------------------------------------------------------------|--------------------------------------------------------|-----------|
-| aslg_pc12          | N/A                                                          | N/A                                                    | 0.0.1     |
-| rwth_phoenix2014_t | Yes                                                          | Holistic                                               | 3.0.0     |
-| autsl              | Yes                                                          | OpenPose, Holistic                                     | 1.0.0     |
-| dgs_corpus         | Yes                                                          | OpenPose, Holistic                                     | 3.0.0     |
-| dgs_types          | Yes                                                          |                                                        | 3.0.0     |
-| how2sign           | Yes                                                          | OpenPose                                               | 1.0.0     |
-| sign2mint          | Yes                                                          |                                                        | 1.0.0     |
-| signtyp            | Links                                                        |                                                        | 1.0.0     |
-| swojs_glossario    | Yes                                                          |                                                        | 1.0.0     |
-| SignBank           | N/A                                                          |                                                        | 1.0.0     |
-| wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None      |
-| wmtslt             | Yes                                                          | OpenPose, Holistic                                     | 1.2.0     |
-| msasl              |                                                              |                                                        | None      |
-| Video-Based CSL    |                                                              |                                                        | None      |
-| RVL-SLLL ASL       |                                                              |                                                        | None      |
-| ngt_corpus         | Yes                                                          |                                                        | 3.0.0     |
-| bsl_corpus         | No                                                           | No                                                     | 3.0.0     |
+| Dataset            | Videos                                                       | Poses                                                  | Versions |
+|--------------------|--------------------------------------------------------------|--------------------------------------------------------|----------|
+| aslg_pc12          | N/A                                                          | N/A                                                    | 0.0.1    |
+| rwth_phoenix2014_t | Yes                                                          | Holistic                                               | 3.0.0    |
+| autsl              | Yes                                                          | OpenPose, Holistic                                     | 1.0.0    |
+| dgs_corpus         | Yes                                                          | OpenPose, Holistic                                     | 3.0.0    |
+| dgs_types          | Yes                                                          |                                                        | 3.0.0    |
+| how2sign           | Yes                                                          | OpenPose                                               | 1.0.0    |
+| sign2mint          | Yes                                                          |                                                        | 1.0.0    |
+| signtyp            | Links                                                        |                                                        | 1.0.0    |
+| swojs_glossario    | Yes                                                          |                                                        | 1.0.0    |
+| SignBank           | N/A                                                          |                                                        | 1.0.0    |
+| wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None     |
+| wmtslt             | Yes                                                          | OpenPose, Holistic                                     | 1.2.0    |
+| signsuisse         | Yes                                                          |                                                        | 1.0.0    |
+| msasl              |                                                              |                                                        | None     |
+| Video-Based CSL    |                                                              |                                                        | None     |
+| RVL-SLLL ASL       |                                                              |                                                        | None     |
+| ngt_corpus         | Yes                                                          |                                                        | 3.0.0    |
+| bsl_corpus         | No                                                           | No                                                     | 3.0.0    |
 
 ## Data Interface
 

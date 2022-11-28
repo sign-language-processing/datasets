@@ -12,3 +12,4 @@ Pillow
 opencv-python==4.5.5.64
 requests
 etils
+lxml
