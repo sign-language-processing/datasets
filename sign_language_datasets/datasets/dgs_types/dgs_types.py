@@ -49,7 +49,6 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, include_pose=None),
-        SignDatasetConfig(name="openpose", include_video=False, include_pose="openpose"),
         SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
         SignDatasetConfig(name="annotations", include_video=False, include_pose=None),
     ]
@@ -161,7 +160,8 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
             hamnosys_search = re.findall(r"class=\"hamnosys\".*?>(.*?)<", content)
             hamnosys = hamnosys_search[0] if len(hamnosys_search) > 0 else ""
 
-            data.append({"id": gloss_id, "frequencies": frequencies, "glosses": glosses, "hamnosys": hamnosys, "views": views})
+            data.append(
+                {"id": gloss_id, "frequencies": frequencies, "glosses": glosses, "hamnosys": hamnosys, "views": views})
 
         if self.builder_config.include_video:
             video_paths = dl_manager.download(video_urls)
@@ -183,14 +183,18 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
         data = galex_data + dgs_data
 
+        poses = {}
+
         # Poses
         if self.builder_config.include_pose == "holistic":
-            pose_urls = {datum["id"]: _POSE_URLS + f"{datum['id']}_{view['name']}.pose" for datum in data for view in datum["views"]}
-            local_poses = dl_manager.download(pose_urls)
+            pose_urls = {
+                f"{datum['id']}_{view['name']}": _POSE_URLS["holistic"] + f"{datum['id']}_{view['name']}.pose"
+                for datum in data for view in datum["views"]}
+            poses = dl_manager.download(pose_urls)
 
-        return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data})]
+        return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data, "poses": poses})]
 
-    def _generate_examples(self, data):
+    def _generate_examples(self, data, poses):
         """ Yields examples. """
 
         for datum in data:
@@ -198,5 +202,9 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 for view in datum["views"]:
                     # convert PosixGPath to str
                     view["video"] = str(view["video"])
+
+                    pose_view = f"{datum['id']}_{view['name']}"
+                    if pose_view in poses:
+                        view["pose"] = poses[pose_view]
 
             yield datum["id"], datum

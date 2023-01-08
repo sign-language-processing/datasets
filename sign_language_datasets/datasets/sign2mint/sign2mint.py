@@ -59,10 +59,9 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             "otherlink": tfds.features.Text(),
             "variants": tf.int32,
             "gebaerdenschrift": {
-                "url": tfds.features.Text(),
                 "symbolIds": tfds.features.Sequence(tfds.features.Text()),
-                "fsw": tfds.features.Text(),
             },
+            "swu": tfds.features.Text(),
         }
 
         if self._builder_config.include_video and self._builder_config.process_video:
@@ -97,6 +96,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
     ocr_cache = None
 
     def _ocr(self, datum):
+        # sign2mint used to include only a photo of signwriting, which required OCR to get the FSW
         if self.ocr_cache is None:
             with open(OCR_CACHE_PATH, "r") as f:
                 lines = [l.split(" ") for l in f.readlines()]
@@ -128,11 +128,12 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
 
                 video_link = datum["videoLink"]
                 del datum["videoLink"]
+                del datum["videoThumbnailLink"]
 
                 datum["video"] = local_videos[video_link] if video_link in local_videos else video_link
                 datum["gebaerdenschrift"]["symbolIds"] = [
                     s["symbolKey"] for s in datum["gebaerdenschrift"]["symbolIds"] if s["symbolKey"] != ""
                 ]
-                datum["gebaerdenschrift"]["fsw"] = self._ocr(datum)
+                # datum["gebaerdenschrift"]["fsw"] = self._ocr(datum)
 
                 yield datum["id"], datum
