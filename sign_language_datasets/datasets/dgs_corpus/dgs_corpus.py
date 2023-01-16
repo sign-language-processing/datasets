@@ -396,8 +396,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                         pose = poses[sentence["participant"].lower()]
                         sub_pose_body = NumPyPoseBody(
                             fps=pose.body.fps,
-                            data=pose.body.data[start_frame:end_frame],
-                            confidence=pose.body.confidence[start_frame:end_frame],
+                            data=pose.body.data[start_frame:end_frame+1],
+                            confidence=pose.body.confidence[start_frame:end_frame+1],
                         )
                         features["pose"] = Pose(pose.header, sub_pose_body)
 
