@@ -4,6 +4,7 @@ import re
 import string
 
 import tensorflow_datasets as tfds
+from tqdm import tqdm
 
 from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
@@ -21,6 +22,7 @@ SITE_URL = "https://signsuisse.sgb-fss.ch"
 class SignSuisse(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for signsuisse dataset."""
 
+    MAX_SIMULTANEOUS_DOWNLOADS = 100  # Default is 50, but it is slow
     VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
         "1.0.0": "Initial crawl.",
@@ -62,18 +64,48 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         )
 
     def _list_all_lexicon_items(self, dl_manager: tfds.download.DownloadManager):
-        # The lexicon does not allow free search. One must search at least two letters.
-        letters = [c1 + c2 for c1 in string.ascii_lowercase for c2 in string.ascii_lowercase]
-        search_url = SITE_URL + "/index.php?eID=signsuisse_search&sword="
-        urls = [search_url + l for l in letters]
-        indexes = dl_manager.download(urls)
+        try:
+            from unidecode import unidecode
+        except ImportError:
+            raise ImportError("Please install unidecode with: pip install unidecode")
 
         lexicon_items = {}
-        for index in indexes:
-            with open(index, "r", encoding="utf-8") as f:
-                index = json.load(f)
-                for item in index["items"]:
-                    lexicon_items[item["uid"]] = item
+
+        chars = string.ascii_lowercase + ' '
+        # The lexicon does not allow free search. One must search at least two letters.
+        next_searches = [c1 + c2 for c1 in chars for c2 in chars if not (c1 == c2 == " ")]
+
+        tfds.disable_progress_bar()
+
+        while len(next_searches) > 0:
+            print(len(next_searches), "Next searches")
+            search_url = SITE_URL + "/index.php?eID=signsuisse_search&sword="
+            urls = {l: search_url + l.replace(' ', '%20') for l in next_searches}
+            indexes = dl_manager.download(urls)
+
+            next_searches = []
+
+            for search_term, index in tqdm(indexes.items()):
+                with open(index, "r", encoding="utf-8") as f:
+                    index = json.load(f)
+                    for item in index["items"]:
+                        lexicon_items[item["uid"]] = item
+
+                    # As far as I know, there's no way to paginate, so this is the only way to get all items.
+                    # First it searches 728 terms, (15491 items found)
+                    # then 6318 more, (18217 items found),
+                    # then 5427 more (18221 items found)
+                    # then 540 more (18221 items found)
+                    # then 27 more (18221 items found)
+                    if len(index["items"]) < index["count"]:
+                        # It seems like the search system allows for a small edit distance, which makes it not too efficient to search through
+                        # Make sure all items have the search term in them
+                        have_search = [item for item in index["items"] if search_term in unidecode(item["name"]).lower()]
+                        if len(have_search) == len(index["items"]):
+                            for l in chars:
+                                next_searches.append(search_term + l)
+
+            print("So far", len(lexicon_items), "items found.")
 
         return lexicon_items.values()
 
@@ -159,9 +191,11 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                 if not self._builder_config.process_video:
                     datum["video"] = str(datum["video"])
 
-
         return {"train": self._generate_examples(data)}
 
     def _generate_examples(self, data):
         for datum in data:
             yield datum["id"], datum
+
+
+
