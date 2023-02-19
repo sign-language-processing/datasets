@@ -2,7 +2,7 @@
 import csv
 import os
 from os import path
-from typing import Union
+from typing import Union, Dict
 from zipfile import ZipFile
 
 import tensorflow as tf
@@ -49,6 +49,8 @@ _VALID_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_la
 _TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
 _TEST_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_test_labels.csv"
 
+_CLASSES = "https://data.chalearnlap.cvc.uab.cat/AuTSL/data/SignList_ClassId_TR_EN.csv"
+
 _POSE_URLS = {
     "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz",
     "openpose": "https://nlp.biu.ac.il/~amit/datasets/poses/openpose/autsl.tar.gz",
@@ -81,7 +83,16 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
 
-        features = {"id": tfds.features.Text(), "signer": tf.int32, "sample": tf.int32, "gloss_id": tf.int32}
+        features = {
+            "id": tfds.features.Text(),
+            "signer": tf.int32,
+            "sample": tf.int32,
+            "gloss_id": tf.int32,
+            "meaning": {
+                "english": tfds.features.Text(),
+                "turkish": tfds.features.Text()
+            }
+        }
 
         if self._builder_config.include_video:
             features["fps"] = tf.int32
@@ -109,7 +120,8 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             citation=_CITATION,
         )
 
-    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int, pwd: str = None):
+    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int,
+                                        pwd: str = None):
         """Download and extract multipart zip file"""
 
         # Write OpenPose disclaimer
@@ -147,6 +159,17 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         return output_path_extracted
 
+    def load_class_labels(self, dl_manager: tfds.download.DownloadManager):
+        csv_file_path = dl_manager.download(_CLASSES)
+
+        dictionary = {}
+        with open(csv_file_path, mode='r', encoding='utf-8') as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            for row in csv_reader:
+                dictionary[int(row['ClassId'])] = {'english': row['EN'], 'turkish': row['TR']}
+
+        return dictionary
+
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
         dataset_warning(self)
@@ -158,13 +181,16 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         # Load videos if needed
         if self._builder_config.include_video:
-            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18, pwd=self.train_decryption_key)
+            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18,
+                                                               pwd=self.train_decryption_key)
             train_videos = os.path.join(train_parts, "train")
 
-            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3, pwd=self.valid_decryption_key)
+            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3,
+                                                               pwd=self.valid_decryption_key)
             valid_videos = os.path.join(valid_parts, "val")
 
-            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3, pwd=self.test_decryption_key)
+            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3,
+                                                              pwd=self.test_decryption_key)
             test_videos = os.path.join(test_parts, "test")
         else:
             train_videos = valid_videos = test_videos = None
@@ -179,22 +205,30 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         else:
             train_pose_path = valid_pose_path = test_pose_path = None
 
+        class_labels = self.load_class_labels(dl_manager)
+
         splits = [
             tfds.core.SplitGenerator(
-                name=tfds.Split.TEST, gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels},
+                name=tfds.Split.TEST,
+                gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels,
+                            "class_labels": class_labels},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TRAIN, gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels},
+                name=tfds.Split.TRAIN,
+                gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels,
+                            "class_labels": class_labels},
             ),
             tfds.core.SplitGenerator(
                 name=tfds.Split.VALIDATION,
-                gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels},
+                gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels,
+                            "class_labels": class_labels},
             ),
         ]
 
         return splits
 
-    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None], labels_path: Union[str, None]):
+    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None],
+                           labels_path: Union[str, None], class_labels: Dict[int, Dict[str, str]]):
         """Yields examples."""
 
         if labels_path is not None:
@@ -215,6 +249,8 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         for signer, sample in samples:
             datum = dict({"id": signer + "_" + sample, "signer": int(signer[6:]), "sample": int(sample[6:])})
             datum["gloss_id"] = labels[datum["id"]] if labels is not None else -1
+
+            datum["meaning"] = class_labels[datum["gloss_id"]]
 
             if videos_path is not None:
                 datum["fps"] = self._builder_config.fps if self._builder_config.fps is not None else 30

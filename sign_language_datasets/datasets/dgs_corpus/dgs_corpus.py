@@ -19,7 +19,6 @@ from pose_format.numpy import NumPyPoseBody
 from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
-from .dgs_utils import get_elan_sentences
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 from ...utils.features import PoseFeature
@@ -339,6 +338,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _generate_examples(self, data, split: List[str] | Dict[str, List[str]] = None):
         """ Yields examples. """
+        from .dgs_utils import get_elan_sentences
 
         default_video = np.zeros((0, 0, 0, 3))  # Empty video
 
