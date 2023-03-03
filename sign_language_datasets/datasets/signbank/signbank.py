@@ -172,6 +172,7 @@ PUDDLES = {
     153: ["vn", "vn"],  # Dictionary Vietnam"
 }
 
+CACHE_BUSTER = str(datetime.today().date())
 
 class SignBank(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for SignBank dataset."""
@@ -215,7 +216,8 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
         regex = r"\"sgn[\d]+.spml\""
         with open(index, "r", encoding="utf-8") as f:
             matches = [match.group()[1:-1] for match in re.finditer(regex, f.read(), re.MULTILINE)]
-            spml_urls = ["http://signbank.org/signpuddle2.0/data/spml/" + match for match in matches if match != "sgn0.spml"]
+            spml_urls = ["http://signbank.org/signpuddle2.0/data/spml/" + match + "?buster=" + CACHE_BUSTER
+                         for match in matches if match != "sgn0.spml"]
 
         spmls = dl_manager.download(spml_urls)
 
@@ -233,14 +235,14 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
 
             puddle = int(root.attrib["puddle"])
 
-            children = root.getchildren()
+            children = root.iter()
             for child in children:
                 if child.tag == "entry":
                     _id = child.attrib["id"]
                     mdt = int(child.attrib["mdt"]) if "mdt" in child.attrib and child.attrib["mdt"] != "" else 0
                     cdt = int(child.attrib["cdt"]) if "cdt" in child.attrib and child.attrib["cdt"] != "" else mdt
                     usr = child.attrib["usr"] if "usr" in child.attrib else ""
-                    texts = [c.text for c in child.getchildren() if c.tag != "src" and c.text is not None]
+                    texts = [c.text for c in child.iter() if c.tag != "src" and c.text is not None]
 
                     signwriting_texts = []
                     spoken_texts = []

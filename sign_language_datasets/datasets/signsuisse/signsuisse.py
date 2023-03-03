@@ -69,27 +69,35 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         except ImportError:
             raise ImportError("Please install unidecode with: pip install unidecode")
 
-        lexicon_items = {}
-
         chars = string.ascii_lowercase + ' '
         # The lexicon does not allow free search. One must search at least two letters.
         next_searches = [c1 + c2 for c1 in chars for c2 in chars if not (c1 == c2 == " ")]
 
         tfds.disable_progress_bar()
 
-        while len(next_searches) > 0:
-            print(len(next_searches), "Next searches")
-            search_url = SITE_URL + "/index.php?eID=signsuisse_search&sword="
-            urls = {l: search_url + l.replace(' ', '%20') for l in next_searches}
-            indexes = dl_manager.download(urls)
+        done_searches = set()
+        results_count = {}
 
-            next_searches = []
+        with open('searches.txt', 'w') as f:
+            while len(next_searches) > 0:
+                print(len(next_searches), "Next searches")
+                search_url = SITE_URL + "/index.php?eID=signsuisse_search&sword="
+                urls = {l: search_url + l.replace(' ', '%20') for l in next_searches}
+                indexes = dl_manager.download(urls)
 
-            for search_term, index in tqdm(indexes.items()):
-                with open(index, "r", encoding="utf-8") as f:
-                    index = json.load(f)
+                next_searches = []
+
+                for search_term, index in tqdm(indexes.items()):
+                    f.write(search_term + '\n')
+
+                    with open(index, "r", encoding="utf-8") as f:
+                        index = json.load(f)
+
                     for item in index["items"]:
                         lexicon_items[item["uid"]] = item
+
+                    done_searches.add(search_term)
+                    results_count[search_term] = index["count"]
 
                     # As far as I know, there's no way to paginate, so this is the only way to get all items.
                     # First it searches 728 terms, (15491 items found)
@@ -104,8 +112,12 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                         if len(have_search) == len(index["items"]):
                             for l in chars:
                                 next_searches.append(search_term + l)
+                                should_subset[search_term] = search_term
 
-            print("So far", len(lexicon_items), "items found.")
+
+                next_searches = list(set([s for s in next_searches if s not in done_searches]))
+
+                print("So far", len(lexicon_items), "items found.")
 
         return lexicon_items.values()
 
@@ -141,14 +153,16 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         paraphrase = paraphrase_match.group(1).strip() if paraphrase_match else ""
         definition_match = re.search(r"Definition</h2> <p>(.*?)</p>", html)
         definition = definition_match.group(1).strip() if definition_match else ""
+        spoken_language = item["sprache"]
+        url_path = re.search(rf"<a href=\"(\/{spoken_language}\/.*?)\"", html).group(1).strip()
 
         return {
             "id": item["uid"],
             "name": item["name"],
             "category": item["kategorie"],
-            "spokenLanguage": item["sprache"],
-            "signedLanguage": "ch-" + item["sprache"],
-            "url": SITE_URL + item["link"],
+            "spokenLanguage": spoken_language,
+            "signedLanguage": "ch-" + spoken_language,
+            "url": SITE_URL + url_path,
             "paraphrase": paraphrase,
             "definition": definition,
             "exampleText": example_text,

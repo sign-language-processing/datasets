@@ -65,7 +65,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
-            pose_shape = (None, 1, 543, 3)
+            pose_shape = (None, 1, 576, 3)
             video_feature["pose"] = PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
 
         features = {
