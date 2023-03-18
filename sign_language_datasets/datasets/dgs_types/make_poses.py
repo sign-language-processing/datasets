@@ -26,7 +26,7 @@ def load_video(cap: cv2.VideoCapture):
         yield cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
 
-config = SignDatasetConfig(name="full2", version="1.0.0", include_video=True, process_video=False, include_pose=None)
+config = SignDatasetConfig(name="full3", version="1.0.0", include_video=True, process_video=False, include_pose=None)
 dgs_types = tfds.load(name='dgs_types', builder_kwargs={"config": config})
 
 decode_str = lambda s: s.numpy().decode('utf-8')

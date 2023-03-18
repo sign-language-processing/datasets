@@ -216,9 +216,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                 "mouthings": tfds.features.Sequence({"start": tf.int32, "end": tf.int32, "mouthing": tfds.features.Text()}),
             }
 
+        video_ids = ["a", "b", "c"]
+
         if self._builder_config.include_video:
             features["fps"] = tf.int32
-            video_ids = ["a", "b", "c"]
             if self._builder_config.process_video:
                 video_feature = self._builder_config.video_feature((640, 360))
                 if self._builder_config.data_type == "document":

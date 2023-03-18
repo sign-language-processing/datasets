@@ -8,6 +8,8 @@ import tensorflow_datasets as tfds
 
 from os import path
 
+from pose_format import Pose
+
 from sign_language_datasets.utils.features import PoseFeature
 from ..warning import dataset_warning
 
@@ -20,7 +22,7 @@ Parallel corpus for German Sign Language (DGS) with German and English annotatio
 _CITATION = """
 @misc{dgscorpus_3,
   title = {MEINE DGS -- annotiert. {\"O}ffentliches Korpus der Deutschen Geb{\"a}rdensprache, 3. Release / MY DGS -- annotated. Public Corpus of German Sign Language, 3rd release},
-  author = {Konrad, Reiner and Hanke, Thomas and Langer, Gabriele and Blanck, Dolly and Bleicken, Julian and Hofmann, Ilona and Jeziorski, Olga and K{\"o}nig, Lutz and K{\"o}nig, Susanne and Nishio, Rie and Regen, Anja and Salden, Uta and Wagner, Sven and Worseck, Satu and B{\"o}se, Oliver and Jahn, Elena and Schulder, Marc},
+  author = {Konrad, Reiner and Hanke, Thomas and Langer, Gabriele and Blanck, Dolly and Bleicken, Julian and Hofmann, Ilona and Jezziorski, Olga and K{\"o}nig, Lutz and K{\"o}nig, Susanne and Nishio, Rie and Regen, Anja and Salden, Uta and Wagner, Sven and Worseck, Satu and B{\"o}se, Oliver and Jahn, Elena and Schulder, Marc},
   year = {2020},
   type = {languageresource},
   version = {3.0},
@@ -198,13 +200,17 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         """ Yields examples. """
 
         for datum in data:
-            if not self._builder_config.process_video:
-                for view in datum["views"]:
-                    # convert PosixGPath to str
-                    view["video"] = str(view["video"])
+            for view in datum["views"]:
+                # convert PosixGPath to str
+                view["video"] = str(view["video"])
+
+                if self._builder_config.include_pose:
 
                     pose_view = f"{datum['id']}_{view['name']}"
                     if pose_view in poses:
                         view["pose"] = poses[pose_view]
+                    else:
+                        print(f"No pose for {pose_view}.")
+                        view["pose"] = None
 
             yield datum["id"], datum

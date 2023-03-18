@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import numpy as np
+import numpy.ma as ma
 import tensorflow as tf
 from pose_format import Pose, PoseHeader
 from pose_format.numpy.pose_body import NumPyPoseBody
@@ -70,7 +71,8 @@ class PoseFeature(feature.FeatureConnector):
       ```
     """
 
-    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1, dtype=tf.float32):
+    def __init__(self, *, shape=None, header_path: str = None, encoding_format: str = None, stride: int = 1,
+                 dtype=tf.float32):
         """Construct the connector.
 
         Args:
@@ -122,10 +124,15 @@ class PoseFeature(feature.FeatureConnector):
         return state
 
     def encode_body(self, body: NumPyPoseBody):
+        # print("shape", body.data.shape, np.isfinite(body.data).all())
+
         if self.stride != 1:
             body = body.slice_step(self.stride)
 
-        return {"data": body.data.data, "conf": body.confidence, "fps": int(body.fps)}
+        data = body.data.data
+        confidence = body.confidence
+
+        return {"data": data, "conf": confidence, "fps": int(body.fps)}
 
     def encode_example(self, pose_path_or_fobj):
         """Convert the given image into a dict convertible to tf example."""
@@ -137,7 +144,7 @@ class PoseFeature(feature.FeatureConnector):
             conf_shape = tuple(data_shape[:3])
             data_shape = tuple(data_shape)
 
-            pose_body = NumPyPoseBody(data=np.zeros(data_shape), confidence=np.zeros(conf_shape), fps=0)
+            pose_body = NumPyPoseBody(data=ma.zeros(data_shape), confidence=np.zeros(conf_shape), fps=0)
             return self.encode_body(pose_body)
         elif isinstance(pose_path_or_fobj, Pose):
             return self.encode_body(pose_path_or_fobj.body)
@@ -174,7 +181,7 @@ class PoseFeature(feature.FeatureConnector):
         return cls(shape=shape, encoding_format=encoding_format)
 
     def to_json_content(self) -> Json:
-        print("to_json_content", {"shape": list(self._shape), "encoding_format": self._encoding_format,})
+        print("to_json_content", {"shape": list(self._shape), "encoding_format": self._encoding_format, })
         return {
             "shape": list(self._shape),
             "encoding_format": self._encoding_format,
