@@ -1,4 +1,5 @@
 from .aslg_pc12 import AslgPc12
+from .asl_lex import AslLex
 from .autsl import AUTSL
 from .chicagofswild import ChicagoFSWild
 from .config import SignDatasetConfig
