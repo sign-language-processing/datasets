@@ -1,5 +1,6 @@
 global-include *.header
 global-include *.poseheader
+global-include *.csv
 global-include *.tsv
 global-include *.png
 global-include *.ttf
