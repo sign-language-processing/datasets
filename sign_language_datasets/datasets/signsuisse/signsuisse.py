@@ -64,62 +64,17 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         )
 
     def _list_all_lexicon_items(self, dl_manager: tfds.download.DownloadManager):
-        try:
-            from unidecode import unidecode
-        except ImportError:
-            raise ImportError("Please install unidecode with: pip install unidecode")
+        language = ['de', 'fr', 'it']
+        dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json" for l in language]
 
-        chars = string.ascii_lowercase + ' '
-        # The lexicon does not allow free search. One must search at least two letters.
-        next_searches = [c1 + c2 for c1 in chars for c2 in chars if not (c1 == c2 == " ")]
+        indexes = dl_manager.download(dl_links)
+        results = []
+        for index in indexes:
+            with open(index, "r", encoding="utf-8") as f:
+                index = json.load(f)
+            results.extend(index)
 
-        tfds.disable_progress_bar()
-
-        done_searches = set()
-        results_count = {}
-
-        with open('searches.txt', 'w') as f:
-            while len(next_searches) > 0:
-                print(len(next_searches), "Next searches")
-                search_url = SITE_URL + "/index.php?eID=signsuisse_search&sword="
-                urls = {l: search_url + l.replace(' ', '%20') for l in next_searches}
-                indexes = dl_manager.download(urls)
-
-                next_searches = []
-
-                for search_term, index in tqdm(indexes.items()):
-                    f.write(search_term + '\n')
-
-                    with open(index, "r", encoding="utf-8") as f:
-                        index = json.load(f)
-
-                    for item in index["items"]:
-                        lexicon_items[item["uid"]] = item
-
-                    done_searches.add(search_term)
-                    results_count[search_term] = index["count"]
-
-                    # As far as I know, there's no way to paginate, so this is the only way to get all items.
-                    # First it searches 728 terms, (15491 items found)
-                    # then 6318 more, (18217 items found),
-                    # then 5427 more (18221 items found)
-                    # then 540 more (18221 items found)
-                    # then 27 more (18221 items found)
-                    if len(index["items"]) < index["count"]:
-                        # It seems like the search system allows for a small edit distance, which makes it not too efficient to search through
-                        # Make sure all items have the search term in them
-                        have_search = [item for item in index["items"] if search_term in unidecode(item["name"]).lower()]
-                        if len(have_search) == len(index["items"]):
-                            for l in chars:
-                                next_searches.append(search_term + l)
-                                should_subset[search_term] = search_term
-
-
-                next_searches = list(set([s for s in next_searches if s not in done_searches]))
-
-                print("So far", len(lexicon_items), "items found.")
-
-        return lexicon_items.values()
+        return results
 
     def _parse_item(self, item, item_page):
         item["name"] = item["name"].replace("   ", " ").replace("  ", " ")
@@ -177,7 +132,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
 
         lexicon_items = self._list_all_lexicon_items(dl_manager)
         print("Found", len(lexicon_items), "lexicon items.")
-        item_urls = [SITE_URL + item["link"] for item in lexicon_items]
+        item_urls = [item["link"] for item in lexicon_items]
         # Item URLS are actually too long. We need to shorten them.
         item_urls = [url[:url.find("&tx_issignsuisselexikon_anzeige%5Baction")] for url in item_urls]
         items_pages = dl_manager.download(item_urls)
@@ -210,6 +165,3 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
     def _generate_examples(self, data):
         for datum in data:
             yield datum["id"], datum
-
-
-

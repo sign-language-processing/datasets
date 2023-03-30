@@ -5,11 +5,13 @@ This repository includes TFDS data loaders for sign language datasets.
 ## Installation
 
 #### From Source
+
 ```bash
 pip install git+https://github.com/sign-language-processing/datasets.git
 ```
 
 #### PyPi
+
 ```bash
 pip install sign-language-datasets
 ```
@@ -30,38 +32,39 @@ from sign_language_datasets.datasets.config import SignDatasetConfig
 aslg_pc12 = tfds.load("aslg_pc12")
 
 # Loading a dataset with custom configuration
-config = SignDatasetConfig(name="videos_and_poses256x256:12", 
-                           version="3.0.0",          # Specific version
-                           include_video=True,       # Download and load dataset videos
-                           process_video=True,       # Process videos to tensors, or only save path to video
-                           fps=12,                   # Load videos at constant, 12 fps
-                           resolution=(256, 256),    # Convert videos to a constant resolution, 256x256
+config = SignDatasetConfig(name="videos_and_poses256x256:12",
+                           version="3.0.0",  # Specific version
+                           include_video=True,  # Download and load dataset videos
+                           process_video=True,  # Process videos to tensors, or only save path to video
+                           fps=12,  # Load videos at constant, 12 fps
+                           resolution=(256, 256),  # Convert videos to a constant resolution, 256x256
                            include_pose="holistic")  # Download and load Holistic pose estimation
 rwth_phoenix2014_t = tfds.load(name='rwth_phoenix2014_t', builder_kwargs=dict(config=config))
 ```
 
 ## Datasets
 
-| Dataset            | Videos                                                       | Poses                                                  | Versions |
-|--------------------|--------------------------------------------------------------|--------------------------------------------------------|----------|
-| aslg_pc12          | N/A                                                          | N/A                                                    | 0.0.1    |
-| rwth_phoenix2014_t | Yes                                                          | Holistic                                               | 3.0.0    |
-| autsl              | Yes                                                          | OpenPose, Holistic                                     | 1.0.0    |
-| dgs_corpus         | Yes                                                          | OpenPose, Holistic                                     | 3.0.0    |
-| dgs_types          | Yes                                                          |                                                        | 3.0.0    |
-| how2sign           | Yes                                                          | OpenPose                                               | 1.0.0    |
-| sign2mint          | Yes                                                          |                                                        | 1.0.0    |
-| signtyp            | Links                                                        |                                                        | 1.0.0    |
-| swojs_glossario    | Yes                                                          |                                                        | 1.0.0    |
-| SignBank           | N/A                                                          |                                                        | 1.0.0    |
+| Dataset            | Videos                                                       | Poses                                                 | Versions |
+|--------------------|--------------------------------------------------------------|-------------------------------------------------------|----------|
+| aslg_pc12          | N/A                                                          | N/A                                                   | 0.0.1    |
+| asl-lex            | No                                                           |                                                     | 2.0.0    |
+| rwth_phoenix2014_t | Yes                                                          | Holistic                                              | 3.0.0    |
+| autsl              | Yes                                                          | OpenPose, Holistic                                    | 1.0.0    |
+| dgs_corpus         | Yes                                                          | OpenPose, Holistic                                    | 3.0.0    |
+| dgs_types          | Yes                                                          |                                                       | 3.0.0    |
+| how2sign           | Yes                                                          | OpenPose                                              | 1.0.0    |
+| sign2mint          | Yes                                                          |                                                       | 1.0.0    |
+| signtyp            | Links                                                        |                                                       | 1.0.0    |
+| swojs_glossario    | Yes                                                          |                                                       | 1.0.0    |
+| SignBank           | N/A                                                          |                                                       | 1.0.0    |
 | wlasl              | [Failed](https://github.com/tensorflow/datasets/issues/2960) | [OpenPose](https://github.com/gulvarol/bsl1k/issues/4) | None     |
-| wmtslt             | Yes                                                          | OpenPose, Holistic                                     | 1.2.0    |
-| signsuisse         | Yes                                                          |                                                        | 1.0.0    |
-| msasl              |                                                              |                                                        | None     |
-| Video-Based CSL    |                                                              |                                                        | None     |
-| RVL-SLLL ASL       |                                                              |                                                        | None     |
-| ngt_corpus         | Yes                                                          |                                                        | 3.0.0    |
-| bsl_corpus         | No                                                           | No                                                     | 3.0.0    |
+| wmtslt             | Yes                                                          | OpenPose, Holistic                                    | 1.2.0    |
+| signsuisse         | Yes                                                          |                                                       | 1.0.0    |
+| msasl              |                                                              |                                                       | None     |
+| Video-Based CSL    |                                                              |                                                       | None     |
+| RVL-SLLL ASL       |                                                              |                                                       | None     |
+| ngt_corpus         | Yes                                                          |                                                       | 3.0.0    |
+| bsl_corpus         | No                                                           | No                                                    | 3.0.0    |
 
 ## Data Interface
 
@@ -97,9 +100,10 @@ cd sign_language_datasets/datasets
 tfds new new_dataset
 ```
 
-For our purposes, creating a custom TFDS dataset means writing a new class which inherits from `tfds.core.GeneratorBasedBuilder`.
-If you use `tfds new` to create a new dataset then the dataset class is stored in a file with the exact
-same name as the dataset, i.e. `new_dataset.py`. `new_dataset.py` must contain a line similar to:
+For our purposes, creating a custom TFDS dataset means writing a new class which inherits
+from `tfds.core.GeneratorBasedBuilder`. If you use `tfds new` to create a new dataset then the dataset class is stored
+in a file with the exact same name as the dataset, i.e. `new_dataset.py`. `new_dataset.py` must contain a line similar
+to:
 
 ```python
 class NewDataset(tfds.core.GeneratorBasedBuilder):
@@ -107,7 +111,8 @@ class NewDataset(tfds.core.GeneratorBasedBuilder):
 
 ### Registering a new dataset
 
-The mechanism to add a custom dataset to TFDS' dataset registry is to import the class `NewDataset`. For this reason the folder
+The mechanism to add a custom dataset to TFDS' dataset registry is to import the class `NewDataset`. For this reason the
+folder
 `sign_language_datasets/datasets/new_dataset` must have an `__init__.py` file that imports the class
 `NewDataset`:
 
@@ -115,9 +120,9 @@ The mechanism to add a custom dataset to TFDS' dataset registry is to import the
 from .new_dataset import NewDataset
 ```
 
-Even though the name of the class is `NewDataset`, it will be available for loading in lowercase and uppercase characters
-are interpreted as the start of a new word that should be separated with an underscore. This means that the class can
-be loaded as follows:
+Even though the name of the class is `NewDataset`, it will be available for loading in lowercase and uppercase
+characters are interpreted as the start of a new word that should be separated with an underscore. This means that the
+class can be loaded as follows:
 
 ```python
 ds = tfds.load('new_dataset')
@@ -137,9 +142,10 @@ Use a dataset configuration which includes all files (e.g. does include the vide
 argument. The default behaviour is to build all configurations which might be redundant.
 
 ## Why not Huggingface Datasets?
-Huggingface datasets do not work well with videos.
-From the lack of native support of the video type, to lack of support of arbitrary tensors.
-Furthermore, they currently have memory leaks that prevent from saving even the smallest of video datasets.
+
+Huggingface datasets do not work well with videos. From the lack of native support of the video type, to lack of support
+of arbitrary tensors. Furthermore, they currently have memory leaks that prevent from saving even the smallest of video
+datasets.
 
 ## Cite
 
