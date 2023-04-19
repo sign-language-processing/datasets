@@ -10,9 +10,9 @@ class SignSuisseTest(tfds.testing.DatasetBuilderTestCase):
     # TODO(signsuisse):
     DATASET_CLASS = signsuisse.SignSuisse
     SPLITS = {
-        "train": 3,  # Number of fake train example
-        "test": 1,  # Number of fake test example
+        "train": 1,  # Number of fake train example
     }
+    DL_EXTRACT_RESULT = ['de.json']
 
     # If you are calling `download/download_and_extract` with a dict, like:
     #   dl_manager.download({'some_key': 'http://a.org/out.txt', ...})

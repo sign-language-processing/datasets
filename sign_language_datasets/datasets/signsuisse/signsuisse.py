@@ -3,7 +3,11 @@ import json
 import re
 import string
 
+import hashlib
+from os import path
+
 import tensorflow_datasets as tfds
+from sign_language_datasets.utils.features import PoseFeature
 from tqdm import tqdm
 
 from ..warning import dataset_warning
@@ -18,6 +22,10 @@ _CITATION = """
 
 SITE_URL = "https://signsuisse.sgb-fss.ch"
 
+_POSE_HEADERS = {
+    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
+}
+
 
 class SignSuisse(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for signsuisse dataset."""
@@ -31,6 +39,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True),
         SignDatasetConfig(name="annotations", include_video=False),
+        SignDatasetConfig(name="holistic", include_video=False, include_pose='holistic'),
     ]
 
     def _info(self) -> tfds.core.DatasetInfo:
@@ -54,6 +63,12 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         else:
             features["video"] = tfds.features.Text()
 
+        if self._builder_config.include_pose == "holistic":
+            pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
+            stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
+            features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path, stride=stride)
+            features["examplePose"] = ""
+
         return tfds.core.DatasetInfo(
             builder=self,
             description=_DESCRIPTION,
@@ -64,8 +79,9 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         )
 
     def _list_all_lexicon_items(self, dl_manager: tfds.download.DownloadManager):
-        language = ['de', 'fr', 'it']
-        dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json" for l in language]
+        languages = ['de', 'fr', 'it']
+        dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json"
+                    for l in languages]
 
         indexes = dl_manager.download(dl_links)
         results = []
@@ -109,7 +125,9 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         definition_match = re.search(r"Definition</h2> <p>(.*?)</p>", html)
         definition = definition_match.group(1).strip() if definition_match else ""
         spoken_language = item["sprache"]
-        url_path = re.search(rf"<a href=\"(\/{spoken_language}\/.*?)\"", html).group(1).strip()
+        # Check if more friendly URL is available
+        url_path_match = re.search(rf"<a href=\"(\/{spoken_language}\/.*?)\"", html)
+        url_path = url_path_match.group(1).strip() if url_path_match is not None else item["link"]
 
         return {
             "id": item["uid"],
@@ -159,6 +177,20 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                 datum["video"] = video
                 if not self._builder_config.process_video:
                     datum["video"] = str(datum["video"])
+
+        if self._builder_config.include_pose == 'holistic':
+            id_func = lambda opt: 'ss' + hashlib.md5(("signsuisse" + opt[0] + opt[1]).encode()).hexdigest()
+
+            pose_ids = []
+            for datum in data:
+                datum["pose"] = id_func([datum["id"], "isolated"])
+                pose_ids.append(datum["pose"])
+                if datum["exampleVideo"] != "":
+                    datum["examplePose"] = id_func([datum["id"], "example"])
+                    pose_ids.append(datum["examplePose"])
+                else:
+                    datum["examplePose"] = None
+
 
         return {"train": self._generate_examples(data)}
 
