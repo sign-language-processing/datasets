@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import hashlib
 
 # noinspection PyUnresolvedReferences
-import sign_language_datasets.datasets
+import sign_language_datasets.datasets.signsuisse
 from sign_language_datasets.datasets.config import SignDatasetConfig
 
 load_dotenv()
@@ -56,9 +56,6 @@ def signsuisse():
         ids = [id_func(video["id_suffix"]) for video in videos]
 
         for video in videos:
-            if video["text"].lower() == "mit" or video["example"] == "Kaffee mit Zucker und Milch.":
-                print("FOUND", video)
-
             this_id = id_func(video["id_suffix"])
             doc = {
                 "uid": this_id,
