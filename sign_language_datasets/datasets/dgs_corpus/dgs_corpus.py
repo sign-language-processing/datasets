@@ -9,6 +9,7 @@ import cv2
 import math
 
 import numpy as np
+import os
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -253,6 +254,27 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             citation=_CITATION,
         )
 
+    def validate_downloaded_files(self, dl_manager: tfds.download.DownloadManager, url_local: Dict[str, str]):
+        # It seems like sometimes, holistic poses are not downloaded correctly.
+        with open(path.join(path.dirname(path.realpath(__file__)), "file_sizes.json"), "r") as f:
+            expected_sizes = json.load(f)
+
+        is_valid = True
+        for url, size in expected_sizes.items():
+            if url in url_local:
+                local_size = os.path.getsize(url_local[url])
+                if size != local_size:
+                    is_valid = False
+                    print(f"Downloaded file {url} has size {size} but expected {expected_sizes[url]}")
+                    # Delete file
+                    os.remove(url_local[url])
+                    os.remove(str(url_local[url]) + ".INFO")
+                    # Re-download file
+                    url_local[url] = dl_manager.download(url)
+
+        if not is_valid:
+            self.validate_downloaded_files(dl_manager, url_local)
+
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Returns SplitGenerators."""
         dataset_warning(self)
@@ -288,8 +310,10 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         urls = {url: url for datum in index_data.values() for url in datum.values() if url is not None}
 
         local_paths = dl_manager.download(urls)
+        self.validate_downloaded_files(dl_manager, local_paths)
 
-        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()}
+        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()}
+                for _id, datum in index_data.items()}
 
         if self._builder_config.split is not None:
             split = load_split(self._builder_config.split)
@@ -368,6 +392,13 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                                 poses[person] = Pose.read(f.read())
                         else:
                             poses[person] = None
+
+                    # Validate that the poses are synchronized
+                    poses_values = [p for p in poses.values() if p is not None]
+                    if len(poses_values) > 0:
+                        first_pose = poses_values[0]
+                        assert all(p.body.data.shape == first_pose.body.data.shape for p in poses_values), \
+                            f"Document {document_id}: The poses are not synchronized ({[p.body.data.shape for p in poses_values]})"
 
             if self._builder_config.data_type == "document":
                 if poses is not None:
