@@ -7,6 +7,8 @@ import hashlib
 from os import path
 
 import tensorflow_datasets as tfds
+from pose_format import Pose
+
 from sign_language_datasets.utils.features import PoseFeature
 from tqdm import tqdm
 
@@ -22,9 +24,8 @@ _CITATION = """
 
 SITE_URL = "https://signsuisse.sgb-fss.ch"
 
-_POSE_HEADERS = {
-    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
-}
+_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/signsuisse.tar.gz"}
+_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
 class SignSuisse(tfds.core.GeneratorBasedBuilder):
@@ -67,7 +68,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
             features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path, stride=stride)
-            features["examplePose"] = ""
+            features["examplePose"] = features["pose"]
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -178,19 +179,39 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                 if not self._builder_config.process_video:
                     datum["video"] = str(datum["video"])
 
-        if self._builder_config.include_pose == 'holistic':
+        if self._builder_config.include_pose is not None:
+            poses_dir = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
+            poses_dir = poses_dir.joinpath("signsuisse")
+            # Some poses are corrupted. We need to remove them for now.
+            # TODO: rerun these poses
+            bad_poses = [
+                'ssdca608e11c025737cb31eba18c88ab50.pose',
+                'ss703cc76745bf64ad09da82be3052be0c.pose',
+                'ss00f14fcf3240806f1f375e24751bbcda.pose'
+            ]
+            for bad_pose in bad_poses:
+                if poses_dir.joinpath(bad_pose).exists():
+                    poses_dir.joinpath(bad_pose).unlink()
+
             id_func = lambda opt: 'ss' + hashlib.md5(("signsuisse" + opt[0] + opt[1]).encode()).hexdigest()
 
-            pose_ids = []
             for datum in data:
-                datum["pose"] = id_func([datum["id"], "isolated"])
-                pose_ids.append(datum["pose"])
+                pose_file = poses_dir.joinpath(id_func([datum["id"], "isolated"]) + ".pose")
+                if pose_file.exists():
+                    with open(pose_file, "rb") as f:
+                        datum["pose"] = Pose.read(f.read())
+                else:
+                    datum["pose"] = None
+
                 if datum["exampleVideo"] != "":
-                    datum["examplePose"] = id_func([datum["id"], "example"])
-                    pose_ids.append(datum["examplePose"])
+                    pose_file = poses_dir.joinpath(id_func([datum["id"], "example"]) + ".pose")
+                    if pose_file.exists():
+                        with open(pose_file, "rb") as f:
+                            datum["examplePose"] = Pose.read(f.read())
+                    else:
+                        datum["examplePose"] = None
                 else:
                     datum["examplePose"] = None
-
 
         return {"train": self._generate_examples(data)}
 
