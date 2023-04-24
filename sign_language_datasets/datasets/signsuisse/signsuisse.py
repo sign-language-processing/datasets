@@ -56,13 +56,14 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             "paraphrase": tfds.features.Text(),
             "definition": tfds.features.Text(),
             "exampleText": tfds.features.Text(),
-            "exampleVideo": tfds.features.Text(),
         }
 
         if self._builder_config.include_video and self._builder_config.process_video:
             features["video"] = self._builder_config.video_feature((640, 480))
+            features["exampleVideo"] = self._builder_config.video_feature((640, 480))
         else:
             features["video"] = tfds.features.Text()
+            features["exampleVideo"] = tfds.features.Text()
 
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
@@ -178,6 +179,14 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                 datum["video"] = video  # PosixPath
                 if not self._builder_config.process_video:
                     datum["video"] = str(datum["video"])
+
+            # Download example videos if requested
+            video_urls = [item["exampleVideo"] for item in data if item["exampleVideo"] != ""]
+            videos = dl_manager.download(video_urls)
+            for datum, video in zip(data, videos):
+                datum["exampleVideo"] = video  # PosixPath
+                if not self._builder_config.process_video:
+                    datum["exampleVideo"] = str(datum["exampleVideo"])
 
         if self._builder_config.include_pose is not None:
             poses_dir = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
