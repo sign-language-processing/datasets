@@ -128,7 +128,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         spoken_language = item["sprache"]
         # Check if more friendly URL is available
         url_path_match = re.search(rf"<a href=\"(\/{spoken_language}\/.*?)\"", html)
-        url_path = url_path_match.group(1).strip() if url_path_match is not None else item["link"]
+        url_path = SITE_URL + url_path_match.group(1).strip() if url_path_match is not None else item["link"]
 
         return {
             "id": item["uid"],
@@ -136,7 +136,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             "category": item["kategorie"],
             "spokenLanguage": spoken_language,
             "signedLanguage": "ch-" + spoken_language,
-            "url": SITE_URL + url_path,
+            "url": url_path,
             "paraphrase": paraphrase,
             "definition": definition,
             "exampleText": example_text,
@@ -175,7 +175,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             video_urls = [item["video"] for item in data]
             videos = dl_manager.download(video_urls)
             for datum, video in zip(data, videos):
-                datum["video"] = video
+                datum["video"] = video  # PosixPath
                 if not self._builder_config.process_video:
                     datum["video"] = str(datum["video"])
 
