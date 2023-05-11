@@ -131,18 +131,16 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         paraphrase = paraphrase_match.group(1).strip() if paraphrase_match else ""
         definition_match = re.search(r"Definition</h2> <p>(.*?)</p>", html)
         definition = definition_match.group(1).strip() if definition_match else ""
-        spoken_language = item["sprache"]
-        # Check if more friendly URL is available
-        url_path_match = re.search(rf"<a href=\"(\/{spoken_language}\/.*?)\"", html)
-        url_path = SITE_URL + url_path_match.group(1).strip() if url_path_match is not None else item["link"]
+        category_match = re.search(r"<strong>Kategorien:<\/strong>[\s\S]*?<span>([\s\S]*?)<\/span", html)
+        category = category_match.group(1).strip() if category_match else item["kategorie"]
 
         return {
             "id": item["uid"],
             "name": item["name"],
-            "category": item["kategorie"],
-            "spokenLanguage": spoken_language,
-            "signedLanguage": "ch-" + spoken_language,
-            "url": url_path,
+            "category": category,
+            "spokenLanguage": item["sprache"],
+            "signedLanguage": "ch-" + item["sprache"],
+            "url": item["link"],
             "paraphrase": paraphrase,
             "definition": definition,
             "exampleText": example_text,
@@ -186,9 +184,10 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                     datum["video"] = str(datum["video"])
 
             # Download example videos if requested
-            video_urls = [item["exampleVideo"] for item in data if item["exampleVideo"] != ""]
+            data_with_examples = [item for item in data if item["exampleVideo"] != ""]
+            video_urls = [item["exampleVideo"] for item in data_with_examples]
             videos = dl_manager.download(video_urls)
-            for datum, video in zip(data, videos):
+            for datum, video in zip(data_with_examples, videos):
                 datum["exampleVideo"] = video  # PosixPath
                 if not self._builder_config.process_video:
                     datum["exampleVideo"] = str(datum["exampleVideo"])

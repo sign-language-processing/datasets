@@ -28,6 +28,7 @@ with open(_POSE_HEADERS[config.include_pose], "rb") as buffer:
 
 for datum in dataset["train"]:
     print("Concept: ", datum['name'].numpy().decode('utf-8'))
+    print("category: ", datum['category'].numpy().decode('utf-8'))
     print("Video: ", datum['video'].numpy().decode('utf-8'))
     print("Pose path: ", datum['pose']['path'].numpy().decode('utf-8'))
     print("Pose: ", load_pose(pose_header, datum['pose']))
