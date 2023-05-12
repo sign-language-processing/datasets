@@ -156,8 +156,6 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         lexicon_items = self._list_all_lexicon_items(dl_manager)
         print("Found", len(lexicon_items), "lexicon items.")
         item_urls = [item["link"] for item in lexicon_items]
-        # Item URLS are actually too long. We need to shorten them.
-        item_urls = [url[:url.find("&tx_issignsuisselexikon_anzeige%5Baction")] for url in item_urls]
         items_pages = dl_manager.download(item_urls)
 
         data = []
