@@ -18,8 +18,14 @@ from ...datasets import SignDatasetConfig
 _DESCRIPTION = """
 Ein umfangreiches interaktives Lexikon der drei Gebärdensprachen der Schweiz (Deutschschweizerische Gebärdensprache DSGS, Langue des Signes Française LSF und Lingua Italiana dei Segni LIS). Herausgegeben vom Schweizerischen Gehörlosenbund (SGB-FSS)."""
 
-# TODO(signsuisse): BibTeX citation
 _CITATION = """
+@misc{signsuisse,
+    title = {{Gehörlosenbund Gebärdensprache-Lexikon}},
+    author = {{Schweizerischer Gehörlosenbund SGB-FSS}},
+    year = {2023},
+    howpublished = {\url{https://signsuisse.sgb-fss.ch/}},
+    note = {Accessed on: \today}
+}
 """
 
 SITE_URL = "https://signsuisse.sgb-fss.ch"
@@ -31,7 +37,7 @@ _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "h
 class SignSuisse(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for signsuisse dataset."""
 
-    MAX_SIMULTANEOUS_DOWNLOADS = 100  # Default is 50, but it is slow
+    MAX_SIMULTANEOUS_DOWNLOADS = 1  # SignSuisse allows for a maximum of 1 simultaneous connection
     VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
         "1.0.0": "Initial crawl.",
@@ -87,6 +93,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         languages = ['de', 'fr', 'it']
         dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json"
                     for l in languages]
+        # FYI: to reset the indexes, run `rm $(ls *sitemap*)` in the `tensorflow_datasets/downloads/` folder
 
         indexes = dl_manager.download(dl_links)
         results = []
@@ -121,10 +128,6 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             # Because the page is formatted differently. I requested a change to the page.
             example_text = ""
             example_video = ""
-
-        if item["uid"] in ["131220", "131073", "120731", "115584", "121152", "121125", "126042"]:
-            # This is a special case where the video is not available.
-            return None
 
         video = SITE_URL + re.search(r"<video id=\"video-main\".*?src=\"(.*?)\"", html).group(1).strip()
         paraphrase_match = re.search(r"Umschreibung</h2> <p>(.*?)</p>", html)
