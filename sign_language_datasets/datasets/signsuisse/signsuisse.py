@@ -30,7 +30,7 @@ _CITATION = """
 
 SITE_URL = "https://signsuisse.sgb-fss.ch"
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/signsuisse.tar.gz"}
+_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/signsuisse.tar"}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
@@ -195,18 +195,6 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
 
         if self._builder_config.include_pose is not None:
             poses_dir = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
-            poses_dir = poses_dir.joinpath("signsuisse")
-            # Some poses are corrupted. We need to remove them for now.
-            # TODO: rerun these poses
-            bad_poses = [
-                'ssdca608e11c025737cb31eba18c88ab50.pose',
-                'ss703cc76745bf64ad09da82be3052be0c.pose',
-                'ss00f14fcf3240806f1f375e24751bbcda.pose'
-            ]
-            for bad_pose in bad_poses:
-                if poses_dir.joinpath(bad_pose).exists():
-                    poses_dir.joinpath(bad_pose).unlink()
-
             id_func = lambda opt: 'ss' + hashlib.md5(("signsuisse" + opt[0] + opt[1]).encode()).hexdigest()
 
             for datum in data:

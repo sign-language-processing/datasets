@@ -1,5 +1,9 @@
 import os
 from google.cloud import storage
+from pose_format import Pose
+import tarfile
+
+from tqdm import tqdm
 
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
@@ -11,6 +15,9 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
     blob.download_to_filename(destination_file_name)
     print(f'Blob {source_blob_name} downloaded to {destination_file_name}.')
 
+    blob.download_to_filename(destination_file_name)
+
+
 def list_blobs_with_prefix(bucket_name, prefix):
     """Lists all the blobs in the bucket with the given prefix."""
     storage_client = storage.Client()
@@ -18,21 +25,53 @@ def list_blobs_with_prefix(bucket_name, prefix):
 
     return blobs
 
+
+def validate_pose_file(file_name: str, buffer: bytes):
+    pose = Pose.read(buffer)
+    data_frames, data_people, data_points, data_dimensions = pose.body.data.shape
+    conf_frames, conf_people, conf_points = pose.body.confidence.shape
+    assert data_frames == conf_frames, f'Pose {file_name} has different number of frames in data and confidence'
+    assert data_people == conf_people, f'Pose {file_name} has different number of people in data and confidence'
+    assert data_points == conf_points, f'Pose {file_name} has different number of points in data and confidence'
+    assert data_points == 543, f'Pose {file_name} has different number of points in data ({data_points})'
+    assert data_dimensions == 3, f'Pose {file_name} has different number of dimensions in data ({data_dimensions})'
+
+
+def valid_tar_files(tar_file_name):
+    """Iterates over the files in a tar archive and validates each one."""
+    with tarfile.open(tar_file_name, "r") as tar:
+        for member in tqdm(tar.getmembers(), desc="Validating files"):
+            f = tar.extractfile(member)
+            if f is not None:
+                try:
+                    validate_pose_file(member.name, f.read())
+                    yield os.path.basename(member.name)
+                except Exception as e:
+                    print(f'Error validating {member.name}')
+                    print(e)
+
+
 def main():
     bucket_name = 'sign-mt-poses'
     prefix = 'external/ss'
-    destination_directory = 'holistic'
+    blobs = tqdm(list_blobs_with_prefix(bucket_name, prefix), desc="Reading files")
 
-    if not os.path.exists(destination_directory):
-        os.makedirs(destination_directory)
+    destination_tar = '/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse.tar'
+    valid_files = set(valid_tar_files(destination_tar))
+    print(f'Found {len(valid_files)} valid files in {destination_tar}')
+    print(list(valid_files)[:10])
 
-    blobs = list_blobs_with_prefix(bucket_name, prefix)
-    for blob in blobs:
-        if not blob.name.endswith('/'):
-            file_name = os.path.basename(blob.name)
-            destination_path = os.path.join(destination_directory, file_name)
-            if not os.path.exists(destination_path):
-                download_blob(bucket_name, blob.name, destination_path)
+    with tarfile.open(destination_tar, "a") as tar:
+        for blob in blobs:
+            if not blob.name.endswith('/'):
+                file_name = os.path.basename(blob.name)
+                if file_name not in valid_files:
+                    download_blob(bucket_name, blob.name, file_name)
+                    tar.add(file_name)
+                    os.remove(file_name)
+
 
 if __name__ == "__main__":
     main()
+
+# tar -cvf signsuisse.tar -C signsuisse .
