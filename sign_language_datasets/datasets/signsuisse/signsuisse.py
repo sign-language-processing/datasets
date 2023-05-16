@@ -23,8 +23,8 @@ _CITATION = """
     title = {{Gehörlosenbund Gebärdensprache-Lexikon}},
     author = {{Schweizerischer Gehörlosenbund SGB-FSS}},
     year = {2023},
-    howpublished = {\url{https://signsuisse.sgb-fss.ch/}},
-    note = {Accessed on: \today}
+    howpublished = {\\url{https://signsuisse.sgb-fss.ch/}},
+    note = {Accessed on: \\today}
 }
 """
 
