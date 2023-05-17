@@ -1,16 +1,14 @@
 """A Swiss Sign Language Lexicon, combines all three Swiss sign languages: the German-Swiss Sign Language (DSGS), the Langue des Signes Française (LSF) and the Lingua Italiana dei Segni (LIS). ."""
 import json
 import re
-import string
+import html
 
 import hashlib
 from os import path
 
 import tensorflow_datasets as tfds
-from pose_format import Pose
 
 from sign_language_datasets.utils.features import PoseFeature
-from tqdm import tqdm
 
 from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
@@ -109,33 +107,36 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
     def _parse_item(self, item, item_page):
         item["name"] = item["name"].replace("   ", " ").replace("  ", " ")
         with open(item_page, "r", encoding="utf-8") as f:
-            html = f.read()
+            html_content = f.read()
 
         # Verify that the page matches the item
-        title = re.search(r"<h1.*?>(.*?)</h1>", html).group(1).strip()
-        title = title.replace("&amp;", "&")
+        title = re.search(r"<h1.*?>(.*?)</h1>", html_content).group(1).strip()
+        title = html.unescape(title)
+        while '  ' in title:
+            title = title.replace('  ', ' ')
+
         if title != item["name"]:
-            raise ValueError("Title does not match item name")
+            raise ValueError(f"Title does not match item name '{item['name']}' != '{title}'")
 
         assert title == item["name"]
 
-        example = re.search(r"Beispiel</h2> <p>(.*?)</p>.*?<video.*?src=\"(.*?)\"", html)
+        example = re.search(r"(Beispiel|Exemple|Esempio)</h2>\s*<p>(.*?)</p>[\s\S]*?<video[\s\S]*?src=\"(.*?)\"", html_content)
         if example is not None:
-            example_text = example.group(1).strip()
-            example_video = SITE_URL + example.group(2).strip()
+            example_text = example.group(2).strip()
+            example_video = SITE_URL + example.group(3).strip()
         else:
             # This happens on: https://signsuisse.sgb-fss.ch/de/lexikon/g/shakespeare-william/
             # Because the page is formatted differently. I requested a change to the page.
             example_text = ""
             example_video = ""
 
-        video = SITE_URL + re.search(r"<video id=\"video-main\".*?src=\"(.*?)\"", html).group(1).strip()
-        paraphrase_match = re.search(r"Umschreibung</h2> <p>(.*?)</p>", html)
-        paraphrase = paraphrase_match.group(1).strip() if paraphrase_match else ""
-        definition_match = re.search(r"Definition</h2> <p>(.*?)</p>", html)
-        definition = definition_match.group(1).strip() if definition_match else ""
-        category_match = re.search(r"<strong>Kategorien:<\/strong>[\s\S]*?<span>([\s\S]*?)<\/span", html)
-        category = category_match.group(1).strip() if category_match else item["kategorie"]
+        video = SITE_URL + re.search(r"<video id=\"video-main\"[\s\S]*?src=\"(.*?)\"", html_content).group(1).strip()
+        paraphrase_match = re.search(r"(Umschreibung|Périphrase / Synonyme|Parafrasi \(descrizione\))</h2>\s*<p>(.*?)</p>", html_content)
+        paraphrase = paraphrase_match.group(2).strip() if paraphrase_match else ""
+        definition_match = re.search(r"(Definition|Definizione|Définition)</h2>\s*<p>(.*?)</p>", html_content)
+        definition = definition_match.group(2).strip() if definition_match else ""
+        category_match = re.search(r"<strong>(Kategorien|Categoria|Catégorie):</strong>[\s\S]*?<span>([\s\S]*?)</span", html_content)
+        category = category_match.group(2).strip() if category_match else item["kategorie"]
 
         return {
             "id": item["uid"],

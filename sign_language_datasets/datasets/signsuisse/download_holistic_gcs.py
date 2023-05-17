@@ -37,7 +37,7 @@ def validate_pose_file(file_name: str, buffer: bytes):
     assert data_dimensions == 3, f'Pose {file_name} has different number of dimensions in data ({data_dimensions})'
 
 
-def valid_tar_files(tar_file_name):
+def validate_tar_files(tar_file_name):
     """Iterates over the files in a tar archive and validates each one."""
     with tarfile.open(tar_file_name, "r") as tar:
         for member in tqdm(tar.getmembers(), desc="Validating files"):
@@ -45,10 +45,15 @@ def valid_tar_files(tar_file_name):
             if f is not None:
                 try:
                     validate_pose_file(member.name, f.read())
-                    yield os.path.basename(member.name)
                 except Exception as e:
                     print(f'Error validating {member.name}')
                     print(e)
+
+
+def list_files_in_tar_gz(file_path):
+    with tarfile.open(file_path, "r") as tar:
+        file_names = tar.getnames()
+        return [os.path.basename(f) for f in file_names]
 
 
 def main():
@@ -57,18 +62,20 @@ def main():
     blobs = tqdm(list_blobs_with_prefix(bucket_name, prefix), desc="Reading files")
 
     destination_tar = '/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse.tar'
-    valid_files = set(valid_tar_files(destination_tar))
-    print(f'Found {len(valid_files)} valid files in {destination_tar}')
-    print(list(valid_files)[:10])
+    existing_files = set(list_files_in_tar_gz(destination_tar))
+    print(f'Found {len(existing_files)} valid files in {destination_tar}')
+    print(list(existing_files)[:10])
 
     with tarfile.open(destination_tar, "a") as tar:
         for blob in blobs:
             if not blob.name.endswith('/'):
                 file_name = os.path.basename(blob.name)
-                if file_name not in valid_files:
+                if file_name not in existing_files:
                     download_blob(bucket_name, blob.name, file_name)
                     tar.add(file_name)
                     os.remove(file_name)
+
+    validate_tar_files(destination_tar)
 
 
 if __name__ == "__main__":
