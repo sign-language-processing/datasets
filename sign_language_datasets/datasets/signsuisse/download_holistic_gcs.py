@@ -33,7 +33,7 @@ def validate_pose_file(file_name: str, buffer: bytes):
     assert data_frames == conf_frames, f'Pose {file_name} has different number of frames in data and confidence'
     assert data_people == conf_people, f'Pose {file_name} has different number of people in data and confidence'
     assert data_points == conf_points, f'Pose {file_name} has different number of points in data and confidence'
-    assert data_points == 543, f'Pose {file_name} has different number of points in data ({data_points})'
+    assert data_points == 543 or data_points == 576, f'Pose {file_name} has different number of points in data ({data_points})'
     assert data_dimensions == 3, f'Pose {file_name} has different number of dimensions in data ({data_dimensions})'
 
 
@@ -59,7 +59,7 @@ def list_files_in_tar_gz(file_path):
 def main():
     bucket_name = 'sign-mt-poses'
     prefix = 'external/ss'
-    blobs = tqdm(list_blobs_with_prefix(bucket_name, prefix), desc="Reading files")
+    blobs = list_blobs_with_prefix(bucket_name, prefix)
 
     destination_tar = '/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse.tar'
     existing_files = set(list_files_in_tar_gz(destination_tar))
@@ -67,7 +67,7 @@ def main():
     print(list(existing_files)[:10])
 
     with tarfile.open(destination_tar, "a") as tar:
-        for blob in blobs:
+        for blob in tqdm(blobs, desc="Reading files"):
             if not blob.name.endswith('/'):
                 file_name = os.path.basename(blob.name)
                 if file_name not in existing_files:

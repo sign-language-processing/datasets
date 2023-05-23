@@ -42,8 +42,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
     }
 
     BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True),
-        SignDatasetConfig(name="annotations", include_video=False),
+        SignDatasetConfig(name="default", include_video=False),
         SignDatasetConfig(name="holistic", include_video=False, include_pose='holistic'),
     ]
 
@@ -61,6 +60,9 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             "definition": tfds.features.Text(),
             "exampleText": tfds.features.Text(),
         }
+
+        if self._builder_config.include_video:
+            raise ValueError("To prevent spamming signSuisse with requests, include_video=True is not allowed.")
 
         if self._builder_config.include_video and self._builder_config.process_video:
             features["video"] = self._builder_config.video_feature((640, 480))
@@ -104,8 +106,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             return results[:self._builder_config.sample_size]
         return results
 
-    def _parse_item(self, item, item_page):
-        item["name"] = item["name"].replace("   ", " ").replace("  ", " ")
+    def _parse_html(self, item_name: str, item_page: str):
         with open(item_page, "r", encoding="utf-8") as f:
             html_content = f.read()
 
@@ -115,12 +116,11 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         while '  ' in title:
             title = title.replace('  ', ' ')
 
-        if title != item["name"]:
-            raise ValueError(f"Title does not match item name '{item['name']}' != '{title}'")
+        if title != item_name:
+            raise ValueError(f"Title does not match item name '{item_name}' != '{title}'")
 
-        assert title == item["name"]
-
-        example = re.search(r"(Beispiel|Exemple|Esempio)</h2>\s*<p>(.*?)</p>[\s\S]*?<video[\s\S]*?src=\"(.*?)\"", html_content)
+        example = re.search(r"(Beispiel|Exemple|Esempio)</h2>\s*<p>(.*?)</p>[\s\S]*?<video[\s\S]*?src=\"(.*?)\"",
+                            html_content)
         if example is not None:
             example_text = example.group(2).strip()
             example_video = SITE_URL + example.group(3).strip()
@@ -131,25 +131,46 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             example_video = ""
 
         video = SITE_URL + re.search(r"<video id=\"video-main\"[\s\S]*?src=\"(.*?)\"", html_content).group(1).strip()
-        paraphrase_match = re.search(r"(Umschreibung|Périphrase / Synonyme|Parafrasi \(descrizione\))</h2>\s*<p>(.*?)</p>", html_content)
+        paraphrase_match = re.search(
+            r"(Umschreibung|Périphrase / Synonyme|Parafrasi \(descrizione\))</h2>\s*<p>(.*?)</p>", html_content)
         paraphrase = paraphrase_match.group(2).strip() if paraphrase_match else ""
         definition_match = re.search(r"(Definition|Definizione|Définition)</h2>\s*<p>(.*?)</p>", html_content)
         definition = definition_match.group(2).strip() if definition_match else ""
-        category_match = re.search(r"<strong>(Kategorien|Categoria|Catégorie):</strong>[\s\S]*?<span>([\s\S]*?)</span", html_content)
-        category = category_match.group(2).strip() if category_match else item["kategorie"]
+        category_match = re.search(r"<strong>(Kategorien|Categoria|Catégorie):</strong>[\s\S]*?<span>([\s\S]*?)</span",
+                                   html_content)
+        category = category_match.group(2).strip() if category_match else ""
 
         return {
-            "id": item["uid"],
-            "name": item["name"],
             "category": category,
-            "spokenLanguage": item["sprache"],
-            "signedLanguage": "ch-" + item["sprache"],
-            "url": item["link"],
             "paraphrase": paraphrase,
             "definition": definition,
             "exampleText": example_text,
             "exampleVideo": example_video,
             "video": video
+        }
+
+    def _parse_item(self, item, item_page=None):
+        item["name"] = item["name"].replace("   ", " ").replace("  ", " ")
+
+        if item_page is not None:
+            item_values = self._parse_html(item["name"], item_page)
+        else:
+            item_values = {
+                "category": item["kategorie"],
+                "paraphrase": "",
+                "definition": "",
+                "exampleText": "",
+                "exampleVideo": "",
+                "video": ""
+            }
+
+        return {
+            "id": item["uid"],
+            "name": item["name"],
+            "spokenLanguage": item["sprache"],
+            "signedLanguage": "ch-" + item["sprache"],
+            "url": item["link"],
+            **item_values
         }
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
@@ -160,7 +181,10 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         lexicon_items = self._list_all_lexicon_items(dl_manager)
         print("Found", len(lexicon_items), "lexicon items.")
         item_urls = [item["link"] for item in lexicon_items]
-        items_pages = dl_manager.download(item_urls)
+        if self._builder_config.include_video:
+            items_pages = dl_manager.download(item_urls)
+        else:
+            items_pages = [None for _ in item_urls]
 
         data = []
         for item, item_page in zip(lexicon_items, items_pages):
