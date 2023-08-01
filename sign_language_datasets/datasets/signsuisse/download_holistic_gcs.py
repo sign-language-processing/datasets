@@ -6,6 +6,21 @@ import tarfile
 from tqdm import tqdm
 
 
+def fix_pose_file(file_path: str):
+    with open(file_path, "rb") as buffer:
+        pose = Pose.read(buffer.read())
+        if len(pose.header.components) == 4:
+            return
+
+    print(f'Fixing {file_path}')
+
+    pose = pose.get_components(
+        ["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"])
+
+    with open(file_path, "wb") as f:
+        pose.write(f)
+
+
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
     storage_client = storage.Client()
@@ -15,7 +30,7 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
     blob.download_to_filename(destination_file_name)
     print(f'Blob {source_blob_name} downloaded to {destination_file_name}.')
 
-    blob.download_to_filename(destination_file_name)
+    fix_pose_file(destination_file_name)
 
 
 def list_blobs_with_prefix(bucket_name, prefix):
@@ -33,7 +48,7 @@ def validate_pose_file(file_name: str, buffer: bytes):
     assert data_frames == conf_frames, f'Pose {file_name} has different number of frames in data and confidence'
     assert data_people == conf_people, f'Pose {file_name} has different number of people in data and confidence'
     assert data_points == conf_points, f'Pose {file_name} has different number of points in data and confidence'
-    assert data_points == 543 or data_points == 576, f'Pose {file_name} has different number of points in data ({data_points})'
+    assert data_points == 543, f'Pose {file_name} has different number of points in data ({data_points})'
     assert data_dimensions == 3, f'Pose {file_name} has different number of dimensions in data ({data_dimensions})'
 
 
@@ -81,4 +96,15 @@ def main():
 if __name__ == "__main__":
     main()
 
-# tar -cvf signsuisse.tar -C signsuisse .
+# Extract: tar xf signsuisse.tar --directory signsuisse
+# Compress: tar -cvf signsuisse.tar -C signsuisse .
+# import os
+#
+# from pose_format import Pose
+#
+# directory = '/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse'
+# for filename in tqdm(os.listdir(directory)):
+#     if filename.endswith(".pose"):
+#         file_path = os.path.join(directory, filename)
+#
+#         fix_pose_file(file_path)

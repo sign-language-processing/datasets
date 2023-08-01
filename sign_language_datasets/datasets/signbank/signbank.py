@@ -229,7 +229,7 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
         """Yields examples."""
 
         i = 0
-        for spml in tqdm(spmls):
+        for spml in tqdm(reversed(spmls)):
             tree = ET.parse(spml)
             root = tree.getroot()
 
@@ -242,7 +242,7 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
                     mdt = int(child.attrib["mdt"]) if "mdt" in child.attrib and child.attrib["mdt"] != "" else 0
                     cdt = int(child.attrib["cdt"]) if "cdt" in child.attrib and child.attrib["cdt"] != "" else mdt
                     usr = child.attrib["usr"] if "usr" in child.attrib else ""
-                    texts = [c.text for c in child.iter() if c.tag != "src" and c.text is not None]
+                    texts = [c.text for c in child.iter() if c.tag != "src" and c.text is not None and c.text.strip() != ""]
 
                     signwriting_texts = []
                     spoken_texts = []
