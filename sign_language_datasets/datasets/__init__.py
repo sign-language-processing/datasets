@@ -12,6 +12,7 @@ from .sign2mint import Sign2MINT
 from .signbank import SignBank
 from .signtyp import SignTyp
 from .signsuisse import SignSuisse
+from .sign_wordnet import SignWordnet
 from .swojs_glossario import SwojsGlossario
 from .wlasl import Wlasl
 from .ngt_corpus import NGTCorpus
