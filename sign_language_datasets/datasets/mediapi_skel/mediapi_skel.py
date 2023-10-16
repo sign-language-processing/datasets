@@ -53,8 +53,8 @@ _CITATION = """
 """
 
 _POSE_HEADERS = {
-    "holistic": path.join(path.dirname(path.realpath(__file__)), "openpose.header"),
-    "openpose": path.join(path.dirname(path.realpath(__file__)), "holistic.header")
+    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.header"),
+    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")
 }
 
 _SPLITS = {
