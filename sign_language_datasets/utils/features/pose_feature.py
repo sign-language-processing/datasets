@@ -159,6 +159,8 @@ class PoseFeature(feature.FeatureConnector):
             return self.encode_body("empty", pose_body)
         elif isinstance(pose_path_or_fobj, Pose):
             return self.encode_body("Pose", pose_path_or_fobj.body)
+        elif isinstance(pose_path_or_fobj, PoseBody):
+            return self.encode_body("PoseBody", pose_path_or_fobj)
         elif isinstance(pose_path_or_fobj, epath.PathLikeCls):
             pose_path_or_fobj = os.fspath(pose_path_or_fobj)
             with tf.io.gfile.GFile(pose_path_or_fobj, "rb") as pose_f:

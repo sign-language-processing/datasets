@@ -7,6 +7,7 @@ from .dgs_types import DgsTypes
 from .dgs_corpus import DgsCorpus
 from .dicta_sign import DictaSign
 from .how2sign import How2Sign
+from .mediapi_skel import MediapiSkel
 from .rwth_phoenix2014_t import RWTHPhoenix2014T
 from .sign2mint import Sign2MINT
 from .signbank import SignBank
