@@ -6,8 +6,6 @@ import numpy as np
 from pose_format.numpy import NumPyPoseBody
 from tqdm import tqdm
 
-import webvtt
-
 def convert_time(vtt_time):
     hhmmss, fraction = vtt_time.split('.')
     h, m, s = hhmmss.split(':')
@@ -53,6 +51,11 @@ def load_pose_body_from_zip(zip_file, fps: float) -> NumPyPoseBody:
 
 
 def read_mediapi_set(mediapi_path: str, pose_path: str = None, split='test', pose_type="holistic"):
+    try:
+        import webvtt
+    except ImportError:
+        raise ImportError("Please install webvtt with: pip install webvtt-py")
+
     pose_zip = "mediapipe_zips.zip" if pose_type == "holistic" else "openpose_zips.zip"
     mediapipe_zips = f'mediapi-skel/7/data/{pose_zip}'
     subtitle_zips = 'mediapi-skel/7/data/subtitles.zip'
