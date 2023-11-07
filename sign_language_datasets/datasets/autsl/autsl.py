@@ -12,7 +12,7 @@ from tensorflow_datasets.core.download.resource import get_dl_dirname
 from tqdm import tqdm
 
 from ..warning import dataset_warning
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 from ...utils.features import PoseFeature
 
 _DESCRIPTION = """
@@ -44,16 +44,16 @@ _TRAIN_VIDEOS = "http://158.109.8.102/AuTSL/data/train/train_set_vfbha39.zip"  #
 _TRAIN_LABELS = "http://158.109.8.102/AuTSL/data/train/train_labels.csv"
 
 _VALID_VIDEOS = "http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip"  # 3 files
-_VALID_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_validation_labels.csv"
+_VALID_LABELS = cloud_bucket_file("public/autsl_validation_labels.csv")
 
 _TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
-_TEST_LABELS = "https://nlp.biu.ac.il/~amit/datasets/public/autsl_test_labels.csv"
+_TEST_LABELS = cloud_bucket_file("public/autsl_test_labels.csv")
 
 _CLASSES = "https://data.chalearnlap.cvc.uab.cat/AuTSL/data/SignList_ClassId_TR_EN.csv"
 
 _POSE_URLS = {
-    "holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/autsl.tar.gz",
-    "openpose": "https://nlp.biu.ac.il/~amit/datasets/poses/openpose/autsl.tar.gz",
+    "holistic": cloud_bucket_file("poses/holistic/autsl.tar.gz"),
+    "openpose": cloud_bucket_file("poses/openpose/autsl.tar.gz")
 }
 _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),

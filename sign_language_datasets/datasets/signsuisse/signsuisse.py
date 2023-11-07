@@ -9,6 +9,7 @@ from os import path
 import tensorflow_datasets as tfds
 
 from sign_language_datasets.utils.features import PoseFeature
+from ..config import cloud_bucket_file
 
 from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
@@ -28,7 +29,7 @@ _CITATION = """
 
 SITE_URL = "https://signsuisse.sgb-fss.ch"
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/signsuisse.tar"}
+_POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/signsuisse.tar")}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 

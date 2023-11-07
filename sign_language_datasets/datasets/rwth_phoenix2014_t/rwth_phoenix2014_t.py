@@ -7,7 +7,7 @@ import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
 from ..warning import dataset_warning
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 from ...utils.features import PoseFeature
 
 _DESCRIPTION = """
@@ -36,9 +36,9 @@ _CITATION = """
 """
 
 _VIDEO_ANNOTATIONS_URL = "https://www-i6.informatik.rwth-aachen.de/ftp/pub/rwth-phoenix/2016/phoenix-2014-T.v3.tar.gz"
-_ANNOTATIONS_URL = "https://nlp.biu.ac.il/~amit/datasets/public/phoenix-annotations.tar.gz"
+_ANNOTATIONS_URL = cloud_bucket_file("public/phoenix-annotations.tar.gz")
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/phoenix.tar.gz"}
+_POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/phoenix.tar.gz")}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}
 
 

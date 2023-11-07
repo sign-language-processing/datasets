@@ -4,6 +4,8 @@ import json
 import re
 import urllib.request
 
+from sign_language_datasets.datasets.config import cloud_bucket_file
+
 corpus_path = "https://www.sign-lang.uni-hamburg.de/meinedgs/"
 
 index_data = {}
@@ -33,12 +35,12 @@ with urllib.request.urlopen(corpus_path + "ling/start-name_en.html") as response
 
         # Add holistic
         for c in ["a", "b"]:
-            holistic_path = "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dgs_corpus/" + tr_id + "_" + c + ".pose"
+            holistic_path = cloud_bucket_file(f"poses/holistic/dgs_corpus/{tr_id}_{c}.pose")
             index_data[tr_id]["holistic_" + c] = holistic_path if index_data[tr_id]["video_" + c] is not None else None
 
         # Make sure parsing worked
         if index_data[tr_id]["openpose"] is not None:
             assert index_data[tr_id]["openpose"].endswith(".json.gz")
 
-with open("data.json", "w") as f:
+with open("dgs.json", "w") as f:
     json.dump(index_data, f)

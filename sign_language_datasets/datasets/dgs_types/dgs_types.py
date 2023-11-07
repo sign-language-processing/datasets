@@ -13,7 +13,7 @@ from pose_format import Pose
 from sign_language_datasets.utils.features import PoseFeature
 from ..warning import dataset_warning
 
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 
 _DESCRIPTION = """
 Parallel corpus for German Sign Language (DGS) with German and English annotations
@@ -38,7 +38,7 @@ _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
 }
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dgs_types/"}
+_POSE_URLS = {"holistic": lambda name: cloud_bucket_file("poses/holistic/dgs_types/" + name)}
 
 
 class DgsTypes(tfds.core.GeneratorBasedBuilder):
@@ -190,7 +190,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         # Poses
         if self.builder_config.include_pose == "holistic":
             pose_urls = {
-                f"{datum['id']}_{view['name']}": _POSE_URLS["holistic"] + f"{datum['id']}_{view['name']}.pose"
+                f"{datum['id']}_{view['name']}": _POSE_URLS["holistic"](f"{datum['id']}_{view['name']}.pose")
                 for datum in data for view in datum["views"]}
             poses = dl_manager.download(pose_urls)
 

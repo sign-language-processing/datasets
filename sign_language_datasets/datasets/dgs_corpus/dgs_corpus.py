@@ -21,7 +21,7 @@ from pose_format.utils.openpose import load_openpose, OpenPoseFrames
 from pose_format.pose import Pose
 
 from ..warning import dataset_warning
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 from ...utils.features import PoseFeature
 
 try:
@@ -49,7 +49,7 @@ _CITATION = """
 _HOMEPAGE = "https://www.sign-lang.uni-hamburg.de/meinedgs/"
 
 # This `dgs.json` file was created using `create_index.py`
-INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/dgs.json"
+INDEX_PATH = path.join(path.dirname(path.realpath(__file__)), "dgs.json")
 
 _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
@@ -279,9 +279,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         dataset_warning(self)
 
-        index_path = dl_manager.download(INDEX_URL)
-
-        with open(index_path, "r", encoding="utf-8") as f:
+        with open(INDEX_PATH, "r", encoding="utf-8") as f:
             index_data = json.load(f)
 
         # No need to download HTML pages

@@ -10,7 +10,7 @@ import tensorflow_datasets as tfds
 from typing import Optional
 
 from ..warning import dataset_warning
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 
 _DESCRIPTION = """
 An open access online corpus of movies with annotations of Sign Language of the Netherlands.
@@ -26,7 +26,7 @@ _CITATION = """\
 """
 
 # This `ngt.json` file was created using `create_index.py`
-INDEX_URL = "https://nlp.biu.ac.il/~amit/datasets/ngt.json"
+INDEX_URL = cloud_bucket_file("public/ngt.json")
 
 # alternative mirror:
 # INDEX_URL = "https://files.ifi.uzh.ch/cl/archiv/2022/easier/ngt.json"

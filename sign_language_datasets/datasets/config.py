@@ -3,6 +3,9 @@ from typing import List, Optional, Tuple
 import cv2
 import tensorflow_datasets as tfds
 
+def cloud_bucket_file(file_name: str) -> str:
+    escaped_file_name = file_name.replace("/", "%2F")
+    return f"https://firebasestorage.googleapis.com/v0/b/sign-language-datasets/o/{escaped_file_name}?alt=media"
 
 class SignDatasetConfig(tfds.core.BuilderConfig):
     """General BuilderConfig for sign language datasets."""

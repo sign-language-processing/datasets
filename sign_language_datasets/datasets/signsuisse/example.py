@@ -39,14 +39,3 @@ for datum in dataset["train"]:
     print("Example Pose: ", load_pose(pose_header, datum['examplePose']))
     print("---")
     print('\n\n')
-# from pose_format import Pose
-#
-# with open(
-#         "/home/nlp/amit/tensorflow_datasets/downloads/extracted/TAR_GZ.nlp.biu.ac.il_amit_data_pose_holi_signZjjPSbhafIJNhjgLBLdTYBNZG-89WSEmWE4dJsKvLBM.tar.gz/signsuisse/ss8f848ef2e416a402399a7dcec0b83838.pose",
-#         "rb") as f:
-#     pose = Pose.read(f.read())
-#
-# print("total points", sum(len(c.points) for c in pose.header.components))
-#
-# with open("/home/nlp/amit/sign-language/sign-language-datasets/sign_language_datasets/datasets/signsuisse/holistic.poseheader", "wb") as f:
-#     pose.header.write(f)

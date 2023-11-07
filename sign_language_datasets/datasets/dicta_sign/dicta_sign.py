@@ -3,6 +3,7 @@ from os import path
 import tensorflow_datasets as tfds
 import re
 
+from ..config import cloud_bucket_file
 from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 from ...utils.features import PoseFeature
@@ -23,7 +24,7 @@ _CITATION = """
 
 SPOKEN_LANGUAGES = {"BSL": "en", "DGS": "de", "LSF": "fr", "GSL": "el"}
 
-_POSE_URLS = {"holistic": "https://nlp.biu.ac.il/~amit/datasets/poses/holistic/dicta_sign.tar.gz"}
+_POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/dicta_sign.tar.gz")}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.header")}
 
 
