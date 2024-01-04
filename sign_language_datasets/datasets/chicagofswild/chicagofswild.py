@@ -1,4 +1,4 @@
-"""How2Sign: A multimodal and multiview continuous American Sign Language (ASL) dataset"""
+"""Chicago Fingerspelling in the Wild Data Sets (ChicagoFSWild, ChicagoFSWild+)"""
 import csv
 import tarfile
 from os import path
@@ -6,6 +6,10 @@ from os import path
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
+
+from pose_format import Pose
+
+from sign_language_datasets.utils.features import PoseFeature
 
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
@@ -39,14 +43,20 @@ _VERSIONS = {
 _CHICAGO_FS_WILD_PLUS_URL = "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"
 _CHICAGO_FS_WILD_URL = "https://dl.ttic.edu/ChicagoFSWild.tgz"
 
+_POSE_URLS = {"holistic": "/shares/volk.cl.uzh/zifjia/ChicagoFSWild/pose/"}
+_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
+
 
 class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
-    """DatasetBuilder for how2sign dataset."""
+    """DatasetBuilder for ChicagoFSWild dataset."""
 
     VERSION = tfds.core.Version("2.0.0")
     RELEASE_NOTES = {k: v["name"] for k, v in _VERSIONS.items()}
 
-    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True)]
+    BUILDER_CONFIGS = [
+        SignDatasetConfig(name="default", include_video=True),
+        # SignDatasetConfig(name="holistic", include_video=False, include_pose='holistic'),
+    ]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -63,6 +73,13 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
 
         if self._builder_config.include_video:
             features["video"] = self._builder_config.video_feature((480, 360))
+
+        if self._builder_config.include_pose == "holistic":
+            pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
+            stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
+            features["pose"] = PoseFeature(shape=(None, 1, 543, 3),
+                                           header_path=pose_header_path,
+                                           stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -107,7 +124,11 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
             csv_data = csv.reader(csv_file, delimiter=",")
             next(csv_data)  # Ignore the header
 
-            for row in csv_data:
+            for i, row in enumerate(csv_data):
+                # TODO: remove debug code
+                # if i > 10:
+                #     break
+                # if True:
                 if row[10] == split:
                     _id = row[1].replace("/", "-").replace("_(youtube)", "").replace("_(nad)", "")
 
@@ -125,5 +146,12 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
                         frames_base = path.join(frames_directory, row[1])
 
                         datum["video"] = [path.join(frames_base, name) for name in sorted(tf.io.gfile.listdir(frames_base))]
+
+                    if self.builder_config.include_pose is not None:
+                        if self.builder_config.include_pose == "holistic":
+                            mediapipe_path = path.join(_POSE_URLS['holistic'], f"{_id}.pose")
+                            pose = Pose.read(open(mediapipe_path, "rb").read())
+                            pose = pose.get_components(["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"])
+                            datum["pose"] = pose
 
                     yield _id, datum
