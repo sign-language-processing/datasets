@@ -10,6 +10,7 @@ from tensorflow.io.gfile import GFile
 from pose_format import Pose
 
 from sign_language_datasets.utils.features import PoseFeature
+from ..config import cloud_bucket_file
 
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
@@ -43,7 +44,12 @@ _VERSIONS = {
 _CHICAGO_FS_WILD_PLUS_URL = "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"
 _CHICAGO_FS_WILD_URL = "https://dl.ttic.edu/ChicagoFSWild.tgz"
 
-_POSE_URLS = {"holistic": "/shares/volk.cl.uzh/zifjia/"}
+_POSE_URLS = {
+    "holistic": {
+        "ChicagoFSWild": cloud_bucket_file("poses/holistic/ChicagoFSWild.zip"),
+        "ChicagoFSWildPlus": cloud_bucket_file("poses/holistic/ChicagoFSWildPlus.zip"),
+    }
+}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
@@ -99,13 +105,16 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
 
         archive = dl_manager.download_and_extract(self._version_details("url"))
 
+        v_name = self._version_details("name")
+        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS['holistic'][v_name]))
+
         return [
-            tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train"}),
-            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "dev"}),
-            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test"}),
+            tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "dev", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test", "poses_dir": poses_dir}),
         ]
 
-    def _generate_examples(self, archive_path: str, split: str):
+    def _generate_examples(self, archive_path: str, split: str, poses_dir: str):
         """ Yields examples. """
 
         v_name = self._version_details("name")
@@ -145,7 +154,8 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
 
                     if self.builder_config.include_pose is not None:
                         if self.builder_config.include_pose == "holistic":
-                            mediapipe_path = path.join(_POSE_URLS['holistic'], v_name, 'pose', f"{_id}.pose")
+                            mediapipe_path = path.join(poses_dir, "pose", f"{_id}.pose")
+
                             if path.exists(mediapipe_path):
                                 with open(mediapipe_path, "rb") as f:
                                     pose = Pose.read(f.read())
