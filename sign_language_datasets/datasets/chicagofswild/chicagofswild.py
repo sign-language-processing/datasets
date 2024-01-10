@@ -43,7 +43,7 @@ _VERSIONS = {
 _CHICAGO_FS_WILD_PLUS_URL = "https://dl.ttic.edu/ChicagoFSWildPlus.tgz"
 _CHICAGO_FS_WILD_URL = "https://dl.ttic.edu/ChicagoFSWild.tgz"
 
-_POSE_URLS = {"holistic": "/shares/volk.cl.uzh/zifjia/ChicagoFSWild/pose/"}
+_POSE_URLS = {"holistic": "/shares/volk.cl.uzh/zifjia/"}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
@@ -77,7 +77,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 543, 3),
+            features["pose"] = PoseFeature(shape=(None, 1, 576, 3),
                                            header_path=pose_header_path,
                                            stride=stride)
 
@@ -149,9 +149,12 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
 
                     if self.builder_config.include_pose is not None:
                         if self.builder_config.include_pose == "holistic":
-                            mediapipe_path = path.join(_POSE_URLS['holistic'], f"{_id}.pose")
-                            pose = Pose.read(open(mediapipe_path, "rb").read())
-                            pose = pose.get_components(["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"])
-                            datum["pose"] = pose
+                            mediapipe_path = path.join(_POSE_URLS['holistic'], v_name, 'pose', f"{_id}.pose")
+                            if path.exists(mediapipe_path):
+                                with open(mediapipe_path, "rb") as f:
+                                    pose = Pose.read(f.read())
+                                    datum["pose"] = pose
+                            else:
+                                datum["pose"] = None
 
                     yield _id, datum
