@@ -19,3 +19,4 @@ from .wlasl import Wlasl
 from .ngt_corpus import NGTCorpus
 from .bsl_corpus import BslCorpus
 from .wmt_slt import WMTSLT
+from .asl_signs import ASL_SIGNS
