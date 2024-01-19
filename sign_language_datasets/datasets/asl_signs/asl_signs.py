@@ -35,9 +35,6 @@ _CITATION = """
 }
 """
 
-_POSE_URLS = {
-    "holistic": '',
-}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 _KNOWN_SPLITS = {
@@ -45,7 +42,7 @@ _KNOWN_SPLITS = {
 }
 
 
-class ASL_SIGNS(tfds.core.GeneratorBasedBuilder):
+class ASLSigns(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for asl-signs dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
@@ -68,7 +65,7 @@ class ASL_SIGNS(tfds.core.GeneratorBasedBuilder):
 
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
-            stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
+            stride = 1 if self._builder_config.fps is None else 30 / self._builder_config.fps
             features["pose"] = PoseFeature(shape=(None, 1, 543, 3),
                                            header_path=pose_header_path,
                                            stride=stride)
@@ -97,6 +94,7 @@ class ASL_SIGNS(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         dataset_warning(self)
 
+        # Note: This function requires the Kaggle CLI tool. Read the installation guide at https://www.kaggle.com/docs/api
         archive = dl_manager.download_kaggle_data('asl-signs')
 
         if 'split' in self._builder_config.extra:
@@ -136,6 +134,8 @@ class ASL_SIGNS(tfds.core.GeneratorBasedBuilder):
                         pose_df = pq.read_table(parquet_path).to_pandas()
                         num_frames = len(pose_df['frame'].drop_duplicates())
                         dimensions = ['x', 'y', 'z']
+
+                        # reorder keypoints
                         FACE = np.arange(0, 468).tolist()
                         LHAND = np.arange(468, 489).tolist()
                         POSE = np.arange(489, 522).tolist()
