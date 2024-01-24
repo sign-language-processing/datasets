@@ -92,6 +92,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose is not None:
             urls.append(_POSE_URLS[self._builder_config.include_pose])
 
+        dl_manager._verify_ssl = False  # Due to https://github.com/sign-language-processing/datasets/issues/51
         downloads = dl_manager.download_and_extract(urls)
         annotations_path = path.join(downloads[0], "PHOENIX-2014-T-release-v3", "PHOENIX-2014-T")
 
@@ -102,13 +103,16 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
 
         return [
             tfds.core.SplitGenerator(
-                name=tfds.Split.VALIDATION, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"},
+                name=tfds.Split.VALIDATION,
+                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TEST, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"},
+                name=tfds.Split.TEST,
+                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"},
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TRAIN, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"},
+                name=tfds.Split.TRAIN,
+                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"},
             ),
         ]
 
