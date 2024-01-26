@@ -160,15 +160,6 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                                                 confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))) # FIXME: unkown
                             pose = Pose(header, body)
                             datum["pose"] = pose
-
-                            # TODO: remove debug code
-                            # print(pose.body.data)
-                            # with open('/shares/volk.cl.uzh/zifjia/fairseq/examples/MMPT/test.pose', 'wb') as f:
-                            #     pose.write(f)
-                            #     exit()
-                            # with open(_POSE_HEADERS['holistic'], "wb") as f:
-                            #     pose.header.write(f)
-                            #     exit()
                         else:
                             datum["pose"] = None
 
