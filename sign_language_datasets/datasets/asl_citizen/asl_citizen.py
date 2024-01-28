@@ -18,7 +18,7 @@ from pose_format.utils.holistic import holistic_components
 from sign_language_datasets.utils.features import PoseFeature
 
 from ..warning import dataset_warning
-from ...datasets.config import SignDatasetConfig
+from ...datasets.config import SignDatasetConfig, cloud_bucket_file
 
 _DESCRIPTION = """
 The dataset contains about 84k video recordings of 2.7k isolated signs from American Sign Language (ASL).
@@ -37,7 +37,7 @@ _DOWNLOAD_URL = 'https://download.microsoft.com/download/b/8/8/b88c0bae-e6c1-43e
 
 
 _POSE_URLS = {
-    "holistic": "/shares/volk.cl.uzh/zifjia/ASL_Citizen/poses",
+    "holistic": cloud_bucket_file("poses/holistic/ASLCitizen.zip"),
 }
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
@@ -87,14 +87,15 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
         dataset_warning(self)
 
         archive = dl_manager.download_and_extract(_DOWNLOAD_URL)
+        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS['holistic']))
 
         return [
-            tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train"}),
-            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "val"}),
-            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test"}),
+            tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "val", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test", "poses_dir": poses_dir}),
         ]
 
-    def _generate_examples(self, archive_path: str, split: str):
+    def _generate_examples(self, archive_path: str, split: str, poses_dir: str):
         """ Yields examples. """
 
         with GFile(path.join(archive_path, 'ASL_Citizen', 'splits', f"{split}.csv"), "r") as csv_file:
@@ -111,20 +112,12 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
 
                 if self.builder_config.include_pose is not None:
                     if self.builder_config.include_pose == "holistic":
-                        mediapipe_path = path.join(_POSE_URLS['holistic'], row[1].replace('.mp4', '.pose'))
+                        mediapipe_path = path.join(poses_dir, 'poses', row[1].replace('.mp4', '.pose'))
 
                         if path.exists(mediapipe_path):
                             with open(mediapipe_path, "rb") as f:
                                 pose = Pose.read(f.read())
                                 datum["pose"] = pose
-
-                                # TODO: remove debug code
-                                # print(pose.body.data)
-                                # with open('/shares/volk.cl.uzh/zifjia/fairseq/examples/MMPT/test.pose', 'wb') as f:
-                                #     pose.write(f)
-                                # with open(_POSE_HEADERS['holistic'], "wb") as f:
-                                #     pose.header.write(f)
-                                #     exit()
                         else:
                             datum["pose"] = None
 
