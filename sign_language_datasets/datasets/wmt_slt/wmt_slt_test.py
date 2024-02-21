@@ -4,11 +4,11 @@ import tensorflow_datasets as tfds
 from . import wmt_slt
 
 
-class Sign2MINTTest(tfds.testing.DatasetBuilderTestCase):
+class WMTSLTTest(tfds.testing.DatasetBuilderTestCase):
     """Tests for sign2mint dataset."""
 
-    # TODO(sign2mint):
-    DATASET_CLASS = sign2mint.Sign2MINT
+    # TODO(wmt_slt):
+    DATASET_CLASS = wmt_slt.WMTSLT
     SPLITS = {
         "train": 3,  # Number of fake train example
         "test": 1,  # Number of fake test example
