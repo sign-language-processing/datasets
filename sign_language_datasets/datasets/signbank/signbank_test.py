@@ -1,14 +1,14 @@
 """SignBank dataset."""
 
 import tensorflow_datasets as tfds
-from . import SignBank
+from . import signbank
 
 
 class SignbankTest(tfds.testing.DatasetBuilderTestCase):
     """Tests for SignBank dataset."""
 
     # TODO(SignBank):
-    DATASET_CLASS = SignBank.Signbank
+    DATASET_CLASS = signbank.SignBank
     SPLITS = {
         "train": 3,  # Number of fake train example
         "test": 1,  # Number of fake test example
