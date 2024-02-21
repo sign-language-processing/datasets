@@ -1,14 +1,14 @@
 """SignTyp dataset."""
 
 import tensorflow_datasets as tfds
-from . import SignTyp
+from . import signtyp
 
 
 class SignTypTest(tfds.testing.DatasetBuilderTestCase):
     """Tests for SignTyp dataset."""
 
     # TODO(SignTyp):
-    DATASET_CLASS = SignTyp.SignTyp
+    DATASET_CLASS =  signtyp.SignTyp
     SPLITS = {
         "train": 3,  # Number of fake train example
         "test": 1,  # Number of fake test example
