@@ -8,7 +8,7 @@ class How2signTest(tfds.testing.DatasetBuilderTestCase):
     """Tests for how2sign dataset."""
 
     # TODO(how2sign):
-    DATASET_CLASS = how2sign.How2sign
+    DATASET_CLASS = how2sign.How2Sign
     SPLITS = {
         "train": 3,  # Number of fake train example
         "test": 1,  # Number of fake test example
