@@ -9,7 +9,7 @@ class AutslTest(tfds.testing.DatasetBuilderTestCase):
     """Tests for autsl dataset."""
 
     # TODO(autsl):
-    DATASET_CLASS = autsl.Autsl
+    DATASET_CLASS = autsl.AUTSL
     SPLITS = {
         "train": 3,  # Number of fake train example
         "test": 1,  # Number of fake test example

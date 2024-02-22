@@ -11,7 +11,7 @@ from unittest import TestCase
 from typing import List, Dict
 from contextlib import contextmanager
 
-from sign_language_datasets.datasets.dgs_corpus import dgs_corpus
+from . import dgs_corpus
 from pose_format.pose import Pose
 
 
