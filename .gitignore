@@ -11,3 +11,5 @@ build/
 dist/
 sign_language_datasets.egg-info/
 .DS_Store
+
+sign_language_datasets/datasets/spread_the_sign/splits/1.0.0-uzh/*.txt

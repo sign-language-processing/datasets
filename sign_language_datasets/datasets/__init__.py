@@ -1,7 +1,7 @@
 from .aslg_pc12 import AslgPc12
 from .asl_lex import AslLex
 from .autsl import AUTSL
-from .chicagofswild import ChicagoFSWild
+from .chicago_fs_wild import ChicagoFSWild
 from .config import SignDatasetConfig
 from .dgs_types import DgsTypes
 from .dgs_corpus import DgsCorpus
@@ -19,3 +19,7 @@ from .wlasl import Wlasl
 from .ngt_corpus import NGTCorpus
 from .bsl_corpus import BslCorpus
 from .wmt_slt import WMTSLT
+from .asl_signs import ASLSigns
+from .sem_lex import SemLex
+from .asl_citizen import ASLCitizen
+from .spread_the_sign import SpreadTheSign
