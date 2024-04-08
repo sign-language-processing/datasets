@@ -22,9 +22,9 @@ random.seed(seed)
 random.shuffle(video_ids)
 
 length = len(video_ids)
-val_ratio = 0.001
+val_ratio = 0.01
 val_idx = int(length * val_ratio)
-test_ratio = 0.001
+test_ratio = 0.01
 test_idx = val_idx + int(length * test_ratio)
 
 video_ids_val = video_ids[:val_idx]
