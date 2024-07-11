@@ -1,16 +1,13 @@
 """The Sem-Lex Benchmark: Modeling ASL Signs and Their Phonemes"""
 import csv
-import tarfile
 from os import path
 
 import numpy as np
-import gdown
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
 
-from pose_format import Pose
 from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
 from pose_format.pose_header import PoseHeaderDimensions
@@ -94,6 +91,11 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
         # custom download with gdown
         csv_path = path.join(dl_manager.download_dir, 'extracted', 'sem-lex-metadata.csv')
         if not path.exists(csv_path):
+            try:
+                import gdown
+            except ImportError:
+                raise ImportError("Please install gdown with: pip install gdown")
+
             gdown.download(url=_CSV_URL, output=csv_path, quiet=False, fuzzy=True)
         self.csv_path = csv_path
 
