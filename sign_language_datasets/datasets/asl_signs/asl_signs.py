@@ -1,23 +1,17 @@
 """asl-signs dataset for Google - Isolated Sign Language Recognition (kaggle)"""
 import csv
-import tarfile
+import functools
 from os import path
 
 import numpy as np
 import pyarrow.parquet as pq
-
-import tensorflow as tf
 import tensorflow_datasets as tfds
-from tensorflow.io.gfile import GFile
-
-from pose_format import Pose
 from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
 from pose_format.pose_header import PoseHeaderDimensions
-from pose_format.utils.holistic import holistic_components
+from tensorflow.io.gfile import GFile
 
 from sign_language_datasets.utils.features import PoseFeature
-
 from ..warning import dataset_warning
 from ...datasets.config import SignDatasetConfig
 
@@ -40,6 +34,20 @@ _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "h
 _KNOWN_SPLITS = {
     "1.0.0-uzh": path.join(path.dirname(path.realpath(__file__)), "splits/1.0.0-uzh"),
 }
+
+
+@functools.lru_cache()
+def get_pose_header():
+    from pose_format.utils.holistic import holistic_components
+
+    # create a new Pose instance
+    # FIXME: raw video resolution and fps as well as estimated keypoint confidence are unknown
+    # resolution and fps are hardcoded to the default values for a Pixel 4a smartphone at the moment
+    width = 1080
+    height = 720
+    dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000)
+    return PoseHeader(version=0.1, dimensions=dimensions,
+                      components=holistic_components("XYZC")[:-1])  # no world landmarks
 
 
 class ASLSigns(tfds.core.GeneratorBasedBuilder):
@@ -85,7 +93,7 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
         with open(path.join(split_dir, f'{split}.txt')) as f:
             ids = []
             for line in f:
-                id = line.rstrip('\n') 
+                id = line.rstrip('\n')
                 ids.append(id)
 
         return ids
@@ -145,14 +153,8 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
                         pose_data = pose_df[dimensions].to_numpy().reshape(num_frames, -1, len(dimensions))
                         pose_data = pose_data[:, points, :]
 
-                        # create a new Pose instance
-                        # FIXME: raw video resolution and fps as well as estimated keypoint confidence are unknown 
-                        # resolution and fps are hardcoded to the default values for a Pixel 4a smartphone at the moment
-                        width = 1080
-                        height = 720
-                        dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000) 
-                        header = PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC")[:-1]) # no world landmarks
-                        
+                        header = get_pose_header()
+
                         # add the person dimension
                         pose_data = np.expand_dims(pose_data, 1)
                         # TODO: revert the normalization done in the original dataset
