@@ -78,7 +78,10 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
         }
 
         if self._builder_config.include_video:
-            features["video"] = self._builder_config.video_feature((480, 360))
+            if self._builder_config.process_video:
+                features["video"] = self._builder_config.video_feature((480, 360))
+            else:
+                features["video"] = tfds.features.Sequence(tfds.features.Text())
 
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
