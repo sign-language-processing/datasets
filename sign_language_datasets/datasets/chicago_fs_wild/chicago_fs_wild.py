@@ -121,7 +121,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
         archive_directory = path.join(archive_path, v_name) if v_name == "ChicagoFSWild" else archive_path
 
         frames_directory = path.join(archive_directory, "frames")
-        frames_directory = path.join(frames_directory, v_name) if v_name == "ChicagoFSWildPlus" else frames_directory
+        frames_directory = path.join(frames_directory, v_name, v_name) if v_name == "ChicagoFSWildPlus" else frames_directory
 
         if not path.exists(frames_directory):
             print("Extracting Frames Archive")
