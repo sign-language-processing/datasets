@@ -94,9 +94,7 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
     """
 
     VERSION = tfds.core.Version("3.0.0")
-    RELEASE_NOTES = {
-        "3.0.0": "3rd release",
-    }
+    RELEASE_NOTES = {"3.0.0": "3rd release"}
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, include_pose=None),
@@ -106,10 +104,7 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
-        features = {
-            "id": tfds.features.Text(),
-            "paths": {"eaf": tfds.features.Text(),},
-        }
+        features = {"id": tfds.features.Text(), "paths": {"eaf": tfds.features.Text()}}
 
         if self._builder_config.include_video:
             features["fps"] = tf.int32
@@ -160,7 +155,6 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_video:
             # rename "body" video keys, ignore other views
             for datum in index_data.values():
-
                 # determine which video URL corresponds to abstract views "a" and "b"
                 view_to_speaker_mapping = _get_view_to_speaker_mapping(datum)
 
@@ -204,16 +198,13 @@ class NGTCorpus(tfds.core.GeneratorBasedBuilder):
         return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
     def _generate_examples(self, data):
-        """ Yields examples. """
+        """Yields examples."""
 
         default_fps = _FRAMERATE
         default_video = np.zeros((0, 0, 0, 3))  # Empty video
 
         for _id, datum in list(data.items()):
-            features = {
-                "id": _id,
-                "paths": {t: str(datum[t]) if t in datum else "" for t in ["eaf"]},
-            }
+            features = {"id": _id, "paths": {t: str(datum[t]) if t in datum else "" for t in ["eaf"]}}
 
             if self._builder_config.include_video:
                 videos = {t: str(datum["video_" + t]) if ("video_" + t) in datum else "" for t in ["a", "b", "c"]}

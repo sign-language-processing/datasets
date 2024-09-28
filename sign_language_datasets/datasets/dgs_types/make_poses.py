@@ -27,11 +27,11 @@ def load_video(cap: cv2.VideoCapture):
 
 
 config = SignDatasetConfig(name="full3", version="1.0.0", include_video=True, process_video=False, include_pose=None)
-dgs_types = tfds.load(name='dgs_types', builder_kwargs={"config": config})
+dgs_types = tfds.load(name="dgs_types", builder_kwargs={"config": config})
 
-decode_str = lambda s: s.numpy().decode('utf-8')
+decode_str = lambda s: s.numpy().decode("utf-8")
 for datum in tqdm(dgs_types["train"]):
-    _id = decode_str(datum['id'])
+    _id = decode_str(datum["id"])
     for view, video in zip(datum["views"]["name"], datum["views"]["video"]):
         view = decode_str(view)
         video = decode_str(video)
@@ -57,7 +57,6 @@ for datum in tqdm(dgs_types["train"]):
                 pose.write(f)
 
             cap.release()
-
 
 
 with open("holistic.poseheader", "wb") as f:

@@ -65,7 +65,6 @@ def _generate_dgs_openpose_data(camera_names: List[str], num_frames: int = 10, n
 def _generate_dgs_openpose_file(
     filehandle: tempfile.NamedTemporaryFile, camera_names: List[str], num_frames: int = 10, num_people: int = 1
 ) -> None:
-
     data = _generate_dgs_openpose_data(camera_names, num_frames, num_people)
     json.dump(data, filehandle)
     filehandle.flush()
@@ -90,7 +89,6 @@ def _create_tmp_dgs_openpose_file(camera_names: List[str], num_frames: int = 10,
 
 class TestDgsCorpusAuxiliaryFunctions(TestCase):
     def test_convert_dgs_dict_to_openpose_frames(self):
-
         input_dict = {"7": {"people": [1, 2, 3]}, "8": {"people": [4, 5, 6]}}
 
         expected_output = {7: {"people": [1, 2, 3], "frame_id": 7}, 8: {"people": [4, 5, 6], "frame_id": 8}}
@@ -100,7 +98,6 @@ class TestDgsCorpusAuxiliaryFunctions(TestCase):
         self.assertDictEqual(actual_output, expected_output)
 
     def test_get_poses_return_type(self):
-
         camera_names_in_mock_data = ["a", "b", "c"]
         num_frames_in_mock_data = 10
         num_people_in_mock_data = 1
@@ -116,7 +113,6 @@ class TestDgsCorpusAuxiliaryFunctions(TestCase):
                 self.assertIsInstance(pose, Pose)
 
     def test_get_poses_subset_of_camera_names(self):
-
         camera_names_in_mock_data = ["a2", "b1", "c5"]
         num_frames_in_mock_data = 10
         num_people_in_mock_data = 1

@@ -1,4 +1,5 @@
 """MEDIAPI-SKEL is a bilingual corpus of French Sign Language (LSF) in the form of pose data (coordinates of skeleton points) and French in the form of subtitles. It can be used for academic research."""
+
 import os
 from os import path
 
@@ -54,14 +55,10 @@ _CITATION = """
 
 _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.header"),
-    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header")
+    "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose.header"),
 }
 
-_SPLITS = {
-    tfds.Split.TRAIN: "train",
-    tfds.Split.VALIDATION: "dev",
-    tfds.Split.TEST: "test",
-}
+_SPLITS = {tfds.Split.TRAIN: "train", tfds.Split.VALIDATION: "dev", tfds.Split.TEST: "test"}
 
 
 class MediapiSkel(tfds.core.GeneratorBasedBuilder):
@@ -77,18 +74,8 @@ class MediapiSkel(tfds.core.GeneratorBasedBuilder):
 
         features = {
             "id": tfds.features.Text(),
-            "metadata": {
-                "fps": tf.int32,
-                "height": tf.int32,
-                "width": tf.int32,
-                "duration": tf.float32,
-                "frames": tf.int32,
-            },
-            "subtitles": tfds.features.Sequence({
-                "start_time": tf.float32,
-                "end_time": tf.float32,
-                "text": tfds.features.Text(),
-            }),
+            "metadata": {"fps": tf.int32, "height": tf.int32, "width": tf.int32, "duration": tf.float32, "frames": tf.int32},
+            "subtitles": tfds.features.Sequence({"start_time": tf.float32, "end_time": tf.float32, "text": tfds.features.Text()}),
         }
 
         if self._builder_config.include_pose is not None:
@@ -132,21 +119,19 @@ class MediapiSkel(tfds.core.GeneratorBasedBuilder):
             raise ValueError(f"MEDIAPI_POSE_PATH environment variable points to non-existent path: {POSE_ZIP_PATH}")
 
         return [
-            tfds.core.SplitGenerator(name=name,
-                                     gen_kwargs={"data": read_mediapi_set(mediapi_path=ZIP_PATH,
-                                                                          pose_path=POSE_ZIP_PATH,
-                                                                          split=split,
-                                                                          pose_type=self._builder_config.include_pose)})
+            tfds.core.SplitGenerator(
+                name=name,
+                gen_kwargs={
+                    "data": read_mediapi_set(
+                        mediapi_path=ZIP_PATH, pose_path=POSE_ZIP_PATH, split=split, pose_type=self._builder_config.include_pose
+                    )
+                },
+            )
             for name, split in _SPLITS.items()
         ]
 
     def _generate_examples(self, data: iter):
-        """ Yields examples. """
+        """Yields examples."""
 
         for datum in data:
-            yield datum["id"], {
-                "id": datum["id"],
-                "metadata": datum["metadata"],
-                "subtitles": datum["subtitles"],
-                "pose": datum["pose"]
-            }
+            yield datum["id"], {"id": datum["id"], "metadata": datum["metadata"], "subtitles": datum["subtitles"], "pose": datum["pose"]}

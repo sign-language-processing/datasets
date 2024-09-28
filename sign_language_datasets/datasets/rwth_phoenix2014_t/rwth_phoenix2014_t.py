@@ -1,4 +1,5 @@
 """RWTH-PHOENIX 2014 T: Parallel Corpus of Sign Language Video, Gloss and Translation"""
+
 import csv
 from os import path
 
@@ -58,12 +59,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
 
-        features = {
-            "id": tfds.features.Text(),
-            "signer": tfds.features.Text(),
-            "gloss": tfds.features.Text(),
-            "text": tfds.features.Text(),
-        }
+        features = {"id": tfds.features.Text(), "signer": tfds.features.Text(), "gloss": tfds.features.Text(), "text": tfds.features.Text()}
 
         if self._builder_config.include_video:
             features["fps"] = tf.int32
@@ -103,21 +99,18 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
 
         return [
             tfds.core.SplitGenerator(
-                name=tfds.Split.VALIDATION,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"},
+                name=tfds.Split.VALIDATION, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "dev"}
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TEST,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"},
+                name=tfds.Split.TEST, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "test"}
             ),
             tfds.core.SplitGenerator(
-                name=tfds.Split.TRAIN,
-                gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"},
+                name=tfds.Split.TRAIN, gen_kwargs={"annotations_path": annotations_path, "pose_path": pose_path, "split": "train"}
             ),
         ]
 
     def _generate_examples(self, annotations_path: str, pose_path: str, split: str):
-        """ Yields examples. """
+        """Yields examples."""
 
         filepath = path.join(annotations_path, "annotations", "manual", "PHOENIX-2014-T." + split + ".corpus.csv")
         images_path = path.join(annotations_path, "features", "fullFrame-210x260px", split)
@@ -126,12 +119,7 @@ class RWTHPhoenix2014T(tfds.core.GeneratorBasedBuilder):
         with GFile(filepath, "r") as f:
             data = csv.DictReader(f, delimiter="|", quoting=csv.QUOTE_NONE)
             for row in data:
-                datum = {
-                    "id": row["name"],
-                    "signer": row["speaker"],
-                    "gloss": row["orth"],
-                    "text": row["translation"],
-                }
+                datum = {"id": row["name"], "signer": row["speaker"], "gloss": row["orth"], "text": row["translation"]}
 
                 if self._builder_config.include_video:
                     frames_base = path.join(images_path, row["video"])[:-7]

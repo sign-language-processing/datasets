@@ -5,7 +5,6 @@ from typing import Dict, List
 
 
 def get_elan_sentences(elan_path: str):
-
     eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
     timeslots = eaf.timeslots
@@ -76,9 +75,7 @@ def get_elan_sentences(elan_path: str):
             yield sentence
 
 
-def get_child_elements(root: etree.ElementTree,
-                       element_name: str,
-                       attributes_to_extract: List[str]) -> Dict[str, Dict[str, str]]:
+def get_child_elements(root: etree.ElementTree, element_name: str, attributes_to_extract: List[str]) -> Dict[str, Dict[str, str]]:
     """
 
     :param root:
@@ -134,18 +131,15 @@ def get_signer_ids_from_ilex(ilex_path: str) -> Dict[str, List[str]]:
 
     root = etree.parse(ilex_path)
 
-    informant_dict = get_child_elements(root=root,
-                                        element_name="informant",
-                                        attributes_to_extract=["name"])
+    informant_dict = get_child_elements(root=root, element_name="informant", attributes_to_extract=["name"])
 
-    camera_perspective_dict = get_child_elements(root=root,
-                                                 element_name="camera_perspective",
-                                                 attributes_to_extract=["visible_persons", "code"])
+    camera_perspective_dict = get_child_elements(
+        root=root, element_name="camera_perspective", attributes_to_extract=["visible_persons", "code"]
+    )
 
     signer_identities_by_perspective = {}  # type: Dict[str, List[str]]
 
     for camera_perspective in camera_perspective_dict.values():
-
         # extract A, B or C without trailing numbers
 
         clean_code = camera_perspective["code"][0].lower()

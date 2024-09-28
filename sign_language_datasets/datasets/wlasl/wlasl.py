@@ -1,4 +1,5 @@
 """WLASL: A large-scale dataset for Word-Level American Sign Language"""
+
 import json
 
 import tensorflow as tf
@@ -46,7 +47,7 @@ class Wlasl(tfds.core.GeneratorBasedBuilder):
             "signer": tfds.features.Text(),
             "gloss": tfds.features.Text(),
             "gloss_variation": tf.int32,
-            "video_file": {"start": tf.int32, "end": tf.int32, "remote": tfds.features.Text(),},
+            "video_file": {"start": tf.int32, "end": tf.int32, "remote": tfds.features.Text()},
             "fps": tf.int32,
             "bbox": tfds.features.BBoxFeature(),
         }

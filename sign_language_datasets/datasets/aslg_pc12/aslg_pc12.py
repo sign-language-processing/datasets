@@ -47,9 +47,7 @@ class AslgPc12(tfds.core.GeneratorBasedBuilder):
 
         gloss_path, text_path = dl_manager.download([_GLOSS_URL, _TEXT_URL])
 
-        return {
-            "train": self._generate_examples(gloss_path, text_path),
-        }
+        return {"train": self._generate_examples(gloss_path, text_path)}
 
     def _generate_examples(self, gloss_path: str, text_path: str):
         """Yields examples."""

@@ -1,4 +1,5 @@
 """A Swiss Sign Language Lexicon, combines all three Swiss sign languages: the German-Swiss Sign Language (DSGS), the Langue des Signes Française (LSF) and the Lingua Italiana dei Segni (LIS). ."""
+
 import json
 import re
 import html
@@ -38,13 +39,11 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
 
     MAX_SIMULTANEOUS_DOWNLOADS = 1  # SignSuisse allows for a maximum of 1 simultaneous connection
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial crawl.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial crawl."}
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=False),
-        SignDatasetConfig(name="holistic", include_video=False, include_pose='holistic'),
+        SignDatasetConfig(name="holistic", include_video=False, include_pose="holistic"),
     ]
 
     def _info(self) -> tfds.core.DatasetInfo:
@@ -75,10 +74,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 543, 3),
-                                           header_path=pose_header_path,
-                                           stride=stride,
-                                           include_path=True)
+            features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path, stride=stride, include_path=True)
             features["examplePose"] = features["pose"]
 
         return tfds.core.DatasetInfo(
@@ -91,9 +87,8 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         )
 
     def _list_all_lexicon_items(self, dl_manager: tfds.download.DownloadManager):
-        languages = ['de', 'fr', 'it']
-        dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json"
-                    for l in languages]
+        languages = ["de", "fr", "it"]
+        dl_links = [f"https://signsuisse.sgb-fss.ch/index.php?eID=sitemap&lang={l}&format=json" for l in languages]
         # FYI: to reset the indexes, run `rm $(ls *sitemap*)` in the `tensorflow_datasets/downloads/` folder
 
         indexes = dl_manager.download(dl_links)
@@ -104,7 +99,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             results.extend(index)
 
         if self._builder_config.sample_size is not None:
-            return results[:self._builder_config.sample_size]
+            return results[: self._builder_config.sample_size]
         return results
 
     def _parse_html(self, item_name: str, item_page: str):
@@ -114,14 +109,13 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
         # Verify that the page matches the item
         title = re.search(r"<h1.*?>(.*?)</h1>", html_content).group(1).strip()
         title = html.unescape(title)
-        while '  ' in title:
-            title = title.replace('  ', ' ')
+        while "  " in title:
+            title = title.replace("  ", " ")
 
         if title != item_name:
             raise ValueError(f"Title does not match item name '{item_name}' != '{title}'")
 
-        example = re.search(r"(Beispiel|Exemple|Esempio)</h2>\s*<p>(.*?)</p>[\s\S]*?<video[\s\S]*?src=\"(.*?)\"",
-                            html_content)
+        example = re.search(r"(Beispiel|Exemple|Esempio)</h2>\s*<p>(.*?)</p>[\s\S]*?<video[\s\S]*?src=\"(.*?)\"", html_content)
         if example is not None:
             example_text = example.group(2).strip()
             example_video = SITE_URL + example.group(3).strip()
@@ -132,13 +126,11 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             example_video = ""
 
         video = SITE_URL + re.search(r"<video id=\"video-main\"[\s\S]*?src=\"(.*?)\"", html_content).group(1).strip()
-        paraphrase_match = re.search(
-            r"(Umschreibung|Périphrase / Synonyme|Parafrasi \(descrizione\))</h2>\s*<p>(.*?)</p>", html_content)
+        paraphrase_match = re.search(r"(Umschreibung|Périphrase / Synonyme|Parafrasi \(descrizione\))</h2>\s*<p>(.*?)</p>", html_content)
         paraphrase = paraphrase_match.group(2).strip() if paraphrase_match else ""
         definition_match = re.search(r"(Definition|Definizione|Définition)</h2>\s*<p>(.*?)</p>", html_content)
         definition = definition_match.group(2).strip() if definition_match else ""
-        category_match = re.search(r"<strong>(Kategorien|Categoria|Catégorie):</strong>[\s\S]*?<span>([\s\S]*?)</span",
-                                   html_content)
+        category_match = re.search(r"<strong>(Kategorien|Categoria|Catégorie):</strong>[\s\S]*?<span>([\s\S]*?)</span", html_content)
         category = category_match.group(2).strip() if category_match else ""
 
         return {
@@ -147,7 +139,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             "definition": definition,
             "exampleText": example_text,
             "exampleVideo": example_video,
-            "video": video
+            "video": video,
         }
 
     def _parse_item(self, item, item_page=None):
@@ -162,7 +154,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
                 "definition": "",
                 "exampleText": "",
                 "exampleVideo": "",
-                "video": ""
+                "video": "",
             }
 
         return {
@@ -171,13 +163,12 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
             "spokenLanguage": item["sprache"],
             "signedLanguage": "ch-" + item["sprache"],
             "url": item["link"],
-            **item_values
+            **item_values,
         }
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         dataset_warning(self)
-        print(
-            "The lexicon is available free of charge, so we look forward to your donation! https://www.sgb-fss.ch/spenden/jetzt-spenden/")
+        print("The lexicon is available free of charge, so we look forward to your donation! https://www.sgb-fss.ch/spenden/jetzt-spenden/")
 
         lexicon_items = self._list_all_lexicon_items(dl_manager)
         print("Found", len(lexicon_items), "lexicon items.")
@@ -221,7 +212,7 @@ class SignSuisse(tfds.core.GeneratorBasedBuilder):
 
         if self._builder_config.include_pose is not None:
             poses_dir = dl_manager.download_and_extract(_POSE_URLS[self._builder_config.include_pose])
-            id_func = lambda opt: 'ss' + hashlib.md5(("signsuisse" + opt[0] + opt[1]).encode()).hexdigest()
+            id_func = lambda opt: "ss" + hashlib.md5(("signsuisse" + opt[0] + opt[1]).encode()).hexdigest()
 
             for datum in data:
                 pose_file = poses_dir.joinpath(id_func([datum["id"], "isolated"]) + ".pose")

@@ -1,4 +1,5 @@
 """ocr tests"""
+
 import os
 from unittest import TestCase
 import cv2

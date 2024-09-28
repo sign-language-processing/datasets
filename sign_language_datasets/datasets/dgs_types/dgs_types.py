@@ -34,9 +34,7 @@ _CITATION = """
 
 _HOMEPAGE = "https://www.sign-lang.uni-hamburg.de/meinedgs/ling/types_de.html"
 
-_POSE_HEADERS = {
-    "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
-}
+_POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 _POSE_URLS = {"holistic": lambda name: cloud_bucket_file("poses/holistic/dgs_types/" + name)}
 
@@ -45,9 +43,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for dgs_types dataset."""
 
     VERSION = tfds.core.Version("3.0.0")
-    RELEASE_NOTES = {
-        "3.0.0": "3rd release",
-    }
+    RELEASE_NOTES = {"3.0.0": "3rd release"}
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, include_pose=None),
@@ -162,8 +158,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
             hamnosys_search = re.findall(r"class=\"hamnosys\".*?>(.*?)<", content)
             hamnosys = hamnosys_search[0] if len(hamnosys_search) > 0 else ""
 
-            data.append(
-                {"id": gloss_id, "frequencies": frequencies, "glosses": glosses, "hamnosys": hamnosys, "views": views})
+            data.append({"id": gloss_id, "frequencies": frequencies, "glosses": glosses, "hamnosys": hamnosys, "views": views})
 
         if self.builder_config.include_video:
             video_paths = dl_manager.download(video_urls)
@@ -191,13 +186,15 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
         if self.builder_config.include_pose == "holistic":
             pose_urls = {
                 f"{datum['id']}_{view['name']}": _POSE_URLS["holistic"](f"{datum['id']}_{view['name']}.pose")
-                for datum in data for view in datum["views"]}
+                for datum in data
+                for view in datum["views"]
+            }
             poses = dl_manager.download(pose_urls)
 
         return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": data, "poses": poses})]
 
     def _generate_examples(self, data, poses):
-        """ Yields examples. """
+        """Yields examples."""
 
         for datum in data:
             for view in datum["views"]:
@@ -205,7 +202,6 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 view["video"] = str(view["video"])
 
                 if self._builder_config.include_pose:
-
                     pose_view = f"{datum['id']}_{view['name']}"
                     if pose_view in poses:
                         view["pose"] = poses[pose_view]

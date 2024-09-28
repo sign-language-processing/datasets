@@ -1,4 +1,5 @@
 """WMT-SLT: Data for the WMT shared task on sign language translation"""
+
 import json
 import os
 from os import path
@@ -74,14 +75,9 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for wmt slt srf dataset."""
 
     VERSION = tfds.core.Version("1.2.0")
-    RELEASE_NOTES = {
-        "1.2.0": "10.5281/zenodo.6637392 Jun 12, 2022",
-    }
+    RELEASE_NOTES = {"1.2.0": "10.5281/zenodo.6637392 Jun 12, 2022"}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", process_video=True),
-        SignDatasetConfig(name="annotations", process_video=False),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", process_video=True), SignDatasetConfig(name="annotations", process_video=False)]
 
     def __init__(self, zenodo_srf_poses_token: str, zenodo_srf_videos_token: str, zenodo_focusnews_token: str, **kwargs):
         super().__init__(**kwargs)
@@ -97,7 +93,7 @@ class WMTSLT(tfds.core.GeneratorBasedBuilder):
             "id": tfds.features.Text(),
             "source": tfds.features.Text(),  # srf|focusnews
             "fps": tf.int32,
-            "subtitle": {"text": tfds.features.Text(), "start": tfds.features.Text(), "end": tfds.features.Text(),},
+            "subtitle": {"text": tfds.features.Text(), "start": tfds.features.Text(), "end": tfds.features.Text()},
         }
 
         # Add poses if requested

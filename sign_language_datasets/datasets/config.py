@@ -13,15 +13,15 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
     """General BuilderConfig for sign language datasets."""
 
     def __init__(
-            self,
-            include_video: bool = True,
-            process_video: bool = None,
-            include_pose: Optional[str] = None,
-            fps: Optional[float] = None,
-            resolution: Optional[Tuple[int, int]] = None,
-            sample_size: Optional[int] = None,
-            extra: dict = {},
-            **kwargs,
+        self,
+        include_video: bool = True,
+        process_video: bool = None,
+        include_pose: Optional[str] = None,
+        fps: Optional[float] = None,
+        resolution: Optional[Tuple[int, int]] = None,
+        sample_size: Optional[int] = None,
+        extra: dict = {},
+        **kwargs,
     ):
         """Constructs a RWTHPhoenix2014TConfig.
         Args:
@@ -75,8 +75,7 @@ class VideoFeature(tfds.features.Video):
             video_or_path_or_fobj = [cv2.resize(cv2.imread(f), (w, h)) for f in video_or_path_or_fobj]
 
         # In case where additional ffmpeg parameters are needed
-        if isinstance(video_or_path_or_fobj, dict) and "video" in video_or_path_or_fobj and isinstance(
-                video_or_path_or_fobj["video"], str):
+        if isinstance(video_or_path_or_fobj, dict) and "video" in video_or_path_or_fobj and isinstance(video_or_path_or_fobj["video"], str):
             old_args = list(self._extra_ffmpeg_args)
             self._extra_ffmpeg_args += video_or_path_or_fobj["ffmpeg_args"]
             result = super(VideoFeature, self).encode_example(video_or_path_or_fobj["video"])

@@ -84,7 +84,6 @@ def get_sub_pages(html):
 
 
 def create_flat_download_dict() -> dict:
-
     # Iterate over pages
     next_page = "/tla/islandora/object/tla%3A1839_00_0000_0000_0004_F3D5_A"
     sub_pages = []
@@ -193,7 +192,6 @@ def create_structured_download_dict(
     structured_download_dict = {}
 
     for filename, url in flat_download_dict.items():
-
         if "-" in filename:
             print("Found hyphen in filename: '%s'. Will replace with underscore." % filename)
             filename = filename.replace("-", "_")

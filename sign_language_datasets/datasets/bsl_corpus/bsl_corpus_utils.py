@@ -120,7 +120,6 @@ def generate_download_links(
         number_of_records = int(re.search(r"Records.*?of\s*(\d*)", search_response_text).groups()[0])
 
     for i in range(1, number_of_records, 20):  # Page size is 20, no control over that that I have seen
-
         if i == 1 or i % renew_user_token_every_n_pages == 0:
             # generate a new user token for this result page
             user_token = login_with_credentials(username=username, password=password, base_url=base_url)
@@ -339,7 +338,7 @@ class _BslCorpusDownloader(downloader._Downloader):
                         size_mb %= unit_mb
         self._pbar_url.update(1)
         return downloader.DownloadResult(
-            path=utils.as_path(path), url_info=checksums_lib.UrlInfo(checksum=checksum.hexdigest(), size=utils.Size(size), filename=fname,),
+            path=utils.as_path(path), url_info=checksums_lib.UrlInfo(checksum=checksum.hexdigest(), size=utils.Size(size), filename=fname)
         )
 
 
@@ -413,7 +412,7 @@ def get_elan_sentences_bsl_corpus(elan_path: str) -> Iterator:
 
         all_glosses += list(glosses.values())
 
-    for (start, end, value, _) in english_text:
+    for start, end, value, _ in english_text:
         sentence = {"start": timeslots[start], "end": timeslots[end], "english": value}
 
         # Add glosses whose timestamps are within this sentence
@@ -439,7 +438,6 @@ if __name__ == "__main__":
     )
 
     for data_per_results_page in download_links_iterator:
-
         for datum in data_per_results_page:
             # look for a record with an ELAN file
             if "EAF file" not in datum["downloads"].keys():
@@ -452,7 +450,6 @@ if __name__ == "__main__":
                 metadata,
                 iter_content,
             ):
-
                 file_name = _get_file_name_bsl_corpus(response, metadata)
                 print("Found %s" % file_name)
                 with open(file_name, "wb") as outfile:

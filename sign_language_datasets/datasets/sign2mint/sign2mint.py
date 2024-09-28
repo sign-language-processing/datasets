@@ -1,4 +1,5 @@
 """A German Sign Language (DGS) lexicon for natural science subjects."""
+
 import json
 import os
 
@@ -34,14 +35,9 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for sign2mint dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True),
-        SignDatasetConfig(name="annotations", include_video=False),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True), SignDatasetConfig(name="annotations", include_video=False)]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -58,9 +54,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             "wikipedialink": tfds.features.Text(),
             "otherlink": tfds.features.Text(),
             "variants": tf.int32,
-            "gebaerdenschrift": {
-                "symbolIds": tfds.features.Sequence(tfds.features.Text()),
-            },
+            "gebaerdenschrift": {"symbolIds": tfds.features.Sequence(tfds.features.Text())},
             "swu": tfds.features.Text(),
         }
 

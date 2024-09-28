@@ -1,4 +1,5 @@
 """SignTyp dataset."""
+
 import re
 from datetime import datetime
 
@@ -28,9 +29,7 @@ class SignTyp(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for SignTyp dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, process_video=False, extra={"PHPSESSID": "hj9co07ct7f5noq529no9u09l4"})
@@ -96,9 +95,7 @@ class SignTyp(tfds.core.GeneratorBasedBuilder):
         if not spml.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
             raise Exception("PHPSESSID might be expired.")
 
-        return {
-            "train": self._generate_examples(spml),
-        }
+        return {"train": self._generate_examples(spml)}
 
     def _generate_examples(self, spml):
         regex = '<entry id="(.*?)".*?cdt="(.*?)" mdt="(.*?)".*?term>(.*?)<.*?lxsg: (.*?)].*(http.*?)"'

@@ -1,4 +1,5 @@
 """ASL Citizen - A Community-Sourced Dataset for Advancing Isolated Sign Language Recognition"""
+
 import csv
 import tarfile
 from os import path
@@ -33,12 +34,10 @@ _CITATION = """
 }
 """
 
-_DOWNLOAD_URL = 'https://download.microsoft.com/download/b/8/8/b88c0bae-e6c1-43e1-8726-98cf5af36ca4/ASL_Citizen.zip'
+_DOWNLOAD_URL = "https://download.microsoft.com/download/b/8/8/b88c0bae-e6c1-43e1-8726-98cf5af36ca4/ASL_Citizen.zip"
 
 
-_POSE_URLS = {
-    "holistic": cloud_bucket_file("poses/holistic/ASLCitizen.zip"),
-}
+_POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/ASLCitizen.zip")}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
@@ -46,13 +45,9 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for ASL Citizen dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_pose='holistic'),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_pose="holistic")]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -69,9 +64,7 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 30 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 576, 3),
-                                           header_path=pose_header_path,
-                                           stride=stride)
+            features["pose"] = PoseFeature(shape=(None, 1, 576, 3), header_path=pose_header_path, stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -87,32 +80,29 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
         dataset_warning(self)
 
         archive = dl_manager.download_and_extract(_DOWNLOAD_URL)
-        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS['holistic']))
+        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS["holistic"]))
 
         return [
             tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train", "poses_dir": poses_dir}),
-            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "val", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(
+                name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "val", "poses_dir": poses_dir}
+            ),
             tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test", "poses_dir": poses_dir}),
         ]
 
     def _generate_examples(self, archive_path: str, split: str, poses_dir: str):
-        """ Yields examples. """
+        """Yields examples."""
 
-        with GFile(path.join(archive_path, 'ASL_Citizen', 'splits', f"{split}.csv"), "r") as csv_file:
+        with GFile(path.join(archive_path, "ASL_Citizen", "splits", f"{split}.csv"), "r") as csv_file:
             csv_data = csv.reader(csv_file, delimiter=",")
             next(csv_data)  # Ignore the header
 
             for i, row in enumerate(csv_data):
-                datum = {
-                    "id": str(i),
-                    "text": row[2],
-                    "signer_id": row[0],
-                    "asl_lex_code": row[3],
-                }
+                datum = {"id": str(i), "text": row[2], "signer_id": row[0], "asl_lex_code": row[3]}
 
                 if self.builder_config.include_pose is not None:
                     if self.builder_config.include_pose == "holistic":
-                        mediapipe_path = path.join(poses_dir, 'poses', row[1].replace('.mp4', '.pose'))
+                        mediapipe_path = path.join(poses_dir, "poses", row[1].replace(".mp4", ".pose"))
 
                         if path.exists(mediapipe_path):
                             with open(mediapipe_path, "rb") as f:
@@ -121,4 +111,4 @@ class ASLCitizen(tfds.core.GeneratorBasedBuilder):
                         else:
                             datum["pose"] = None
 
-                yield datum['id'], datum
+                yield datum["id"], datum

@@ -1,4 +1,5 @@
 """Chicago Fingerspelling in the Wild Data Sets (ChicagoFSWild, ChicagoFSWild+)"""
+
 import csv
 import tarfile
 from os import path
@@ -74,7 +75,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
             "video_url": tfds.features.Text(),
             "start": tfds.features.Text(),
             "signer": tfds.features.Text(),
-            "metadata": {"frames": tf.int32, "width": tf.int32, "height": tf.int32,},
+            "metadata": {"frames": tf.int32, "width": tf.int32, "height": tf.int32},
         }
 
         if self._builder_config.include_video:
@@ -86,9 +87,7 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 576, 3),
-                                           header_path=pose_header_path,
-                                           stride=stride)
+            features["pose"] = PoseFeature(shape=(None, 1, 576, 3), header_path=pose_header_path, stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -109,16 +108,18 @@ class ChicagoFSWild(tfds.core.GeneratorBasedBuilder):
         archive = dl_manager.download_and_extract(self._version_details("url"))
 
         v_name = self._version_details("name")
-        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS['holistic'][v_name]))
+        poses_dir = str(dl_manager.download_and_extract(_POSE_URLS["holistic"][v_name]))
 
         return [
             tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive, "split": "train", "poses_dir": poses_dir}),
-            tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "dev", "poses_dir": poses_dir}),
+            tfds.core.SplitGenerator(
+                name=tfds.Split.VALIDATION, gen_kwargs={"archive_path": archive, "split": "dev", "poses_dir": poses_dir}
+            ),
             tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"archive_path": archive, "split": "test", "poses_dir": poses_dir}),
         ]
 
     def _generate_examples(self, archive_path: str, split: str, poses_dir: str):
-        """ Yields examples. """
+        """Yields examples."""
 
         v_name = self._version_details("name")
         archive_directory = path.join(archive_path, v_name) if v_name == "ChicagoFSWild" else archive_path

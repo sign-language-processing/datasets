@@ -1,4 +1,5 @@
 """A Brazilian Sign Language (Libras) lexicon."""
+
 import json
 
 import tensorflow as tf
@@ -36,14 +37,9 @@ class SwojsGlossario(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for swojs_glossario dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True),
-        SignDatasetConfig(name="annotations", include_video=False),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True), SignDatasetConfig(name="annotations", include_video=False)]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""

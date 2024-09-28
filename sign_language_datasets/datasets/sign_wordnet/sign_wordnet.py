@@ -1,4 +1,5 @@
 """The Multilingual Sign Language Wordnet"""
+
 import csv
 
 import tensorflow_datasets as tfds
@@ -23,13 +24,7 @@ _CITATION = """
 """
 
 # Map between Sign Wornet language codes and IANA language codes
-IANA_MAP = {
-    "bsl": "bfi",
-    "dgs": "gsg",
-    "gsl": "gss",
-    "lsf": "fsl",
-    "ngt": "dse"
-}
+IANA_MAP = {"bsl": "bfi", "dgs": "gsg", "gsl": "gss", "lsf": "fsl", "ngt": "dse"}
 
 
 def no_space(d: dict):
@@ -38,17 +33,14 @@ def no_space(d: dict):
             d[k] = v.strip()
     return d
 
+
 class SignWordnet(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for SignWordnet dataset."""
 
     VERSION = tfds.core.Version("0.2.0")
-    RELEASE_NOTES = {
-        "0.2.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"0.2.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True)
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True)]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -57,10 +49,7 @@ class SignWordnet(tfds.core.GeneratorBasedBuilder):
             "id": tfds.features.Text(),
             "sign_language": tfds.features.Text(),
             "sign_language_name": tfds.features.Text(),
-            "translations": tfds.features.Sequence({
-                "language": tfds.features.Text(),
-                "text": tfds.features.Text()
-            }),
+            "translations": tfds.features.Sequence({"language": tfds.features.Text(), "text": tfds.features.Text()}),
             "links": tfds.features.Text(),
             "gloss": tfds.features.Text(),
             "video": tfds.features.Text(),
@@ -94,18 +83,16 @@ class SignWordnet(tfds.core.GeneratorBasedBuilder):
         accepted_synsets_url = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/static/csv/synset_links_accepted.csv"
         custom_synsets_url = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/static/csv/custom_synsets.csv"
 
-        signs_data, accepted_synsets, custom_synsets = dl_manager.download(
-            [signs_data_url, accepted_synsets_url, custom_synsets_url])
+        signs_data, accepted_synsets, custom_synsets = dl_manager.download([signs_data_url, accepted_synsets_url, custom_synsets_url])
 
-        return {
-            "train": self._generate_examples(signs_data, accepted_synsets, custom_synsets),
-        }
+        return {"train": self._generate_examples(signs_data, accepted_synsets, custom_synsets)}
 
     def _generate_examples(self, signs_data: str, accepted_synsets: str, custom_synsets: str):
         from nltk.corpus import wordnet as wn
+
         # List all available languages in OMW
         languages = wn.langs()
-        print('Translation Languages', languages)
+        print("Translation Languages", languages)
 
         with open(custom_synsets, "r", encoding="utf-8") as csvfile:
             custom_synsets_dict = {row["synset_id"]: no_space(row) for row in csv.DictReader(csvfile)}
@@ -123,14 +110,11 @@ class SignWordnet(tfds.core.GeneratorBasedBuilder):
 
             if synset_id != "":  # Looks like  omw.00672433-v
                 if synset_id in custom_synsets_dict:
-                    translations.append({
-                        "language": "en",
-                        "text": custom_synsets_dict[synset_id]["words_english"]
-                    })
+                    translations.append({"language": "en", "text": custom_synsets_dict[synset_id]["words_english"]})
                 else:
                     # TODO: track open issue https://github.com/omwn/omw-data/issues/35
-                    _, omw_id = synset_id.split('.')
-                    omw_offset, omw_pos = omw_id.split('-')
+                    _, omw_id = synset_id.split(".")
+                    omw_offset, omw_pos = omw_id.split("-")
                     synset = wn.synset_from_pos_and_offset(omw_pos, int(omw_offset))
 
                     # Get translations in all languages

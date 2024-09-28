@@ -9,9 +9,7 @@ class AslgPc12Test(tfds.testing.DatasetBuilderTestCase):
     """Tests for aslg_pc12 dataset."""
 
     DATASET_CLASS = aslg_pc12.AslgPc12
-    SPLITS = {
-        "train": 10,  # Number of fake train example
-    }
+    SPLITS = {"train": 10}  # Number of fake train example
     DL_DOWNLOAD_RESULT = ["sample-corpus-asl-en.asl", "sample-corpus-asl-en.en"]
 
 

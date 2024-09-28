@@ -1,4 +1,5 @@
 """SignBank dataset."""
+
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -174,13 +175,12 @@ PUDDLES = {
 
 CACHE_BUSTER = str(datetime.today().date())
 
+
 class SignBank(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for SignBank dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
     BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=False)]
 
@@ -217,14 +217,15 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
         regex = r"\"sgn[\d]+.spml\""
         with open(index, "r", encoding="utf-8") as f:
             matches = [match.group()[1:-1] for match in re.finditer(regex, f.read(), re.MULTILINE)]
-            spml_urls = ["http://signbank.org/signpuddle2.0/data/spml/" + match + "?buster=" + CACHE_BUSTER
-                         for match in matches if match != "sgn0.spml"]
+            spml_urls = [
+                "http://signbank.org/signpuddle2.0/data/spml/" + match + "?buster=" + CACHE_BUSTER
+                for match in matches
+                if match != "sgn0.spml"
+            ]
 
         spmls = dl_manager.download(spml_urls)
 
-        return {
-            "train": self._generate_examples(spmls),
-        }
+        return {"train": self._generate_examples(spmls)}
 
     def _generate_examples(self, spmls: List[str]):
         """Yields examples."""
@@ -256,7 +257,9 @@ class SignBank(tfds.core.GeneratorBasedBuilder):
                     # print(child.attrib)
                     if len(texts) > 0:
                         sample_id = "_".join([str(puddle), _id, str(i)])
-                        assumed_spoken_language_code, country_code, sign_language_code = PUDDLES[puddle] if puddle in PUDDLES else ["", "", ""]
+                        assumed_spoken_language_code, country_code, sign_language_code = (
+                            PUDDLES[puddle] if puddle in PUDDLES else ["", "", ""]
+                        )
                         i += 1
                         yield sample_id, {
                             "puddle": puddle,

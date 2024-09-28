@@ -26,7 +26,6 @@ Not all ELAN files have gloss annotations or translations. The code needs to ass
 
 
 def get_elan_sentences_ngt_corpus(elan_path: str):
-
     eaf = pympi.Elan.Eaf(elan_path)  # TODO add "suppress_version_warning=True" when pympi 1.7 is released
 
     timeslots = eaf.timeslots
@@ -65,7 +64,7 @@ def get_elan_sentences_ngt_corpus(elan_path: str):
 
             all_glosses += list(glosses.values())
 
-        for (start, end, value, _) in dutch_text:
+        for start, end, value, _ in dutch_text:
             sentence = {"participant": participant, "start": timeslots[start], "end": timeslots[end], "dutch": value}
 
             # Add glosses whose timestamps are within this sentence

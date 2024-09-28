@@ -86,7 +86,6 @@ def get_split_name_from_id(_id: str) -> str:
 sentences_found = {"train": 0, "dev": 0, "test": 0, "none": 0}
 
 for datum in dgs_corpus["train"]:
-
     _id = datum["id"].numpy().decode("utf-8")
 
     split_name = get_split_name_from_id(_id)

@@ -1,4 +1,5 @@
 """The Sem-Lex Benchmark: Modeling ASL Signs and Their Phonemes"""
+
 import csv
 from os import path
 
@@ -32,12 +33,12 @@ _CITATION = """
 }
 """
 
-_CSV_URL = 'https://drive.google.com/file/d/1pkX8_TzL3kdJytQvrU68QEAp6oUvt4rv/view?usp=drive_link'
+_CSV_URL = "https://drive.google.com/file/d/1pkX8_TzL3kdJytQvrU68QEAp6oUvt4rv/view?usp=drive_link"
 _POSE_URLS = {
     "holistic": [
-        ('sem-lex-train-poses.tar.gz', 'https://drive.google.com/file/d/12BlVy7S07MvF-moHoT0egdyJIJf_f7nS/view?usp=drive_link'),
-        ('sem-lex-val-poses.tar.gz', 'https://drive.google.com/file/d/1r7SmksY4U9GtLUR05h-fYZHZ9uup4eeI/view?usp=drive_link'),
-        ('sem-lex-test-poses.tar.gz', 'https://drive.google.com/file/d/1uYoM1zNpw4oLpJe4LwtDVPBNgKmAi8CC/view?usp=drive_link'),
+        ("sem-lex-train-poses.tar.gz", "https://drive.google.com/file/d/12BlVy7S07MvF-moHoT0egdyJIJf_f7nS/view?usp=drive_link"),
+        ("sem-lex-val-poses.tar.gz", "https://drive.google.com/file/d/1r7SmksY4U9GtLUR05h-fYZHZ9uup4eeI/view?usp=drive_link"),
+        ("sem-lex-test-poses.tar.gz", "https://drive.google.com/file/d/1uYoM1zNpw4oLpJe4LwtDVPBNgKmAi8CC/view?usp=drive_link"),
     ]
 }
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
@@ -47,13 +48,9 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for sem-lex dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_pose='holistic'),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_pose="holistic")]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
@@ -71,9 +68,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 30 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 553, 3),
-                                           header_path=pose_header_path,
-                                           stride=stride)
+            features["pose"] = PoseFeature(shape=(None, 1, 553, 3), header_path=pose_header_path, stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -89,7 +84,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
         dataset_warning(self)
 
         # custom download with gdown
-        csv_path = path.join(dl_manager.download_dir, 'extracted', 'sem-lex-metadata.csv')
+        csv_path = path.join(dl_manager.download_dir, "extracted", "sem-lex-metadata.csv")
         if not path.exists(csv_path):
             try:
                 import gdown
@@ -114,7 +109,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
         ]
 
     def _generate_examples(self, archive_path: str, split: str):
-        """ Yields examples. """
+        """Yields examples."""
 
         with GFile(self.csv_path, "r") as csv_file:
             csv_data = csv.reader(csv_file, delimiter=",")
@@ -125,7 +120,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                     continue
 
                 datum = {
-                    "id": f'{i}_{row[0]}', # warning: id in the original dataset is not unique
+                    "id": f"{i}_{row[0]}",  # warning: id in the original dataset is not unique
                     "text": row[6],
                     "signer_id": row[2],
                     "label_type": row[5],
@@ -135,7 +130,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                 if self.builder_config.include_pose is not None:
                     if self.builder_config.include_pose == "holistic":
                         # get data from .npy file
-                        npy_path = path.join(archive_path, split, f'{row[1]}.npy')
+                        npy_path = path.join(archive_path, split, f"{row[1]}.npy")
 
                         if path.exists(npy_path):
                             # reorder keypoints
@@ -150,19 +145,21 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                             # create a new Pose instance
                             width = 640
                             height = 480
-                            dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000) 
-                            header = PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10)[:-1]) # no world landmarks
-                            
+                            dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000)
+                            header = PoseHeader(
+                                version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10)[:-1]
+                            )  # no world landmarks
+
                             # add the person dimension
                             pose_data = np.expand_dims(pose_data, 1)
                             # revert the scaling done in the original dataset
                             pose_data = pose_data * np.array([width, height, 1.0])
-                            body = NumPyPoseBody(fps=30,
-                                                data=pose_data,
-                                                confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))) # FIXME: unkown
+                            body = NumPyPoseBody(
+                                fps=30, data=pose_data, confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))
+                            )  # FIXME: unkown
                             pose = Pose(header, body)
                             datum["pose"] = pose
                         else:
                             datum["pose"] = None
 
-                yield datum['id'], datum
+                yield datum["id"], datum

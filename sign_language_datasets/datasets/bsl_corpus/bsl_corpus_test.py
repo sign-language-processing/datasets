@@ -9,10 +9,7 @@ class BslCorpusTest(tfds.testing.DatasetBuilderTestCase):
 
     # TODO(bsl_corpus):
     DATASET_CLASS = bsl_corpus.BslCorpus
-    SPLITS = {
-        "train": 3,  # Number of fake train example
-        "test": 1,  # Number of fake test example
-    }
+    SPLITS = {"train": 3, "test": 1}  # Number of fake train example  # Number of fake test example
 
     # If you are calling `download/download_and_extract` with a dict, like:
     #   dl_manager.download({'some_key': 'http://a.org/out.txt', ...})

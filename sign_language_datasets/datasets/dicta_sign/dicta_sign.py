@@ -1,4 +1,5 @@
 """A list of 1000+ concepts with a sign language equivalent in each of the four project languages."""
+
 from os import path
 import tensorflow_datasets as tfds
 import re
@@ -32,9 +33,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for sign2mint dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
     BUILDER_CONFIGS = [
         SignDatasetConfig(name="default", include_video=True, include_pose="holistic"),

@@ -41,16 +41,16 @@ _FRAMERATE = 25
 
 class BslCorpus(tfds.core.GeneratorBasedBuilder):
     """
-  DatasetBuilder for BSL corpus dataset.
+    DatasetBuilder for BSL corpus dataset.
 
-  The dataset currently loads annotations only, and ignores video files.
-  """
+    The dataset currently loads annotations only, and ignores video files.
+    """
 
     VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
         # Third release of annotations:
         # https://bslcorpusproject.org/wp-content/uploads/Notes-to-the-3rd-release-of-BSL-Corpus-annotations.pdf
-        "3.0.0": "Third release.",
+        "3.0.0": "Third release."
     }
 
     BUILDER_CONFIGS = [
@@ -59,7 +59,6 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
     ]
 
     def __init__(self, bslcp_username: str, bslcp_password: str, **kwargs):
-
         super(BslCorpus, self).__init__(**kwargs)
 
         self.bslcp_username = bslcp_username
@@ -105,10 +104,7 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
               in this data loader. See `bsl_corpus_utils._stream_file_from_container_url` which also
               returns a metadata dictionary.
         """
-        features = {
-            "id": tfds.features.Text(),
-            "paths": {"eaf": tfds.features.Sequence(tfds.features.Text(), length=None),},
-        }
+        features = {"id": tfds.features.Text(), "paths": {"eaf": tfds.features.Sequence(tfds.features.Text(), length=None)}}
 
         if self._builder_config.include_video:
             raise NotImplementedError("Videos are currently not available for the BSL corpus.")
@@ -149,7 +145,6 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
                     continue
 
                 for eaf_index, eaf_url in enumerate(eaf_urls):
-
                     datum = {"eaf_" + str(eaf_index): eaf_url}
                     index_data[_id] = datum
 
@@ -166,20 +161,16 @@ class BslCorpus(tfds.core.GeneratorBasedBuilder):
         return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"data": processed_data})]
 
     def _generate_examples(self, data):
-        """ Yields examples. """
+        """Yields examples."""
 
         for _id, datum in list(data.items()):
-
             eaf_files_as_list = []
             eaf_keys = [k for k in datum.keys() if k.startswith("eaf")]
 
             for eaf_key in sorted(eaf_keys):
                 eaf_files_as_list.append(str(datum[eaf_key]))
 
-            features = {
-                "id": _id,
-                "paths": {"eaf": eaf_files_as_list},
-            }
+            features = {"id": _id, "paths": {"eaf": eaf_files_as_list}}
 
             if self._builder_config.include_video:
                 raise NotImplementedError("Videos are currently not available for the BSL corpus.")

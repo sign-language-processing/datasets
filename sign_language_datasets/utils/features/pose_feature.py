@@ -71,12 +71,16 @@ class PoseFeature(feature.FeatureConnector):
       ```
     """
 
-    def __init__(self, *, shape=None,
-                 header_path: str = None,
-                 encoding_format: str = None,
-                 stride: int = 1,
-                 include_path: bool = False,
-                 dtype=tf.float32):
+    def __init__(
+        self,
+        *,
+        shape=None,
+        header_path: str = None,
+        encoding_format: str = None,
+        stride: int = 1,
+        include_path: bool = False,
+        dtype=tf.float32,
+    ):
         """Construct the connector.
 
         Args:
@@ -198,10 +202,6 @@ class PoseFeature(feature.FeatureConnector):
         return cls(shape=shape, encoding_format=encoding_format, include_path=include_path)
 
     def to_json_content(self) -> Json:
-        content =  {
-            "shape": list(self._shape),
-            "encoding_format": self._encoding_format,
-            "include_path": self._include_path,
-        }
+        content = {"shape": list(self._shape), "encoding_format": self._encoding_format, "include_path": self._include_path}
         print("to_json_content", content)
         return content

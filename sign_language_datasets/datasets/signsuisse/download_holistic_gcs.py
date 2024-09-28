@@ -12,10 +12,9 @@ def fix_pose_file(file_path: str):
         if len(pose.header.components) == 4:
             return
 
-    print(f'Fixing {file_path}')
+    print(f"Fixing {file_path}")
 
-    pose = pose.get_components(
-        ["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"])
+    pose = pose.get_components(["POSE_LANDMARKS", "FACE_LANDMARKS", "LEFT_HAND_LANDMARKS", "RIGHT_HAND_LANDMARKS"])
 
     with open(file_path, "wb") as f:
         pose.write(f)
@@ -28,7 +27,7 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
     blob = bucket.blob(source_blob_name)
 
     blob.download_to_filename(destination_file_name)
-    print(f'Blob {source_blob_name} downloaded to {destination_file_name}.')
+    print(f"Blob {source_blob_name} downloaded to {destination_file_name}.")
 
     fix_pose_file(destination_file_name)
 
@@ -45,11 +44,11 @@ def validate_pose_file(file_name: str, buffer: bytes):
     pose = Pose.read(buffer)
     data_frames, data_people, data_points, data_dimensions = pose.body.data.shape
     conf_frames, conf_people, conf_points = pose.body.confidence.shape
-    assert data_frames == conf_frames, f'Pose {file_name} has different number of frames in data and confidence'
-    assert data_people == conf_people, f'Pose {file_name} has different number of people in data and confidence'
-    assert data_points == conf_points, f'Pose {file_name} has different number of points in data and confidence'
-    assert data_points == 543, f'Pose {file_name} has different number of points in data ({data_points})'
-    assert data_dimensions == 3, f'Pose {file_name} has different number of dimensions in data ({data_dimensions})'
+    assert data_frames == conf_frames, f"Pose {file_name} has different number of frames in data and confidence"
+    assert data_people == conf_people, f"Pose {file_name} has different number of people in data and confidence"
+    assert data_points == conf_points, f"Pose {file_name} has different number of points in data and confidence"
+    assert data_points == 543, f"Pose {file_name} has different number of points in data ({data_points})"
+    assert data_dimensions == 3, f"Pose {file_name} has different number of dimensions in data ({data_dimensions})"
 
 
 def validate_tar_files(tar_file_name):
@@ -61,7 +60,7 @@ def validate_tar_files(tar_file_name):
                 try:
                     validate_pose_file(member.name, f.read())
                 except Exception as e:
-                    print(f'Error validating {member.name}')
+                    print(f"Error validating {member.name}")
                     print(e)
 
 
@@ -72,18 +71,18 @@ def list_files_in_tar_gz(file_path):
 
 
 def main():
-    bucket_name = 'sign-mt-poses'
-    prefix = 'external/ss'
+    bucket_name = "sign-mt-poses"
+    prefix = "external/ss"
     blobs = list_blobs_with_prefix(bucket_name, prefix)
 
-    destination_tar = '/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse.tar'
+    destination_tar = "/home/nlp/amit/WWW/datasets/poses/holistic/signsuisse.tar"
     existing_files = set(list_files_in_tar_gz(destination_tar))
-    print(f'Found {len(existing_files)} valid files in {destination_tar}')
+    print(f"Found {len(existing_files)} valid files in {destination_tar}")
     print(list(existing_files)[:10])
 
     with tarfile.open(destination_tar, "a") as tar:
         for blob in tqdm(blobs, desc="Reading files"):
-            if not blob.name.endswith('/'):
+            if not blob.name.endswith("/"):
                 file_name = os.path.basename(blob.name)
                 if file_name not in existing_files:
                     download_blob(bucket_name, blob.name, file_name)

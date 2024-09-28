@@ -1,4 +1,5 @@
 """A database of lexical and phonological properties of American Sign Language signs. """
+
 from os import path
 import tensorflow_datasets as tfds
 import csv
@@ -36,10 +37,7 @@ class AslLex(tfds.core.GeneratorBasedBuilder):
         "2.0.0": "greatly expanded information and an increased size of 2,723 signs",
     }
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_video=True),
-        SignDatasetConfig(name="annotations", include_video=False),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_video=True), SignDatasetConfig(name="annotations", include_video=False)]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""

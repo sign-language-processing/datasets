@@ -1,4 +1,5 @@
 """Public DGS Corpus: parallel corpus for German Sign Language (DGS) with German and English annotations"""
+
 from __future__ import annotations
 
 import gzip
@@ -58,7 +59,7 @@ _POSE_HEADERS = {
 
 _KNOWN_SPLITS = {
     "3.0.0-uzh-document": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-document.json"),
-    "3.0.0-uzh-sentence": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-sentence.json")
+    "3.0.0-uzh-sentence": path.join(path.dirname(path.realpath(__file__)), "splits", "split.3.0.0-uzh-sentence.json"),
 }
 
 
@@ -165,9 +166,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for dgs_corpus dataset."""
 
     VERSION = tfds.core.Version("3.0.0")
-    RELEASE_NOTES = {
-        "3.0.0": "3rd release",
-    }
+    RELEASE_NOTES = {"3.0.0": "3rd release"}
 
     BUILDER_CONFIGS = [
         DgsCorpusConfig(name="default", include_video=True, include_pose="openpose"),
@@ -181,17 +180,11 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
 
-        assert isinstance(self._builder_config, DgsCorpusConfig), \
-            "Builder config for dgs_corpus must be an instance of DgsCorpusConfig"
+        assert isinstance(self._builder_config, DgsCorpusConfig), "Builder config for dgs_corpus must be an instance of DgsCorpusConfig"
 
         features = {
             "id": tfds.features.Text(),
-            "paths": {
-                "ilex": tfds.features.Text(),
-                "eaf": tfds.features.Text(),
-                "srt": tfds.features.Text(),
-                "cmdi": tfds.features.Text(),
-            },
+            "paths": {"ilex": tfds.features.Text(), "eaf": tfds.features.Text(), "srt": tfds.features.Text(), "cmdi": tfds.features.Text()},
         }
 
         if self._builder_config.data_type == "sentence":
@@ -310,8 +303,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         local_paths = dl_manager.download(urls)
         self.validate_downloaded_files(dl_manager, local_paths)
 
-        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()}
-                for _id, datum in index_data.items()}
+        data = {_id: {k: local_paths[v] if v is not None else None for k, v in datum.items()} for _id, datum in index_data.items()}
 
         if self._builder_config.split is not None:
             split = load_split(self._builder_config.split)
@@ -360,7 +352,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         features["paths"]["videos"] = videos
 
     def _generate_examples(self, data, split: List[str] | Dict[str, List[str]] = None):
-        """ Yields examples. """
+        """Yields examples."""
         from .dgs_utils import get_elan_sentences
 
         default_video = np.zeros((0, 0, 0, 3))  # Empty video
@@ -369,10 +361,7 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
             if split is not None and document_id not in split:
                 continue
 
-            features = {
-                "id": document_id,
-                "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]},
-            }
+            features = {"id": document_id, "paths": {t: str(datum[t]) if t in datum else "" for t in ["ilex", "eaf", "srt", "cmdi"]}}
 
             if self._builder_config.include_video:
                 self._include_videos(datum, features)
@@ -395,8 +384,9 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     poses_values = [p for p in poses.values() if p is not None]
                     if len(poses_values) > 0:
                         first_pose = poses_values[0]
-                        assert all(p.body.data.shape == first_pose.body.data.shape for p in poses_values), \
-                            f"Document {document_id}: The poses are not synchronized ({[p.body.data.shape for p in poses_values]})"
+                        assert all(
+                            p.body.data.shape == first_pose.body.data.shape for p in poses_values
+                        ), f"Document {document_id}: The poses are not synchronized ({[p.body.data.shape for p in poses_values]})"
 
             if self._builder_config.data_type == "document":
                 if poses is not None:
@@ -426,8 +416,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                         pose = poses[sentence["participant"].lower()]
                         sub_pose_body = NumPyPoseBody(
                             fps=pose.body.fps,
-                            data=pose.body.data[start_frame:end_frame+1],
-                            confidence=pose.body.confidence[start_frame:end_frame+1],
+                            data=pose.body.data[start_frame : end_frame + 1],
+                            confidence=pose.body.confidence[start_frame : end_frame + 1],
                         )
                         features["pose"] = Pose(pose.header, sub_pose_body)
 

@@ -2,6 +2,7 @@
 This SignWriting OCR code is adapted from
 https://colab.research.google.com/drive/1x0OupzZNkQW1rCiDjEe1LX5V9k8_YF69#scrollTo=_1YX_pILnjFe
 """
+
 import functools
 from typing import List
 
@@ -69,7 +70,6 @@ def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
         from PIL import Image, ImageDraw
     except ImportError:
         raise ImportError("Please install pillow with: pip install Pillow")
-
 
     font = get_font()
 

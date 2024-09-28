@@ -1,4 +1,5 @@
 """AUTSL: Large Scale Signer Independent Isolated SLR Dataset (Turkish Sign Language)"""
+
 import csv
 import os
 from os import path
@@ -51,10 +52,7 @@ _TEST_LABELS = cloud_bucket_file("public/autsl_test_labels.csv")
 
 _CLASSES = "https://data.chalearnlap.cvc.uab.cat/AuTSL/data/SignList_ClassId_TR_EN.csv"
 
-_POSE_URLS = {
-    "holistic": cloud_bucket_file("poses/holistic/autsl.tar.gz"),
-    "openpose": cloud_bucket_file("poses/openpose/autsl.tar.gz")
-}
+_POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/autsl.tar.gz"), "openpose": cloud_bucket_file("poses/openpose/autsl.tar.gz")}
 _POSE_HEADERS = {
     "holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader"),
     "openpose": path.join(path.dirname(path.realpath(__file__)), "openpose_135.poseheader"),
@@ -88,10 +86,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             "signer": tf.int32,
             "sample": tf.int32,
             "gloss_id": tf.int32,
-            "meaning": {
-                "english": tfds.features.Text(),
-                "turkish": tfds.features.Text()
-            }
+            "meaning": {"english": tfds.features.Text(), "turkish": tfds.features.Text()},
         }
 
         if self._builder_config.include_video:
@@ -120,8 +115,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             citation=_CITATION,
         )
 
-    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int,
-                                        pwd: str = None):
+    def _download_and_extract_multipart(self, dl_manager: tfds.download.DownloadManager, url: str, parts: int, pwd: str = None):
         """Download and extract multipart zip file"""
 
         # Write OpenPose disclaimer
@@ -163,10 +157,10 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         csv_file_path = dl_manager.download(_CLASSES)
 
         dictionary = {}
-        with open(csv_file_path, mode='r', encoding='utf-8') as csv_file:
+        with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
             csv_reader = csv.DictReader(csv_file)
             for row in csv_reader:
-                dictionary[int(row['ClassId'])] = {'english': row['EN'], 'turkish': row['TR']}
+                dictionary[int(row["ClassId"])] = {"english": row["EN"], "turkish": row["TR"]}
 
         return dictionary
 
@@ -181,16 +175,13 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
 
         # Load videos if needed
         if self._builder_config.include_video:
-            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18,
-                                                               pwd=self.train_decryption_key)
+            train_parts = self._download_and_extract_multipart(dl_manager, url=_TRAIN_VIDEOS, parts=18, pwd=self.train_decryption_key)
             train_videos = os.path.join(train_parts, "train")
 
-            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3,
-                                                               pwd=self.valid_decryption_key)
+            valid_parts = self._download_and_extract_multipart(dl_manager, url=_VALID_VIDEOS, parts=3, pwd=self.valid_decryption_key)
             valid_videos = os.path.join(valid_parts, "val")
 
-            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3,
-                                                              pwd=self.test_decryption_key)
+            test_parts = self._download_and_extract_multipart(dl_manager, url=_TEST_VIDEOS, parts=3, pwd=self.test_decryption_key)
             test_videos = os.path.join(test_parts, "test")
         else:
             train_videos = valid_videos = test_videos = None
@@ -210,25 +201,42 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
         splits = [
             tfds.core.SplitGenerator(
                 name=tfds.Split.TEST,
-                gen_kwargs={"videos_path": test_videos, "poses_path": test_pose_path, "labels_path": test_labels,
-                            "class_labels": class_labels},
+                gen_kwargs={
+                    "videos_path": test_videos,
+                    "poses_path": test_pose_path,
+                    "labels_path": test_labels,
+                    "class_labels": class_labels,
+                },
             ),
             tfds.core.SplitGenerator(
                 name=tfds.Split.TRAIN,
-                gen_kwargs={"videos_path": train_videos, "poses_path": train_pose_path, "labels_path": train_labels,
-                            "class_labels": class_labels},
+                gen_kwargs={
+                    "videos_path": train_videos,
+                    "poses_path": train_pose_path,
+                    "labels_path": train_labels,
+                    "class_labels": class_labels,
+                },
             ),
             tfds.core.SplitGenerator(
                 name=tfds.Split.VALIDATION,
-                gen_kwargs={"videos_path": valid_videos, "poses_path": valid_pose_path, "labels_path": valid_labels,
-                            "class_labels": class_labels},
+                gen_kwargs={
+                    "videos_path": valid_videos,
+                    "poses_path": valid_pose_path,
+                    "labels_path": valid_labels,
+                    "class_labels": class_labels,
+                },
             ),
         ]
 
         return splits
 
-    def _generate_examples(self, videos_path: Union[str, None], poses_path: Union[str, None],
-                           labels_path: Union[str, None], class_labels: Dict[int, Dict[str, str]]):
+    def _generate_examples(
+        self,
+        videos_path: Union[str, None],
+        poses_path: Union[str, None],
+        labels_path: Union[str, None],
+        class_labels: Dict[int, Dict[str, str]],
+    ):
         """Yields examples."""
 
         if labels_path is not None:

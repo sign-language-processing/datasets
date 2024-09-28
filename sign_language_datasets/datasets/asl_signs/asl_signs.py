@@ -1,4 +1,5 @@
 """asl-signs dataset for Google - Isolated Sign Language Recognition (kaggle)"""
+
 import csv
 import functools
 from os import path
@@ -31,9 +32,7 @@ _CITATION = """
 
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
-_KNOWN_SPLITS = {
-    "1.0.0-uzh": path.join(path.dirname(path.realpath(__file__)), "splits/1.0.0-uzh"),
-}
+_KNOWN_SPLITS = {"1.0.0-uzh": path.join(path.dirname(path.realpath(__file__)), "splits/1.0.0-uzh")}
 
 
 @functools.lru_cache()
@@ -46,37 +45,26 @@ def get_pose_header():
     width = 1080
     height = 720
     dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000)
-    return PoseHeader(version=0.1, dimensions=dimensions,
-                      components=holistic_components("XYZC")[:-1])  # no world landmarks
+    return PoseHeader(version=0.1, dimensions=dimensions, components=holistic_components("XYZC")[:-1])  # no world landmarks
 
 
 class ASLSigns(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for asl-signs dataset."""
 
     VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTES = {
-        "1.0.0": "Initial release.",
-    }
+    RELEASE_NOTES = {"1.0.0": "Initial release."}
 
-    BUILDER_CONFIGS = [
-        SignDatasetConfig(name="default", include_pose='holistic'),
-    ]
+    BUILDER_CONFIGS = [SignDatasetConfig(name="default", include_pose="holistic")]
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Returns the dataset metadata."""
 
-        features = {
-            "id": tfds.features.Text(),
-            "text": tfds.features.Text(),
-            "signer_id": tfds.features.Text(),
-        }
+        features = {"id": tfds.features.Text(), "text": tfds.features.Text(), "signer_id": tfds.features.Text()}
 
         if self._builder_config.include_pose == "holistic":
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 30 / self._builder_config.fps
-            features["pose"] = PoseFeature(shape=(None, 1, 543, 3),
-                                           header_path=pose_header_path,
-                                           stride=stride)
+            features["pose"] = PoseFeature(shape=(None, 1, 543, 3), header_path=pose_header_path, stride=stride)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -88,12 +76,12 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
         )
 
     def _load_split_ids(self, split: str):
-        split_dir = _KNOWN_SPLITS[self._builder_config.extra['split']]
+        split_dir = _KNOWN_SPLITS[self._builder_config.extra["split"]]
 
-        with open(path.join(split_dir, f'{split}.txt')) as f:
+        with open(path.join(split_dir, f"{split}.txt")) as f:
             ids = []
             for line in f:
-                id = line.rstrip('\n')
+                id = line.rstrip("\n")
                 ids.append(id)
 
         return ids
@@ -103,12 +91,12 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
         dataset_warning(self)
 
         # Note: This function requires the Kaggle CLI tool. Read the installation guide at https://www.kaggle.com/docs/api
-        archive = dl_manager.download_kaggle_data('asl-signs')
+        archive = dl_manager.download_kaggle_data("asl-signs")
 
-        if 'split' in self._builder_config.extra:
-            train_args = {"archive_path": archive, "ids": self._load_split_ids('train')}
-            val_args = {"archive_path": archive, "ids": self._load_split_ids('val')}
-            test_args = {"archive_path": archive, "ids": self._load_split_ids('test')}
+        if "split" in self._builder_config.extra:
+            train_args = {"archive_path": archive, "ids": self._load_split_ids("train")}
+            val_args = {"archive_path": archive, "ids": self._load_split_ids("val")}
+            test_args = {"archive_path": archive, "ids": self._load_split_ids("test")}
 
             return [
                 tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs=train_args),
@@ -119,18 +107,14 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
             return [tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archive})]
 
     def _generate_examples(self, archive_path: str, ids: list = []):
-        """ Yields examples. """
+        """Yields examples."""
 
         with GFile(path.join(archive_path, "train.csv"), "r") as csv_file:
             csv_data = csv.reader(csv_file, delimiter=",")
             next(csv_data)  # Ignore the header
 
             for i, row in enumerate(csv_data):
-                datum = {
-                    "id": row[2],
-                    "text": row[3],
-                    "signer_id": row[1],
-                }
+                datum = {"id": row[2], "text": row[3], "signer_id": row[1]}
 
                 if len(ids) > 0 and (datum["id"] not in ids):
                     continue
@@ -140,8 +124,8 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
                         # get data from parquet file
                         parquet_path = path.join(archive_path, row[0])
                         pose_df = pq.read_table(parquet_path).to_pandas()
-                        num_frames = len(pose_df['frame'].drop_duplicates())
-                        dimensions = ['x', 'y', 'z']
+                        num_frames = len(pose_df["frame"].drop_duplicates())
+                        dimensions = ["x", "y", "z"]
 
                         # reorder keypoints
                         FACE = np.arange(0, 468).tolist()
@@ -159,10 +143,10 @@ class ASLSigns(tfds.core.GeneratorBasedBuilder):
                         pose_data = np.expand_dims(pose_data, 1)
                         # TODO: revert the normalization done in the original dataset
                         # pose_data = pose_data * np.array([width, height, 1.0])
-                        body = NumPyPoseBody(fps=30,
-                                             data=pose_data,
-                                             confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points())))
+                        body = NumPyPoseBody(
+                            fps=30, data=pose_data, confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))
+                        )
                         pose = Pose(header, body)
                         datum["pose"] = pose
 
-                yield datum['id'], datum
+                yield datum["id"], datum

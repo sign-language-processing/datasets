@@ -13,7 +13,6 @@ from ...datasets.ngt_corpus.ngt_corpus_utils import get_elan_sentences_ngt_corpu
 
 class TestNgtCorpus(TestCase):
     def test_ngt_corpus_loader(self):
-
         config = SignDatasetConfig(name="only-annotations", version="1.0.0", include_video=False)
         ngt = tfds.load(name="ngt_corpus", builder_kwargs={"config": config})
 
@@ -23,7 +22,6 @@ class TestNgtCorpus(TestCase):
 
 class TestNgtCorpusUtils(TestCase):
     def test_ngt_get_elan_sentences(self):
-
         config = SignDatasetConfig(name="only-annotations", version="1.0.0", include_video=False)
         ngt = tfds.load(name="ngt_corpus", builder_kwargs={"config": config})
 

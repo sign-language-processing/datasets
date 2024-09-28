@@ -1,4 +1,5 @@
 """How2Sign: A multimodal and multiview continuous American Sign Language (ASL) dataset"""
+
 import os
 from itertools import chain
 from os import path
@@ -108,12 +109,12 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
         url_map = {u: d for u, d in zip(urls, downloads)}  # Map local paths
 
         return [
-            tfds.core.SplitGenerator(name=name, gen_kwargs={k: url_map[v] if v is not None else None for k, v in split.items()},)
+            tfds.core.SplitGenerator(name=name, gen_kwargs={k: url_map[v] if v is not None else None for k, v in split.items()})
             for name, split in _SPLITS.items()
         ]
 
     def _generate_examples(self, rgb_clips_front: str, rgb_clips_side: str, bfh_2d_front: str, bfh_2d_side: str, translation: str):
-        """ Yields examples. """
+        """Yields examples."""
 
         # TODO get ids from translation file
         ids = []
@@ -121,10 +122,7 @@ class How2Sign(tfds.core.GeneratorBasedBuilder):
         ids = ids[:10]
 
         for _id in ids:
-            datum = {
-                "id": _id,
-                "fps": 24,
-            }
+            datum = {"id": _id, "fps": 24}
 
             if self.builder_config.include_video:
                 datum["video"] = {
