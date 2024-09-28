@@ -7,7 +7,6 @@ import os
 import datetime
 from typing import Dict
 
-import cv2
 import tarfile
 import tempfile
 
@@ -148,6 +147,8 @@ def read_mediapipe_surrey_format(filepath: str, fps: int, width: int, height: in
 
 
 def get_video_metadata(filename: str) -> Dict[str, int]:
+    import cv2
+
     """
     Get metadata from mp4 video.
 

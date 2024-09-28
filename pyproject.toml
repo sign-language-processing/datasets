@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sign-language-datasets"
+version = "0.2.1"
+description = "TFDS Datasets for sign language"
+readme = "README.md"
+requires-python = ">=3.6"
+authors = [
+    { name = "Amit Moryossef", email = "amitmoryossef@gmail.com" }
+]
+
+dependencies = [
+    "typing-extensions",
+    "python-dotenv",
+    "tqdm",
+    "pose-format>=0.0.3",
+    "tensorflow-datasets",
+    "numpy",
+    "Pillow",
+    "requests",
+    "etils",
+    # For the BSL, DGS, NGT corpora
+    "lxml",
+    "pympi-ling",
+    # Set the correct tensorflow version based on the platform
+    'tensorflow; platform_system != "Darwin"',
+    'tensorflow-macos; platform_system == "Darwin"',
+]
+
+[project.optional-dependencies]
+video = [
+    "opencv-python"
+]
+dev = [
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "black",
+]
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools.package-data]
+"sign_language_datasets" = [
+    "*.header",
+    "*.poseheader",
+    "*.csv",
+    "*.tsv",
+    "*.png",
+    "*.ttf",
+    "*.json",
+]
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=sign_language_datasets"
+filterwarnings = [
+    "ignore::DeprecationWarning:flatbuffers",
+]

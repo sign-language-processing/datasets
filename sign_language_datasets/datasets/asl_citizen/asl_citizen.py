@@ -14,7 +14,6 @@ from pose_format import Pose
 from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
 from pose_format.pose_header import PoseHeaderDimensions
-from pose_format.utils.holistic import holistic_components
 
 from sign_language_datasets.utils.features import PoseFeature
 

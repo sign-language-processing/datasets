@@ -16,6 +16,29 @@ pip install git+https://github.com/sign-language-processing/datasets.git
 pip install sign-language-datasets
 ```
 
+For apple environments, you may need touse an ARM version of conda:
+```bash
+# Uninstall Anaconda
+conda activate base
+conda install anaconda-clean
+anaconda-clean --yes
+conda deactivate
+brew uninstall anaconda
+
+# Download and install Miniforge for ARM (Apple Silicon)
+curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+bash Miniforge3-MacOSX-arm64.sh
+# Follow the instructions
+
+conda create --name=datasets python=3.11
+conda activate datasets
+pip install .
+
+# Test the installation
+python -c "import tensorflow"
+python -c "import sign_language_datasets"
+```
+
 ## Usage
 
 We demonstrate a loading script for every dataset in [examples/load.ipynb](examples/load.ipynb)

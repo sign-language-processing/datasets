@@ -9,7 +9,7 @@ import tensorflow_datasets as tfds
 from ..warning import dataset_warning
 from ...datasets import SignDatasetConfig
 import urllib.request
-import cv2
+
 
 from ...utils.signwriting.ocr import image_to_fsw
 
@@ -91,6 +91,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
 
     def _ocr(self, datum):
         # sign2mint used to include only a photo of signwriting, which required OCR to get the FSW
+        import cv2
         if self.ocr_cache is None:
             with open(OCR_CACHE_PATH, "r") as f:
                 lines = [l.split(" ") for l in f.readlines()]
@@ -101,6 +102,7 @@ class Sign2MINT(tfds.core.GeneratorBasedBuilder):
             return self.ocr_cache[image_url]
 
         urllib.request.urlretrieve(image_url, "sign.png")
+
         img_rgb = cv2.imread("sign.png")
 
         symbols = datum["gebaerdenschrift"]["symbolIds"]

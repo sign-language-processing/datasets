@@ -6,7 +6,6 @@ import gzip
 import json
 from copy import copy
 
-import cv2
 import math
 
 import numpy as np
@@ -337,6 +336,8 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
         for video_path in videos.values():
             if video_path == "":
                 continue
+
+            import cv2
 
             cap = cv2.VideoCapture(video_path)
             actual_video_fps = cap.get(cv2.CAP_PROP_FPS)

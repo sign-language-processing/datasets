@@ -12,7 +12,6 @@ from tensorflow.io.gfile import GFile
 from pose_format import Pose, PoseHeader
 from pose_format.numpy import NumPyPoseBody
 from pose_format.pose_header import PoseHeaderDimensions
-from pose_format.utils.holistic import holistic_components
 
 from sign_language_datasets.utils.features import PoseFeature
 
@@ -146,6 +145,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                             width = 640
                             height = 480
                             dimensions = PoseHeaderDimensions(width=width, height=height, depth=1000)
+                            from pose_format.utils.holistic import holistic_components
                             header = PoseHeader(
                                 version=0.1, dimensions=dimensions, components=holistic_components("XYZC", 10)[:-1]
                             )  # no world landmarks

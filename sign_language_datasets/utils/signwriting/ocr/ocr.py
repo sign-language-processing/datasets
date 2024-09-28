@@ -8,7 +8,6 @@ from typing import List
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-import cv2
 import os
 
 
@@ -37,6 +36,8 @@ def shape_pos(shape):
 
 
 def crop_whitespace(img):
+    import cv2
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = 255 * (gray < 128).astype(np.uint8)  # To invert the text to white
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
@@ -66,6 +67,8 @@ def get_font():
 
 
 def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
+    import cv2
+
     try:
         from PIL import Image, ImageDraw
     except ImportError:
@@ -138,6 +141,8 @@ def image_to_fsw(image: np.ndarray, symbols: List[str]) -> str:
 
 
 if __name__ == "__main__":
+    import cv2
+
     img_rgb = cv2.imread("assets/sign.png")
     symbols = ["S1f520", "S1f528", "S23c04", "S23c1c", "S2fb04", "S2ff00", "S33b10"]
 

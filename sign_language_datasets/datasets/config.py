@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 
-import cv2
 import tensorflow_datasets as tfds
 
 
@@ -71,6 +70,7 @@ class VideoFeature(tfds.features.Video):
 
         # Load images if list of file paths
         if isinstance(video_or_path_or_fobj, list) and isinstance(video_or_path_or_fobj[0], str):
+            import cv2
             _, h, w, _ = self.shape
             video_or_path_or_fobj = [cv2.resize(cv2.imread(f), (w, h)) for f in video_or_path_or_fobj]
 
