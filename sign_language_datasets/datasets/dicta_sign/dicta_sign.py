@@ -49,6 +49,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
             "signed_language": tfds.features.Text(),
             "spoken_language": tfds.features.Text(),
             "text": tfds.features.Text(),
+            "text_en": tfds.features.Text(),
             "gloss": tfds.features.Text(),
             "hamnosys": tfds.features.Text(),
         }
@@ -112,6 +113,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
                         "signed_language": match[1],
                         "spoken_language": SPOKEN_LANGUAGES[match[1]],
                         "text": match[0],
+                        "text_en": matches[0][0],
                         "gloss": match[3],
                         "hamnosys": match[4],
                         "video": "https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/" + match[2],
@@ -126,7 +128,9 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
             for video_path, concept in zip(video_paths, concepts):
                 concept["video"] = video_path if self._builder_config.process_video else str(video_path)
 
-        return {"train": self._generate_examples(concepts, poses_path)}
+        return {
+            "train": self._generate_examples(concepts, poses_path),
+        }
 
     def _generate_examples(self, concepts, poses_path: str):
         """Yields examples."""

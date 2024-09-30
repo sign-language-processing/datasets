@@ -156,7 +156,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                             pose_data = pose_data * np.array([width, height, 1.0])
                             body = NumPyPoseBody(
                                 fps=30, data=pose_data, confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))
-                            )  # FIXME: unkown
+                            )  # FIXME: unknown
                             pose = Pose(header, body)
                             datum["pose"] = pose
                         else:
