@@ -128,9 +128,7 @@ class DictaSign(tfds.core.GeneratorBasedBuilder):
             for video_path, concept in zip(video_paths, concepts):
                 concept["video"] = video_path if self._builder_config.process_video else str(video_path)
 
-        return {
-            "train": self._generate_examples(concepts, poses_path),
-        }
+        return {"train": self._generate_examples(concepts, poses_path)}
 
     def _generate_examples(self, concepts, poses_path: str):
         """Yields examples."""
