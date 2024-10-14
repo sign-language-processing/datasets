@@ -36,8 +36,7 @@ _CITATION = """
 _DOWNLOAD_URL = "https://signdata.cc.gatech.edu/"
 
 
-# _POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/ASLCitizen.zip")}
-_POSE_URLS = {"holistic": "/shares/iict-sp2.ebling.cl.uzh/common/popsign_v1_0/game/"}
+# _POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/ASLCitizen.zip")} 
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "holistic.poseheader")}
 
 
@@ -78,8 +77,9 @@ class PopSign(tfds.core.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         dataset_warning(self)
 
+        # too expensive to host the poses at the moment, need to specify a local path
         # poses_dir = str(dl_manager.download_and_extract(_POSE_URLS["holistic"]))
-        poses_dir = _POSE_URLS["holistic"]
+        poses_dir = self._builder_config.extra["pose_dir"]
 
         return [
             tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"poses_dir": path.join(poses_dir, 'train')}),
