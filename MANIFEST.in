@@ -1,0 +1,7 @@
+recursive-include sign_language_datasets *.header
+recursive-include sign_language_datasets *.poseheader
+recursive-include sign_language_datasets *.csv
+recursive-include sign_language_datasets *.tsv
+recursive-include sign_language_datasets *.png
+recursive-include sign_language_datasets *.ttf
+recursive-include sign_language_datasets *.json

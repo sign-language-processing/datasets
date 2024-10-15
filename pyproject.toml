@@ -45,7 +45,7 @@ dev = [
 find = {}
 
 [tool.setuptools.package-data]
-"sign_language_datasets" = [
+sign_language_datasets = [
     "*.header",
     "*.poseheader",
     "*.csv",
