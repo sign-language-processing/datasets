@@ -16,6 +16,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         include_video: bool = True,
         process_video: bool = None,
         include_pose: Optional[str] = None,
+        process_pose: bool = True,
         fps: Optional[float] = None,
         resolution: Optional[Tuple[int, int]] = None,
         sample_size: Optional[int] = None,
@@ -36,6 +37,7 @@ class SignDatasetConfig(tfds.core.BuilderConfig):
         self.include_video = include_video
         self.process_video = process_video if process_video is not None else include_video
         self.include_pose = include_pose.lower() if include_pose is not None else None
+        self.process_pose = process_pose
 
         self.fps = fps
         self.resolution = resolution

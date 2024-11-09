@@ -9,7 +9,7 @@ from zipfile import ZipFile
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.io.gfile import GFile
-from tensorflow_datasets.core.download.resource import get_dl_dirname
+from tensorflow_datasets.core.download.resource import get_dl_fname
 from tqdm import tqdm
 
 from ..warning import dataset_warning
@@ -123,7 +123,7 @@ class AUTSL(tfds.core.GeneratorBasedBuilder):
             print(_OPENPOSE_DISCLAIMER)
 
         # Make sure not already downloaded
-        dirname = get_dl_dirname(url)
+        dirname = get_dl_fname(url)
         output_path = os.path.join(dl_manager._download_dir, dirname)
         output_path_extracted = os.path.join(dl_manager._extract_dir, dirname)
 

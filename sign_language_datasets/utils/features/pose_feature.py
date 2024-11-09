@@ -152,7 +152,7 @@ class PoseFeature(feature.FeatureConnector):
     def encode_example(self, pose_path_or_fobj):
         """Convert the given image into a dict convertible to tf example."""
 
-        if pose_path_or_fobj is None:
+        if pose_path_or_fobj is None or pose_path_or_fobj == "":
             # Create 0 size tensors
             data_shape = list(self._shape)
             data_shape[0] = 0

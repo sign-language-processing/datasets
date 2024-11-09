@@ -61,10 +61,15 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
 
         # Add poses if requested
         if self._builder_config.include_pose == "holistic":
-            pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
-            stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
-            pose_shape = (None, 1, 576, 3)
-            video_feature["pose"] = PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
+            if self._builder_config.process_pose:
+                pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
+                stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
+                pose_shape = (None, 1, 576, 3)
+                pose_feature = PoseFeature(shape=pose_shape, stride=stride, header_path=pose_header_path)
+            else:
+                pose_feature = tfds.features.Text()
+
+            video_feature["pose"] = pose_feature
 
         features = {
             "id": tfds.features.Text(),
@@ -100,6 +105,7 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 content = f.read()
                 gloss = re.findall(r"span class=\"Gloss\">(.*?)<", content)[0]
                 video = re.findall(r"source src=\"\.\.\/(.*?)\"", content)[0]
+                video = video.replace('filmekl/', 'filmegr/') # higher resolution videos
                 datum = {
                     "id": "galex_" + gloss,
                     "glosses": [gloss],
@@ -204,9 +210,9 @@ class DgsTypes(tfds.core.GeneratorBasedBuilder):
                 if self._builder_config.include_pose:
                     pose_view = f"{datum['id']}_{view['name']}"
                     if pose_view in poses:
-                        view["pose"] = poses[pose_view]
+                        view["pose"] = str(poses[pose_view])
                     else:
                         print(f"No pose for {pose_view}.")
-                        view["pose"] = None
+                        view["pose"] = ""
 
             yield datum["id"], datum
