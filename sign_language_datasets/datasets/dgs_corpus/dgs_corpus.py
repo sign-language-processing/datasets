@@ -385,10 +385,12 @@ class DgsCorpus(tfds.core.GeneratorBasedBuilder):
                     poses_values = [p for p in poses.values() if p is not None]
                     if len(poses_values) > 0:
                         first_pose = poses_values[0]
-                        assert all(
-                            p.body.data.shape == first_pose.body.data.shape for p in poses_values
-                        ), f"Document {document_id}: The poses are not synchronized ({[p.body.data.shape for p in poses_values]})"
-
+                        try:
+                            assert all(p.body.data.shape == first_pose.body.data.shape for p in poses_values
+                                       ), f"Document {document_id}: The poses are not synchronized ({[p.body.data.shape for p in poses_values]})"
+                        except AssertionError as e:
+                            print(f"Warning: {e}")
+                            continue # Skip this document
             if self._builder_config.data_type == "document":
                 if poses is not None:
                     features["poses"] = poses
