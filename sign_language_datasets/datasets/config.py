@@ -4,7 +4,7 @@ import tensorflow_datasets as tfds
 
 
 def cloud_bucket_file(file_name: str) -> str:
-    return f"https://pub-883e9a030738428bbfcad446e5711c4a.r2.dev/{file_name}"
+    return f"https://sign-lanugage-datasets.sign-mt.cloud/{file_name}"
 
 
 class SignDatasetConfig(tfds.core.BuilderConfig):
