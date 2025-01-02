@@ -4,8 +4,7 @@ import tensorflow_datasets as tfds
 
 
 def cloud_bucket_file(file_name: str) -> str:
-    escaped_file_name = file_name.replace("/", "%2F")
-    return f"https://firebasestorage.googleapis.com/v0/b/sign-language-datasets/o/{escaped_file_name}?alt=media"
+    return f"https://pub-883e9a030738428bbfcad446e5711c4a.r2.dev/{file_name}"
 
 
 class SignDatasetConfig(tfds.core.BuilderConfig):
