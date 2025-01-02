@@ -94,12 +94,18 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
         self.csv_path = csv_path
 
         to_be_extracted = []
-        for file_name, url in _POSE_URLS[self._builder_config.include_pose]:
-            output = path.join(dl_manager.download_dir, file_name)
-            if not path.exists(output):
-                gdown.download(url=url, output=output, quiet=False, fuzzy=True)
-            to_be_extracted.append(output)
-        archives = dl_manager.extract(to_be_extracted)
+        
+        # If it's not requested, e.g. None, don't try to download it. 
+        if self._builder_config.include_pose == "holistic":
+            to_be_extracted = []
+            for file_name, url in _POSE_URLS[self._builder_config.include_pose]:
+                output = path.join(dl_manager.download_dir, file_name)
+                if not path.exists(output):
+                    gdown.download(url=url, output=output, quiet=False, fuzzy=True)
+                to_be_extracted.append(output)
+            archives = dl_manager.extract(to_be_extracted)
+        else: 
+            archives = [None, None, None] # So that the indexing below will not crash, e.g. on archives[0]
 
         return [
             tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"archive_path": archives[0], "split": "train"}),
@@ -156,7 +162,7 @@ class SemLex(tfds.core.GeneratorBasedBuilder):
                             pose_data = pose_data * np.array([width, height, 1.0])
                             body = NumPyPoseBody(
                                 fps=30, data=pose_data, confidence=np.ones(shape=(pose_data.shape[0], 1, header.total_points()))
-                            )  # FIXME: unkown
+                            )  # FIXME: unknown
                             pose = Pose(header, body)
                             datum["pose"] = pose
                         else:
