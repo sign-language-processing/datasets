@@ -62,6 +62,9 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
         features = {
             "id": tfds.features.Text(),
             "text": tfds.features.Text(),
+            "episode_id": tfds.features.Text(),
+            "start_frame": tfds.features.Scalar(dtype=np.int64),
+            "end_frame": tfds.features.Scalar(dtype=np.int64),
         }
 
         # TODO: add videos
@@ -70,6 +73,9 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
             pose_header_path = _POSE_HEADERS[self._builder_config.include_pose]
             stride = 1 if self._builder_config.fps is None else 25 / self._builder_config.fps
             features["pose"] = PoseFeature(shape=(None, 1, 576, 3), header_path=pose_header_path, stride=stride)
+
+        if "lip_feature_dir" in self._builder_config.extra:
+            features["lip"] = tfds.features.Tensor(shape=(None, 768), dtype=np.float32)
 
         return tfds.core.DatasetInfo(
             builder=self,
@@ -87,7 +93,6 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
         # too expensive to host the poses at the moment, need to specify a local path
         # poses_dir = str(dl_manager.download_and_extract(_POSE_URLS["holistic"]))
         poses_dir = self._builder_config.extra["poses_dir"]
-        poses_dir_test = self._builder_config.extra["poses_dir_test"]
 
         print(f'Generating train and valid set ...')
         # Copy aggregated annotations from the vgg_islr repo
@@ -129,6 +134,7 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
             TRAIN_SPLIT_NUM: defaultdict(list),
             VAL_SPLIT_NUM: defaultdict(list),
         }
+        # for split_idx in [VAL_SPLIT_NUM]:
         for split_idx in [TRAIN_SPLIT_NUM,VAL_SPLIT_NUM]:
             count = 0 
 
@@ -152,15 +158,19 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
                                 w_l = w_l if isinstance(w_l, tuple) else [w_l]
 
                                 for w in w_l:
-                                    examples[split_idx][pose_filename].append({
-                                        'idx': f"{w}-{pose_filename.replace('.pose', '')}-{i}",
+                                    episode_id = pose_filename.replace('.pose', '')
+                                    idx = f"{'train' if split_idx == TRAIN_SPLIT_NUM else 'val'}-{w}-{episode_id}-{i}"
+                                    examples[split_idx][episode_id].append({
+                                        'idx': idx,
                                         'text': w,
                                         'start_frame': s,
                                         'end_frame': e,
+                                        'episode_id': episode_id,
                                     })
 
+                                # DEBUG
                                 # count = count + 1 
-                                # if count >= 20:
+                                # if count >= 10:
                                 #     break
                             else:
                                 print(f'{pose_path} does not exist, skipping ...')
@@ -181,6 +191,7 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
                 },
             },
         }
+        fps = 25
 
         test_examples = []
         for annotation_source, annotation in annotations['test'].items():
@@ -199,54 +210,79 @@ class BobslIslr(tfds.core.GeneratorBasedBuilder):
                         for i, name in enumerate(value['names']):
                             global_time = value['global_times'][i]
                             filename = f"{name}-{str(global_time).replace('.', '_')}"
-                            idx = f"{gloss}-{filename}"
+                            idx = f"test-{gloss}-{filename}"
                             pose_path = f"{annotation_source}/{gloss}/{filename}.pose"
+
+                            start_offset, end_offset = annotation['range']
+                            s, e = max(0, int(global_time * fps + start_offset)), int(global_time * fps + end_offset)
 
                             test_examples.append({
                                 'idx': idx,
-                                'pose_path': pose_path,
+                                # 'pose_path': pose_path,
                                 'text': gloss,
+                                'start_frame': s,
+                                'end_frame': e,
+                                'episode_id': filename.split('-')[0],
                             })
+
+        idxs = [item["idx"] for item in test_examples]
+        assert len(idxs) == len(set(idxs)), "Duplicate 'idx' values found!"
+        
+        # test_examples = test_examples[:10] # DEBUG
+
+        # Group examples by episode_id
+        grouped_examples = defaultdict(list)
+        for example in test_examples:
+            grouped_examples[example['episode_id']].append(example)
+        test_examples = grouped_examples
 
         print('Train:', sum([len(d) for d in examples[TRAIN_SPLIT_NUM].values()]))
         print('Valid:', sum([len(d) for d in examples[VAL_SPLIT_NUM].values()]))
-        print('Test:', len(test_examples))
+        print('Test:', sum([len(d) for d in test_examples.values()]))
 
         return [
             tfds.core.SplitGenerator(name=tfds.Split.TRAIN, gen_kwargs={"poses_dir": poses_dir, "examples": examples[TRAIN_SPLIT_NUM]}),
             tfds.core.SplitGenerator(name=tfds.Split.VALIDATION, gen_kwargs={"poses_dir": poses_dir, "examples": examples[VAL_SPLIT_NUM]}),
-            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"poses_dir": poses_dir_test, "examples": test_examples}),
+            tfds.core.SplitGenerator(name=tfds.Split.TEST, gen_kwargs={"poses_dir": poses_dir, "examples": test_examples}),
         ]
 
-    def _generate_examples(self, poses_dir: str, examples: Union[list, dict]):
+    def _generate_examples(self, poses_dir: str, examples: dict):
         """Yields examples."""
 
-        if isinstance(examples, list):
-            for example in examples:
-                datum = {"id": example["idx"], "text": example["text"]}
-                mediapipe_path = path.join(poses_dir, example['pose_path'])
+        lip_dir = self._builder_config.extra["lip_feature_dir"] if "lip_feature_dir" in self._builder_config.extra else None
 
-                with open(mediapipe_path, "rb") as f:
+        for episode_id, episode_examples in examples.items():
+            mediapipe_path = path.join(poses_dir, episode_id + '.pose')
+
+            with open(mediapipe_path, "rb") as f:
+                buffer = f.read()
+
+                if lip_dir:
+                    feat_path = path.join(lip_dir, episode_id + ".npy")
+                    lip_feat = np.load(feat_path) if os.path.exists(feat_path) else None
+                
+                for example in episode_examples:
                     try:
-                        pose = Pose.read(f.read())
+                        datum = {
+                            "id": example["idx"], 
+                            "text": example["text"],
+                            "episode_id": example["episode_id"],
+                            "start_frame": example["start_frame"],
+                            "end_frame": example["end_frame"],
+                        }
+
+                        pose = Pose.read(buffer, start_frame=example["start_frame"], end_frame=example["end_frame"])
                         datum["pose"] = pose
+                        
+                        if lip_dir:
+                            if lip_feat is not None:
+                                datum['lip'] = lip_feat[example['start_frame']:example['end_frame']]
+                                assert datum['lip'].shape[0] == pose.body.data.shape[0], \
+                                    f"lip reading feature should have the same number of frames as pose: {datum['lip'].shape[0]} vs. {pose.body.data.shape[0]}"
+                            else:
+                                print(f'WARNING: {feat_path} not found ...')
+                                datum['lip'] = np.zeros((pose.body.data.shape[0], 768), dtype=np.float32)
 
                         yield datum["id"], datum
                     except Exception as e:
                         print(e)
-        elif isinstance(examples, dict):
-            for pose_path, episode_examples in examples.items():
-                mediapipe_path = path.join(poses_dir, pose_path)
-
-                with open(mediapipe_path, "rb") as f:
-                    buffer = f.read()
-                    
-                    for episode_example in episode_examples:
-                        try:
-                            datum = {"id": episode_example["idx"], "text": episode_example["text"]}
-                            datum["pose"] = Pose.read(buffer, start_frame=episode_example["start_frame"], end_frame=episode_example["end_frame"])
-
-                            yield datum["id"], datum
-                        except Exception as e:
-                            print(e)
-
