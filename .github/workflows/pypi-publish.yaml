@@ -28,9 +28,7 @@ jobs:
           pip install build
 
       - name: Build a binary wheel dist
-        working-directory: src/python
         run: |
-          rm -rf dist
           python -m build
 
       - name: Quick test of the built dist
