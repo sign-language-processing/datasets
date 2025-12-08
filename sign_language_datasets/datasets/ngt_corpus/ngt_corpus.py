@@ -29,7 +29,7 @@ _CITATION = """\
 INDEX_URL = cloud_bucket_file("public/ngt.json")
 
 # alternative mirror:
-# INDEX_URL = "https://files.ifi.uzh.ch/cl/archiv/2022/easier/ngt.json"
+# INDEX_URL = "https://archive.cl.uzh.ch/cl-archive/2022/easier/ngt.json"
 
 _HOMEPAGE = "https://www.ru.nl/corpusngtuk/"
 
