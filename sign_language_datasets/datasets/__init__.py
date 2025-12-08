@@ -1,6 +1,7 @@
 from .aslg_pc12 import AslgPc12
 from .asl_lex import AslLex
 from .autsl import AUTSL
+from .bobsl_islr import BobslIslr
 from .chicago_fs_wild import ChicagoFSWild
 from .config import SignDatasetConfig
 from .dgs_types import DgsTypes
