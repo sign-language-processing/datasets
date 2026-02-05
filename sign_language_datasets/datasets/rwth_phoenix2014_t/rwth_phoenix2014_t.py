@@ -37,7 +37,7 @@ _CITATION = """
 """
 
 _VIDEO_ANNOTATIONS_URL = "https://www-i6.informatik.rwth-aachen.de/ftp/pub/rwth-phoenix/2016/phoenix-2014-T.v3.tar.gz"
-_ANNOTATIONS_URL = cloud_bucket_file("public/phoenix-annotations.tar.gz")
+_ANNOTATIONS_URL = cloud_bucket_file("public/phoenix/phoenix-annotations.tar.gz")
 
 _POSE_URLS = {"holistic": cloud_bucket_file("poses/holistic/phoenix.tar.gz")}
 _POSE_HEADERS = {"holistic": path.join(path.dirname(path.realpath(__file__)), "pose.header")}

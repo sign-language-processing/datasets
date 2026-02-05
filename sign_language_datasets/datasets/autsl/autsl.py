@@ -45,10 +45,10 @@ _TRAIN_VIDEOS = "http://158.109.8.102/AuTSL/data/train/train_set_vfbha39.zip"  #
 _TRAIN_LABELS = "http://158.109.8.102/AuTSL/data/train/train_labels.csv"
 
 _VALID_VIDEOS = "http://158.109.8.102/AuTSL/data/validation/val_set_bjhfy68.zip"  # 3 files
-_VALID_LABELS = cloud_bucket_file("public/autsl_validation_labels.csv")
+_VALID_LABELS = cloud_bucket_file("public/autsl/autsl_validation_labels.csv")
 
 _TEST_VIDEOS = "http://158.109.8.102/AuTSL/data/test/test_set_xsaft57.zip"  # 3 files
-_TEST_LABELS = cloud_bucket_file("public/autsl_test_labels.csv")
+_TEST_LABELS = cloud_bucket_file("public/autsl/autsl_test_labels.csv")
 
 _CLASSES = "https://data.chalearnlap.cvc.uab.cat/AuTSL/data/SignList_ClassId_TR_EN.csv"
 
