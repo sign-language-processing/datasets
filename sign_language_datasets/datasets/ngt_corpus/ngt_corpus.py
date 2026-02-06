@@ -26,10 +26,10 @@ _CITATION = """\
 """
 
 # This `ngt.json` file was created using `create_index.py`
-INDEX_URL = cloud_bucket_file("public/ngt.json")
+INDEX_URL = cloud_bucket_file("public/ngt-corpus/ngt.json")
 
 # alternative mirror:
-# INDEX_URL = "https://archive.cl.uzh.ch/cl-archive/2022/easier/ngt.json"
+# INDEX_URL = "https://archive.cl.uzh.ch/public/archive/2022/easier/ngt.json"
 
 _HOMEPAGE = "https://www.ru.nl/corpusngtuk/"
 

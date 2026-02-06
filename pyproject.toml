@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sign-language-datasets"
-version = "v0.3.0"
+version = "v0.3.1"
 description = "TFDS Datasets for sign language"
 readme = "README.md"
 requires-python = ">=3.6"
